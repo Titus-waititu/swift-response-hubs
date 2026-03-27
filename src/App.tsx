@@ -83,6 +83,14 @@ const App = () => (
                   </ProtectedRoute>
                 }
               />
+              <Route
+                path="/dashboard/dispatcher"
+                element={
+                  <ProtectedRoute allowedRoles={["DISPATCHER"]}>
+                    <DispatcherDashboard />
+                  </ProtectedRoute>
+                }
+              />
 
               {/* Information Routes */}
               <Route path="/features" element={<FeaturesPage />} />
@@ -96,7 +104,7 @@ const App = () => (
               <Route
                 path="/dispatcher"
                 element={
-                  <ProtectedRoute allowedRoles={["OFFICER"]}>
+                  <ProtectedRoute allowedRoles={["DISPATCHER"]}>
                     <DispatcherDashboard />
                   </ProtectedRoute>
                 }

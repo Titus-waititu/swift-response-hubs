@@ -19,7 +19,15 @@ export const useGetAccidents = () => {
   return useQuery({
     queryKey: accidentKeys.lists(),
     queryFn: () => {
-      // Fetch user-specific accidents using the corrected endpoint
+      // Dispatcher and Officer need ALL accidents across the system
+      if (
+        user?.role === "DISPATCHER" ||
+        user?.role === "OFFICER" ||
+        user?.role === "ADMIN"
+      ) {
+        return apiClient.get("/accidents/");
+      }
+      // USER and RESPONDER fetch their specific/relevant accidents
       if (user?.id) {
         return apiClient.get(`/accidents/user/${user.id}`);
       }

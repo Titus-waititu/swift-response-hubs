@@ -1,9 +1,12 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuthStore } from "@/stores/authStore";
 import DispatcherSidebar from "@/components/dispatcher/DispatcherSidebar";
 import DispatcherTopNav from "@/components/dispatcher/DispatcherTopNav";
 import DispatcherDashboardPage from "@/components/dispatcher/pages/DispatcherDashboardPage";
 import IncidentsQueuePage from "@/components/dispatcher/pages/IncidentsQueuePage";
+import RespondersManagementPage from "@/components/dispatcher/pages/RespondersManagementPage";
+import EmergencyServicesPage from "@/components/dispatcher/pages/EmergencyServicesPage";
 import DispatcherSettingsPage from "@/components/dispatcher/pages/DispatcherSettingsPage";
 import { useGetAccidents } from "@/hooks/useAccidents";
 import { mapBackendAccidentToIncident } from "@/lib/backend-api";
@@ -12,29 +15,24 @@ import {
   getIncidentTypeBreakdown,
   getResponseTimeMetrics,
 } from "@/lib/incident-analytics";
-import type { DispatcherSession } from "@/components/dispatcher/DispatcherTypes";
 import type { IncidentReport } from "@/types/incident";
 
-type DispatcherPage = "dashboard" | "queue" | "settings";
-
-const DISPATCHER_SESSION_KEY = "swift-response-hub/dispatcher-session/v1";
+type DispatcherPage =
+  | "dashboard"
+  | "queue"
+  | "responders"
+  | "services"
+  | "settings";
 
 export default function DispatcherDashboard() {
   const navigate = useNavigate();
+  const { user, logout } = useAuthStore();
   const [currentPage, setCurrentPage] = useState<DispatcherPage>("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [isDarkMode, setIsDarkMode] = useState(() => {
     const stored = localStorage.getItem("dispatcher-theme");
     if (stored) return stored === "dark";
     return document.documentElement.classList.contains("dark");
-  });
-  const [session, setSession] = useState<DispatcherSession | null>(() => {
-    try {
-      const rawSession = localStorage.getItem(DISPATCHER_SESSION_KEY);
-      return rawSession ? JSON.parse(rawSession) : null;
-    } catch {
-      return null;
-    }
   });
 
   // Apply theme on mount
@@ -47,11 +45,12 @@ export default function DispatcherDashboard() {
     localStorage.setItem("dispatcher-theme", isDarkMode ? "dark" : "light");
   }, [isDarkMode]);
 
+  // Check if user is authenticated and has dispatcher role
   useEffect(() => {
-    if (!session) {
-      navigate("/");
+    if (!user || user.role !== "DISPATCHER") {
+      navigate("/login");
     }
-  }, [session, navigate]);
+  }, [user, navigate]);
 
   const { data: accidents } = useGetAccidents();
   const accidentsArray = Array.isArray(accidents)
@@ -66,8 +65,7 @@ export default function DispatcherDashboard() {
   const responseMetrics = getResponseTimeMetrics(incidents);
 
   const handleLogout = () => {
-    localStorage.removeItem(DISPATCHER_SESSION_KEY);
-    setSession(null);
+    logout();
     navigate("/");
   };
 
@@ -84,6 +82,10 @@ export default function DispatcherDashboard() {
         );
       case "queue":
         return <IncidentsQueuePage incidents={incidents} />;
+      case "responders":
+        return <RespondersManagementPage incidents={incidents} />;
+      case "services":
+        return <EmergencyServicesPage />;
       case "settings":
         return <DispatcherSettingsPage />;
       default:
@@ -91,7 +93,10 @@ export default function DispatcherDashboard() {
     }
   };
 
-  if (!session) return null;
+  // Don't render until user is authenticated and has dispatcher role
+  if (!user || user.role !== "DISPATCHER") {
+    return null;
+  }
 
   return (
     <div className="flex h-screen bg-white dark:bg-slate-950">
@@ -100,11 +105,11 @@ export default function DispatcherDashboard() {
         onPageChange={setCurrentPage}
         sidebarOpen={sidebarOpen}
         onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
-        userName={session.name}
+        userName={user.name}
       />
       <div className="flex-1 flex flex-col overflow-hidden">
         <DispatcherTopNav
-          userName={session.name}
+          userName={user.name}
           isDarkMode={isDarkMode}
           onToggleTheme={() => setIsDarkMode(!isDarkMode)}
           onLogout={handleLogout}

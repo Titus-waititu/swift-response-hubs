@@ -9,6 +9,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 
 const navigationItems = [
@@ -150,13 +151,30 @@ export default function LandingPageHeader() {
                   <DropdownMenuTrigger asChild>
                     <Button
                       size="sm"
-                      className="bg-primary hover:bg-primary/90 gap-2"
+                      variant="outline"
+                      className="rounded-full w-10 h-10 p-0 flex items-center justify-center hover:bg-primary/10"
+                      title={`${user?.name} (${user?.role})`}
                     >
-                      <LayoutDashboard className="h-4 w-4" />
-                      <span className="hidden sm:inline">Dashboard</span>
+                      <div className="flex items-center justify-center w-full h-full rounded-full bg-gradient-to-br from-primary/60 to-primary text-white font-semibold">
+                        {user?.name?.charAt(0).toUpperCase() || "U"}
+                      </div>
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
+                  <DropdownMenuContent align="end" className="w-56">
+                    {/* User Info Header */}
+                    <div className="px-4 py-3 border-b border-border">
+                      <p className="font-semibold text-sm text-foreground">
+                        {user?.name}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {user?.email}
+                      </p>
+                      <p className="text-xs font-medium text-primary mt-1">
+                        Role: {user?.role}
+                      </p>
+                    </div>
+
+                    {/* Dashboard Options */}
                     {user?.role === "ADMIN" && (
                       <DropdownMenuItem
                         onClick={() => navigate("/dashboard/admin")}
@@ -184,6 +202,15 @@ export default function LandingPageHeader() {
                         Responder Dashboard
                       </DropdownMenuItem>
                     )}
+                    {user?.role === "DISPATCHER" && (
+                      <DropdownMenuItem
+                        onClick={() => navigate("/dashboard/dispatcher")}
+                        className="cursor-pointer gap-2"
+                      >
+                        <LayoutDashboard className="h-4 w-4" />
+                        Dispatcher Dashboard
+                      </DropdownMenuItem>
+                    )}
                     {user?.role === "USER" && (
                       <DropdownMenuItem
                         onClick={() => navigate("/dashboard/user")}
@@ -193,12 +220,13 @@ export default function LandingPageHeader() {
                         My Dashboard
                       </DropdownMenuItem>
                     )}
+                    <DropdownMenuSeparator />
                     <DropdownMenuItem
                       onClick={() => {
                         logout();
                         navigate("/");
                       }}
-                      className="cursor-pointer gap-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+                      className="cursor-pointer gap-2 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
                     >
                       <LogOut className="h-4 w-4" />
                       Logout

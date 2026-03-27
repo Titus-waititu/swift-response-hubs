@@ -56,6 +56,7 @@ const LoginPage = () => {
         user: "USER",
         officer: "OFFICER",
         emergency_responder: "RESPONDER",
+        dispatcher: "DISPATCHER",
       };
 
       const normalizedUser = {
@@ -75,6 +76,7 @@ const LoginPage = () => {
         ADMIN: "/dashboard/admin",
         OFFICER: "/dashboard/officer",
         RESPONDER: "/dashboard/responder",
+        DISPATCHER: "/dashboard/dispatcher",
       };
 
       const redirectUrl =

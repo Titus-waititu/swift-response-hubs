@@ -3,14 +3,18 @@ import {
   PanelLeft,
   LayoutDashboard,
   AlertCircle,
+  Users,
+  Ambulance,
   Settings,
   LogOut,
 } from "lucide-react";
 import { Button } from "../ui/button";
 
 interface DispatcherSidebarProps {
-  currentPage: "dashboard" | "queue" | "settings";
-  onPageChange: (page: "dashboard" | "queue" | "settings") => void;
+  currentPage: "dashboard" | "queue" | "responders" | "services" | "settings";
+  onPageChange: (
+    page: "dashboard" | "queue" | "responders" | "services" | "settings",
+  ) => void;
   sidebarOpen: boolean;
   onToggleSidebar: () => void;
   userName: string;
@@ -26,6 +30,8 @@ export default function DispatcherSidebar({
   const menuItems = [
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
     { id: "queue", label: "Incidents Queue", icon: AlertCircle },
+    { id: "responders", label: "Responders", icon: Users },
+    { id: "services", label: "Emergency Services", icon: Ambulance },
     { id: "settings", label: "Settings", icon: Settings },
   ];
 

@@ -1,0 +1,1 @@
+export const baseUrl = "https://smartresponse-api.onrender.com/api/v1";

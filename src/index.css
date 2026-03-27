@@ -1,0 +1,393 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Faherty Brand - Cool & Coastal */
+    --background: 200 25% 98%;
+    --foreground: 210 50% 12%;
+
+    --card: 210 20% 96%;
+    --card-foreground: 210 50% 12%;
+
+    --popover: 200 30% 99%;
+    --popover-foreground: 210 50% 12%;
+
+    /* Primary - Deep Teal */
+    --primary: 200 60% 45%;
+    --primary-foreground: 0 0% 100%;
+
+    /* Secondary - Ocean Blue */
+    --secondary: 210 55% 50%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 210 25% 70%;
+    --muted-foreground: 210 30% 35%;
+
+    /* Accent - Emerald Green */
+    --accent: 145 50% 45%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 75% 52%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 210 20% 88%;
+    --input: 210 25% 92%;
+    --ring: 200 60% 45%;
+
+    --radius: 0.375rem;
+
+    /* Status Colors - Cool Palette */
+    --status-submitted: 200 60% 45%;
+    --status-review: 45 80% 52%;
+    --status-verified: 145 50% 45%;
+    --status-dispatched: 200 60% 45%;
+    --status-accepted: 45 80% 52%;
+    --status-onscene: 200 60% 45%;
+    --status-resolved: 145 50% 45%;
+    --status-closed: 210 30% 50%;
+    --status-rejected: 0 75% 52%;
+    --status-duplicate: 210 30% 55%;
+
+    /* Severity - High Contrast for Safety */
+    --severity-critical: 0 80% 52%;
+    --severity-high: 20 85% 55%;
+    --severity-medium: 45 80% 52%;
+    --severity-low: 145 50% 45%;
+
+    /* Sidebar - Coastal & Cool */
+    --sidebar-background: 210 25% 96%;
+    --sidebar-foreground: 210 50% 12%;
+    --sidebar-primary: 200 60% 45%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 210 20% 92%;
+    --sidebar-accent-foreground: 210 50% 12%;
+    --sidebar-border: 210 20% 88%;
+    --sidebar-ring: 200 60% 45%;
+
+    --success: 145 50% 45%;
+    --success-foreground: 0 0% 100%;
+    --warning: 45 80% 52%;
+    --warning-foreground: 45 85% 10%;
+    --info: 200 60% 45%;
+    --info-foreground: 0 0% 100%;
+  }
+
+  .dark {
+    /* Dark Mode - Cool & Deep */
+    --background: 210 35% 8%;
+    --foreground: 200 30% 92%;
+
+    --card: 210 33% 11%;
+    --card-foreground: 200 30% 92%;
+
+    --popover: 210 38% 12%;
+    --popover-foreground: 200 30% 92%;
+
+    --primary: 200 70% 55%;
+    --primary-foreground: 210 35% 8%;
+
+    --secondary: 210 65% 58%;
+    --secondary-foreground: 210 35% 8%;
+
+    --muted: 210 30% 40%;
+    --muted-foreground: 200 25% 65%;
+
+    --accent: 145 60% 55%;
+    --accent-foreground: 210 35% 8%;
+
+    --destructive: 0 75% 60%;
+    --destructive-foreground: 210 35% 8%;
+
+    --border: 210 33% 20%;
+    --input: 210 33% 18%;
+    --ring: 200 70% 55%;
+
+    --radius: 0.375rem;
+
+    /* Status Colors - Cool Palette Dark */
+    --status-submitted: 200 70% 55%;
+    --status-review: 45 80% 60%;
+    --status-verified: 145 60% 55%;
+    --status-dispatched: 200 70% 55%;
+    --status-accepted: 45 80% 60%;
+    --status-onscene: 200 70% 55%;
+    --status-resolved: 145 60% 55%;
+    --status-closed: 210 30% 58%;
+    --status-rejected: 0 75% 58%;
+    --status-duplicate: 210 30% 60%;
+
+    /* Severity - Adjusted for Dark */
+    --severity-critical: 0 80% 60%;
+    --severity-high: 20 85% 60%;
+    --severity-medium: 45 80% 60%;
+    --severity-low: 145 60% 55%;
+
+    /* Sidebar Dark - Cool & Inviting */
+    --sidebar-background: 210 35% 10%;
+    --sidebar-foreground: 200 25% 85%;
+    --sidebar-primary: 200 70% 55%;
+    --sidebar-primary-foreground: 210 35% 8%;
+    --sidebar-accent: 210 33% 16%;
+    --sidebar-accent-foreground: 200 30% 88%;
+    --sidebar-border: 210 33% 16%;
+    --sidebar-ring: 200 70% 55%;
+
+    --success: 145 60% 55%;
+    --success-foreground: 210 35% 8%;
+    --warning: 45 80% 60%;
+    --warning-foreground: 210 35% 8%;
+    --info: 200 70% 55%;
+    --info-foreground: 210 35% 8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-family: "Inter", system-ui, sans-serif;
+  }
+
+  code,
+  .font-mono {
+    font-family: "JetBrains Mono", monospace;
+  }
+}
+
+@layer utilities {
+  .glass-panel {
+    @apply bg-card/80 backdrop-blur-xl border border-border/50;
+  }
+
+  /* Faherty Theme - Cool & Coastal - Global Color Overrides */
+  /* Maps legacy warm tones to cool palette */
+
+  /* Background colors: warm yellows → cool blues/whites */
+  .bg-yellow-50 {
+    @apply bg-blue-50;
+  }
+  .bg-yellow-100 {
+    @apply bg-blue-100;
+  }
+  .bg-yellow-200 {
+    @apply bg-blue-200;
+  }
+  .bg-yellow-300 {
+    @apply bg-blue-300;
+  }
+  .bg-yellow-400 {
+    @apply bg-blue-400;
+  }
+
+  /* Sidebar colors: warm ambers → cool blues */
+  .bg-amber-950 {
+    @apply bg-blue-950;
+  }
+  .bg-amber-900 {
+    @apply bg-blue-900;
+  }
+  .bg-amber-800 {
+    @apply bg-blue-800;
+  }
+  .bg-amber-700 {
+    @apply bg-teal-700;
+  }
+  .bg-amber-400 {
+    @apply bg-cyan-400;
+  }
+  .bg-amber-300 {
+    @apply bg-cyan-300;
+  }
+
+  /* Text colors: warm ambers → cool teals */
+  .text-yellow-50 {
+    @apply text-blue-50;
+  }
+  .text-yellow-100 {
+    @apply text-blue-100;
+  }
+  .text-amber-50 {
+    @apply text-blue-50;
+  }
+  .text-amber-100 {
+    @apply text-blue-100;
+  }
+  .text-amber-200 {
+    @apply text-blue-200;
+  }
+  .text-amber-300 {
+    @apply text-teal-300;
+  }
+  .text-amber-400 {
+    @apply text-cyan-400;
+  }
+  .text-amber-700 {
+    @apply text-teal-700;
+  }
+  .text-amber-800 {
+    @apply text-teal-800;
+  }
+  .text-amber-950 {
+    @apply text-blue-950;
+  }
+
+  /* Border colors: warm yellows → cool blues */
+  .border-yellow-50 {
+    @apply border-blue-50;
+  }
+  .border-yellow-100 {
+    @apply border-blue-100;
+  }
+  .border-yellow-200 {
+    @apply border-blue-200;
+  }
+  .border-amber-900 {
+    @apply border-blue-900;
+  }
+  .border-amber-800 {
+    @apply border-blue-800;
+  }
+
+  /* Hover states: warm → cool */
+  .hover:bg-yellow-50:hover {
+    @apply hover:bg-blue-50;
+  }
+  .hover:bg-yellow-100:hover {
+    @apply hover:bg-blue-100;
+  }
+  .hover:bg-amber-900:hover {
+    @apply hover:bg-blue-900;
+  }
+
+  /* Dark mode: warm ambers → cool blues */
+  .dark:bg-yellow-50 {
+    @apply dark:bg-blue-50;
+  }
+  .dark:bg-amber-950 {
+    @apply dark:bg-blue-950;
+  }
+  .dark:bg-amber-900 {
+    @apply dark:bg-blue-900;
+  }
+  .dark:text-amber-50 {
+    @apply dark:text-blue-50;
+  }
+  .dark:text-amber-100 {
+    @apply dark:text-blue-100;
+  }
+  .dark:text-amber-200 {
+    @apply dark:text-blue-200;
+  }
+  .dark:text-amber-300 {
+    @apply dark:text-teal-300;
+  }
+  .dark:text-amber-400 {
+    @apply dark:text-cyan-400;
+  }
+  .dark:text-amber-50 {
+    @apply dark:text-blue-50;
+  }
+  .dark:border-amber-900 {
+    @apply dark:border-blue-900;
+  }
+  .dark:hover:bg-amber-900 {
+    @apply dark:hover:bg-blue-900;
+  }
+
+  /* Replace orange primary with teal/navy */
+  .bg-orange-700 {
+    @apply bg-teal-700;
+  }
+  .bg-orange-800 {
+    @apply bg-teal-800;
+  }
+  .bg-orange-100 {
+    @apply bg-green-100;
+  }
+  .text-orange-700 {
+    @apply text-teal-700;
+  }
+  .text-orange-300 {
+    @apply text-teal-300;
+  }
+  .hover:bg-orange-800:hover {
+    @apply hover:bg-teal-800;
+  }
+
+  .rounded-lg {
+    @apply rounded-sm;
+  }
+
+  .glow-red {
+    box-shadow:
+      0 0 20px hsl(200 85% 50% / 0.2),
+      0 0 60px hsl(200 85% 50% / 0.07);
+  }
+
+  .glow-amber {
+    box-shadow:
+      0 0 20px hsl(175 70% 45% / 0.2),
+      0 0 60px hsl(175 70% 45% / 0.07);
+  }
+
+  .pulse-urgent {
+    animation: pulse-urgent 2s ease-in-out infinite;
+  }
+
+  .landing-reveal {
+    animation: landing-reveal 0.7s ease-out both;
+  }
+
+  .flow-dot {
+    animation: flow-dot 2.6s ease-in-out infinite;
+  }
+
+  @keyframes pulse-urgent {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.6;
+    }
+  }
+
+  @keyframes landing-reveal {
+    from {
+      opacity: 0;
+      transform: translateY(16px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes flow-dot {
+    0%,
+    100% {
+      opacity: 0.55;
+      transform: scale(0.9);
+      box-shadow: 0 0 0 hsl(200 85% 50% / 0);
+    }
+    50% {
+      opacity: 1;
+      transform: scale(1);
+      box-shadow: 0 0 18px hsl(200 85% 50% / 0.35);
+    }
+  }
+
+  .grid-pattern {
+    background-image:
+      linear-gradient(hsl(220 15% 18% / 0.5) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(220 15% 18% / 0.5) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+}

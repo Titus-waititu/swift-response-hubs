@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Eye, EyeOff, Mail, Lock, ArrowRight } from "lucide-react";
+import { useForm } from "@tanstack/react-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { Navigation } from "@/components/premium/Navigation";
 import { Footer } from "@/components/premium/Footer";
 import { signInToBackend } from "@/lib/backend-api";
+import { loginSchema } from "@/lib/validation-schemas";
 
 const USER_SESSION_KEY = "swift-response-hub/user-session/v1";
 
@@ -21,11 +23,8 @@ interface UserSession {
 
 export default function UserLoginPage() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
 
   // Redirect if already logged in
   useEffect(() => {
@@ -35,46 +34,51 @@ export default function UserLoginPage() {
     }
   }, [navigate]);
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
-
-    try {
-      if (!email.trim() || !password.trim()) {
-        setError("Please enter your email and password");
+  const form = useForm({
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+    onSubmit: async ({ value }) => {
+      setError("");
+      
+      const parsed = loginSchema.safeParse(value);
+      if (!parsed.success) {
+        const errors = parsed.error.flatten().fieldErrors;
+        const errorMessages = Object.values(errors).flat().filter(Boolean);
+        toast.error(errorMessages.join("\n") || "Please fix the errors in the form.");
         return;
       }
 
-      const authResponse = await signInToBackend(
-        email.trim().toLowerCase(),
-        password,
-      );
+      try {
+        const authResponse = await signInToBackend(
+          parsed.data.email.trim().toLowerCase(),
+          parsed.data.password,
+        );
 
-      if (authResponse.success && authResponse.user && authResponse.tokens) {
-        const session: UserSession = {
-          userId: authResponse.user.id,
-          email: authResponse.user.email,
-          name: authResponse.user.fullName,
-          role: authResponse.user.role,
-          accessToken: authResponse.tokens.accessToken,
-          refreshToken: authResponse.tokens.refreshToken,
-        };
+        if (authResponse.success && authResponse.user && authResponse.tokens) {
+          const session: UserSession = {
+            userId: authResponse.user.id,
+            email: authResponse.user.email,
+            name: authResponse.user.fullName,
+            role: authResponse.user.role,
+            accessToken: authResponse.tokens.accessToken,
+            refreshToken: authResponse.tokens.refreshToken,
+          };
 
-        window.localStorage.setItem(USER_SESSION_KEY, JSON.stringify(session));
-        toast.success(`Welcome back, ${authResponse.user.fullName}!`);
-        navigate("/user-dashboard");
-      } else {
-        setError(authResponse.message || "Login failed");
+          window.localStorage.setItem(USER_SESSION_KEY, JSON.stringify(session));
+          toast.success(`Welcome back, ${authResponse.user.fullName}!`);
+          navigate("/user-dashboard");
+        } else {
+          setError(authResponse.message || "Login failed");
+        }
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : "Login failed. Please try again.",
+        );
       }
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Login failed. Please try again.",
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+  });
 
   return (
     <div className="min-h-screen bg-blue-50 dark:bg-blue-950 flex flex-col">
@@ -101,91 +105,140 @@ export default function UserLoginPage() {
             </div>
 
             {/* Form */}
-            <form onSubmit={handleLogin} className="space-y-6">
-              {/* Email */}
-              <div>
-                <label className="block text-sm font-medium text-blue-900 dark:text-blue-100 mb-2">
-                  Email Address
-                </label>
-                <div className="relative">
-                  <Mail
-                    size={18}
-                    className="absolute left-3 top-3 text-blue-400"
-                  />
-                  <Input
-                    type="email"
-                    placeholder="you@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="pl-10 bg-blue-50 dark:bg-blue-800 border-blue-200 dark:border-blue-700"
-                    disabled={loading}
-                  />
-                </div>
-              </div>
-
-              {/* Password */}
-              <div>
-                <label className="block text-sm font-medium text-blue-900 dark:text-blue-100 mb-2">
-                  Password
-                </label>
-                <div className="relative">
-                  <Lock
-                    size={18}
-                    className="absolute left-3 top-3 text-blue-400"
-                  />
-                  <Input
-                    type={showPassword ? "text" : "password"}
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="pl-10 pr-10 bg-blue-50 dark:bg-blue-800 border-blue-200 dark:border-blue-700"
-                    disabled={loading}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-3 text-blue-400 hover:text-blue-600 disabled:opacity-50"
-                    disabled={loading}
-                  >
-                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                  </button>
-                </div>
-              </div>
-
-              {/* Error */}
-              {error && (
-                <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-                  <p className="text-sm text-red-700 dark:text-red-300">
-                    {error}
-                  </p>
-                </div>
-              )}
-
-              {/* Remember & Forgot */}
-              <div className="flex items-center justify-between text-sm">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" className="rounded" />
-                  <span className="text-blue-700 dark:text-blue-300">
-                    Remember me
-                  </span>
-                </label>
-                <Link
-                  to="/forgot-password"
-                  className="text-teal-700 dark:text-teal-400 hover:text-teal-800 dark:hover:text-teal-300"
+            <form.Subscribe>
+              {({ isSubmitting }) => (
+                <form 
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    form.handleSubmit();
+                  }} 
+                  className="space-y-6"
                 >
-                  Forgot password?
-                </Link>
-              </div>
+                  {/* Email */}
+                  <form.Field
+                    name="email"
+                    validators={{
+                      onChange: ({ value }) => {
+                        const parsed = loginSchema.shape.email.safeParse(value);
+                        return parsed.success ? undefined : parsed.error.issues[0].message;
+                      }
+                    }}
+                  >
+                    {(field) => (
+                      <div>
+                        <label className="block text-sm font-medium text-blue-900 dark:text-blue-100 mb-2">
+                          Email Address
+                        </label>
+                        <div className="relative">
+                          <Mail
+                            size={18}
+                            className="absolute left-3 top-3 text-blue-400"
+                          />
+                          <Input
+                            type="email"
+                            name={field.name}
+                            placeholder="you@example.com"
+                            value={field.state.value}
+                            onBlur={field.handleBlur}
+                            onChange={(e) => field.handleChange(e.target.value)}
+                            className={`pl-10 bg-blue-50 dark:bg-blue-800 border-blue-200 dark:border-blue-700 ${
+                              field.state.meta.errors.length ? "border-red-500 focus-visible:ring-red-500" : ""
+                            }`}
+                            disabled={isSubmitting}
+                          />
+                        </div>
+                        {field.state.meta.errors.length > 0 && (
+                          <p className="text-sm text-red-500 mt-1">{field.state.meta.errors.join(", ")}</p>
+                        )}
+                      </div>
+                    )}
+                  </form.Field>
 
-              {/* Submit Button */}
-              <Button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-teal-700 hover:bg-teal-800 dark:bg-teal-600 dark:hover:bg-teal-700 text-white font-semibold py-2.5"
-              >
-                {loading ? "Signing in..." : "Sign In"}
-              </Button>
-            </form>
+                  {/* Password */}
+                  <form.Field
+                    name="password"
+                    validators={{
+                      onChange: ({ value }) => {
+                        const parsed = loginSchema.shape.password.safeParse(value);
+                        return parsed.success ? undefined : parsed.error.issues[0].message;
+                      }
+                    }}
+                  >
+                    {(field) => (
+                      <div>
+                        <label className="block text-sm font-medium text-blue-900 dark:text-blue-100 mb-2">
+                          Password
+                        </label>
+                        <div className="relative">
+                          <Lock
+                            size={18}
+                            className="absolute left-3 top-3 text-blue-400"
+                          />
+                          <Input
+                            type={showPassword ? "text" : "password"}
+                            name={field.name}
+                            placeholder="••••••••"
+                            value={field.state.value}
+                            onBlur={field.handleBlur}
+                            onChange={(e) => field.handleChange(e.target.value)}
+                            className={`pl-10 pr-10 bg-blue-50 dark:bg-blue-800 border-blue-200 dark:border-blue-700 ${
+                              field.state.meta.errors.length ? "border-red-500 focus-visible:ring-red-500" : ""
+                            }`}
+                            disabled={isSubmitting}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-3 top-3 text-blue-400 hover:text-blue-600 disabled:opacity-50"
+                            disabled={isSubmitting}
+                          >
+                            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                          </button>
+                        </div>
+                        {field.state.meta.errors.length > 0 && (
+                          <p className="text-sm text-red-500 mt-1">{field.state.meta.errors.join(", ")}</p>
+                        )}
+                      </div>
+                    )}
+                  </form.Field>
+
+                  {/* Error */}
+                  {error && (
+                    <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                      <p className="text-sm text-red-700 dark:text-red-300">
+                        {error}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Remember & Forgot */}
+                  <div className="flex items-center justify-between text-sm">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input type="checkbox" className="rounded" />
+                      <span className="text-blue-700 dark:text-blue-300">
+                        Remember me
+                      </span>
+                    </label>
+                    <Link
+                      to="/forgot-password"
+                      className="text-teal-700 dark:text-teal-400 hover:text-teal-800 dark:hover:text-teal-300"
+                    >
+                      Forgot password?
+                    </Link>
+                  </div>
+
+                  {/* Submit Button */}
+                  <Button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="w-full bg-teal-700 hover:bg-teal-800 dark:bg-teal-600 dark:hover:bg-teal-700 text-white font-semibold py-2.5"
+                  >
+                    {isSubmitting ? "Signing in..." : "Sign In"}
+                  </Button>
+                </form>
+              )}
+            </form.Subscribe>
 
             {/* Divider */}
             <div className="my-6 flex items-center gap-4">

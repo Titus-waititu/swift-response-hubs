@@ -102,22 +102,32 @@ export default function ReportPage() {
       photos: [],
     },
     onSubmit: async ({ value }) => {
+      const parsed = reportFormSchema.safeParse(value);
+      if (!parsed.success) {
+        const errors = parsed.error.flatten().fieldErrors;
+        const errorMessages = Object.values(errors).flat().filter(Boolean);
+        toast.error(
+          errorMessages.join("\n") || "Please fix the errors in the form."
+        );
+        return { success: false, errors };
+      }
+
       try {
         console.log("[REPORT SUBMIT] Submitting report with TanStack Form");
 
         const accidentData = {
-          reporter_name: value.reporter_name,
-          phone_number: value.phone_number,
-          email: value.email || `reporter-${Date.now()}@swift.local`,
-          incident_type: value.incident_type,
-          severity_level: value.severity_level,
-          short_description: value.short_description,
-          number_of_victims: parseInt(value.number_of_victims),
-          vehicles_involved: parseInt(value.vehicles_involved),
-          gps_latitude: parseFloat(value.gps_latitude),
-          gps_longitude: parseFloat(value.gps_longitude),
-          location_address: value.location_address,
-          time_of_incident: value.time_of_incident,
+          reporter_name: parsed.data.reporter_name,
+          phone_number: parsed.data.phone_number,
+          email: parsed.data.email || `reporter-${Date.now()}@swift.local`,
+          incident_type: parsed.data.incident_type,
+          severity_level: parsed.data.severity_level,
+          short_description: parsed.data.short_description,
+          number_of_victims: parseInt(parsed.data.number_of_victims),
+          vehicles_involved: parseInt(parsed.data.vehicles_involved),
+          gps_latitude: parseFloat(parsed.data.gps_latitude),
+          gps_longitude: parseFloat(parsed.data.gps_longitude),
+          location_address: parsed.data.location_address,
+          time_of_incident: parsed.data.time_of_incident,
         };
 
         try {
@@ -137,19 +147,19 @@ export default function ReportPage() {
           const incident = {
             report_id: id,
             status: "Submitted",
-            reporter_name: value.reporter_name,
-            phone_number: value.phone_number,
-            email: value.email || `reporter-${Date.now()}@swift.local`,
-            incident_type: value.incident_type as IncidentType,
-            severity_level: value.severity_level,
-            short_description: value.short_description,
-            number_of_victims: parseInt(value.number_of_victims),
-            vehicles_involved: parseInt(value.vehicles_involved),
-            gps_latitude: parseFloat(value.gps_latitude),
-            gps_longitude: parseFloat(value.gps_longitude),
-            location_address: value.location_address,
+            reporter_name: parsed.data.reporter_name,
+            phone_number: parsed.data.phone_number,
+            email: parsed.data.email || `reporter-${Date.now()}@swift.local`,
+            incident_type: parsed.data.incident_type as IncidentType,
+            severity_level: parsed.data.severity_level,
+            short_description: parsed.data.short_description,
+            number_of_victims: parseInt(parsed.data.number_of_victims),
+            vehicles_involved: parseInt(parsed.data.vehicles_involved),
+            gps_latitude: parseFloat(parsed.data.gps_latitude),
+            gps_longitude: parseFloat(parsed.data.gps_longitude),
+            location_address: parsed.data.location_address,
             photos: [],
-            time_of_incident: value.time_of_incident,
+            time_of_incident: parsed.data.time_of_incident,
             time_report_submitted: new Date().toISOString(),
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
@@ -201,14 +211,10 @@ export default function ReportPage() {
   }, [step, locationAttempted]);
 
   const currentStep = stepConfig[step];
-  const isSubmitting = form.state.isSubmitting;
-  const hasErrors = Object.keys(form.state.fieldMeta).some(
-    (fieldName) =>
-      form.getFieldInfo(fieldName as any).state.meta.errors &&
-      form.getFieldInfo(fieldName as any).state.meta.errors.length > 0,
-  );
 
   return (
+    <form.Subscribe selector={(state) => [state.isSubmitting]}>
+    {([isSubmitting]) => (
     <div className="min-h-screen bg-background">
       <AppHeader
         brandTo="/report"
@@ -430,7 +436,7 @@ export default function ReportPage() {
                       <ChevronRight className="ml-2 h-4 w-4" />
                     </Button>
                   ) : (
-                    <Button type="submit" disabled={isSubmitting || hasErrors}>
+                    <Button type="submit" disabled={isSubmitting}>
                       {isSubmitting ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -451,6 +457,8 @@ export default function ReportPage() {
         </div>
       </div>
     </div>
+    )}
+    </form.Subscribe>
   );
 }
 
@@ -472,39 +480,50 @@ function FormField({
   disabled?: boolean;
   step?: string;
 }) {
-  const fieldInfo = form.getFieldInfo(fieldName);
-  const error = form.getFieldInfo(fieldName).state.meta.errors?.[0];
-
   return (
-    <div className="space-y-2">
-      <Label className="text-sm font-medium">{label}</Label>
-      {type === "textarea" ? (
-        <Textarea
-          placeholder={placeholder}
-          value={form.state.values[fieldName]}
-          onChange={(e) => form.setFieldValue(fieldName, e.target.value)}
-          onBlur={() => form.validateField(fieldName, "blur")}
-          disabled={disabled}
-          className={error ? "border-red-500 focus:ring-red-500" : ""}
-        />
-      ) : (
-        <Input
-          type={type}
-          placeholder={placeholder}
-          value={form.state.values[fieldName]}
-          onChange={(e) => form.setFieldValue(fieldName, e.target.value)}
-          onBlur={() => form.validateField(fieldName, "blur")}
-          disabled={disabled}
-          className={error ? "border-red-500 focus:ring-red-500" : ""}
-          step={step}
-        />
+    <form.Field
+      name={fieldName}
+      validators={{
+        onChange: ({ value }: any) => {
+          const parsed = reportFormSchema.shape[fieldName as keyof ReportFormValues].safeParse(value);
+          return parsed.success ? undefined : parsed.error.issues[0].message;
+        }
+      }}
+    >
+      {(field: any) => (
+        <div className="space-y-2">
+          <Label className="text-sm font-medium">{label}</Label>
+          {type === "textarea" ? (
+            <Textarea
+              name={field.name}
+              placeholder={placeholder}
+              value={field.state.value}
+              onChange={(e) => field.handleChange(e.target.value)}
+              onBlur={field.handleBlur}
+              disabled={disabled}
+              className={field.state.meta.errors.length ? "border-red-500 focus:ring-red-500" : ""}
+            />
+          ) : (
+            <Input
+              type={type}
+              name={field.name}
+              placeholder={placeholder}
+              value={field.state.value}
+              onChange={(e) => field.handleChange(e.target.value)}
+              onBlur={field.handleBlur}
+              disabled={disabled}
+              className={field.state.meta.errors.length ? "border-red-500 focus:ring-red-500" : ""}
+              step={step}
+            />
+          )}
+          {field.state.meta.errors.length > 0 && (
+            <p className="text-sm text-red-600 dark:text-red-400">
+              {field.state.meta.errors.join(", ")}
+            </p>
+          )}
+        </div>
       )}
-      {error && (
-        <p className="text-sm text-red-600 dark:text-red-400">
-          {String(error)}
-        </p>
-      )}
-    </div>
+    </form.Field>
   );
 }
 
@@ -521,32 +540,42 @@ function SelectField({
   options: string[];
   disabled?: boolean;
 }) {
-  const error = form.getFieldInfo(fieldName).state.meta.errors?.[0];
-
   return (
-    <div className="space-y-2">
-      <Label className="text-sm font-medium">{label}</Label>
-      <Select
-        value={form.state.values[fieldName]}
-        onValueChange={(value) => form.setFieldValue(fieldName, value)}
-        disabled={disabled}
-      >
-        <SelectTrigger className={error ? "border-red-500" : ""}>
-          <SelectValue placeholder={`Select ${label.toLowerCase()}`} />
-        </SelectTrigger>
-        <SelectContent>
-          {options.map((option) => (
-            <SelectItem key={option} value={option}>
-              {option}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-      {error && (
-        <p className="text-sm text-red-600 dark:text-red-400">
-          {String(error)}
-        </p>
+    <form.Field
+      name={fieldName}
+      validators={{
+        onChange: ({ value }: any) => {
+          const parsed = reportFormSchema.shape[fieldName as keyof ReportFormValues].safeParse(value);
+          return parsed.success ? undefined : parsed.error.issues[0].message;
+        }
+      }}
+    >
+      {(field: any) => (
+        <div className="space-y-2">
+          <Label className="text-sm font-medium">{label}</Label>
+          <Select
+            value={field.state.value}
+            onValueChange={(value) => field.handleChange(value)}
+            disabled={disabled}
+          >
+            <SelectTrigger className={field.state.meta.errors.length ? "border-red-500" : ""}>
+              <SelectValue placeholder={`Select ${label.toLowerCase()}`} />
+            </SelectTrigger>
+            <SelectContent>
+              {options.map((option) => (
+                <SelectItem key={option} value={option}>
+                  {option}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {field.state.meta.errors.length > 0 && (
+            <p className="text-sm text-red-600 dark:text-red-400">
+              {field.state.meta.errors.join(", ")}
+            </p>
+          )}
+        </div>
       )}
-    </div>
+    </form.Field>
   );
 }

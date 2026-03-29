@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from "react";
 import { useForm } from "@tanstack/react-form";
 import { Upload, AlertCircle, Loader2, ImagePlus, X } from "lucide-react";
 import { toast } from "sonner";
-import { useCreateAccidentReport } from "@/hooks/useAccidents";
 import {
   Card,
   CardContent,
@@ -31,7 +30,6 @@ export default function SubmitAccidentReportPage({
   const [locationError, setLocationError] = useState<string | null>(null);
   const [mediaPreviews, setMediaPreviews] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const createReport = useCreateAccidentReport();
 
   const requestLocation = () => {
     setIsLocating(true);

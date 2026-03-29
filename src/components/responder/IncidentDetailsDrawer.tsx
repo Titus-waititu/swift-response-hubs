@@ -105,7 +105,8 @@ export default function IncidentDetailsDrawer({
                 {incident.gps_latitude && incident.gps_longitude && (
                   <>
                     <p className="text-xs text-muted-foreground">
-                      {incident.gps_latitude.toFixed(6)}, {incident.gps_longitude.toFixed(6)}
+                      {incident.gps_latitude.toFixed(6)},{" "}
+                      {incident.gps_longitude.toFixed(6)}
                     </p>
                     <Button
                       variant="outline"
@@ -114,7 +115,7 @@ export default function IncidentDetailsDrawer({
                       onClick={() => {
                         window.open(
                           `https://maps.google.com/?q=${incident.gps_latitude},${incident.gps_longitude}`,
-                          "_blank"
+                          "_blank",
                         );
                       }}
                     >
@@ -146,7 +147,9 @@ export default function IncidentDetailsDrawer({
                 <div>
                   <p className="text-xs text-muted-foreground">Time Elapsed</p>
                   <p className="text-sm font-medium">
-                    {incident.created_at ? formatTimeAgo(incident.created_at) : "N/A"}
+                    {incident.created_at
+                      ? formatTimeAgo(incident.created_at)
+                      : "N/A"}
                   </p>
                 </div>
               </CardContent>
@@ -170,7 +173,8 @@ export default function IncidentDetailsDrawer({
                     size="sm"
                     className="w-full"
                     onClick={() => {
-                      const phoneNumber = incident.phone_number_reporter || incident.phone_number;
+                      const phoneNumber =
+                        incident.phone_number_reporter || incident.phone_number;
                       window.location.href = `tel:${phoneNumber}`;
                     }}
                   >
@@ -191,22 +195,30 @@ export default function IncidentDetailsDrawer({
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  {incident.number_of_victims && incident.number_of_victims > 0 && (
-                    <div>
-                      <p className="text-xs text-muted-foreground">Victims</p>
-                      <p className="text-lg font-bold text-red-600">
-                        {incident.number_of_victims} ({incident.number_of_victims === 1 ? "1 person" : `${incident.number_of_victims} people`})
-                      </p>
-                    </div>
-                  )}
-                  {incident.vehicles_involved && incident.vehicles_involved > 0 && (
-                    <div>
-                      <p className="text-xs text-muted-foreground">Vehicles Involved</p>
-                      <p className="text-lg font-bold text-amber-600">
-                        {incident.vehicles_involved}
-                      </p>
-                    </div>
-                  )}
+                  {incident.number_of_victims &&
+                    incident.number_of_victims > 0 && (
+                      <div>
+                        <p className="text-xs text-muted-foreground">Victims</p>
+                        <p className="text-lg font-bold text-red-600">
+                          {incident.number_of_victims} (
+                          {incident.number_of_victims === 1
+                            ? "1 person"
+                            : `${incident.number_of_victims} people`}
+                          )
+                        </p>
+                      </div>
+                    )}
+                  {incident.vehicles_involved &&
+                    incident.vehicles_involved > 0 && (
+                      <div>
+                        <p className="text-xs text-muted-foreground">
+                          Vehicles Involved
+                        </p>
+                        <p className="text-lg font-bold text-amber-600">
+                          {incident.vehicles_involved}
+                        </p>
+                      </div>
+                    )}
                 </CardContent>
               </Card>
             )}
@@ -226,26 +238,29 @@ export default function IncidentDetailsDrawer({
             )}
 
             {/* Media Card */}
-            {(incident.image_urls && incident.image_urls.length > 0) || (incident.photos && incident.photos.length > 0) && (
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base">Media</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  <div className="grid grid-cols-2 gap-2">
-                    {(incident.image_urls || incident.photos)?.map((url, index) => (
-                      <img
-                        key={index}
-                        src={url}
-                        alt={`Incident media ${index + 1}`}
-                        className="rounded-lg w-full h-24 object-cover cursor-pointer hover:opacity-80 transition-opacity"
-                        onClick={() => window.open(url, "_blank")}
-                      />
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+            {(incident.image_urls && incident.image_urls.length > 0) ||
+              (incident.photos && incident.photos.length > 0 && (
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base">Media</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    <div className="grid grid-cols-2 gap-2">
+                      {(incident.image_urls || incident.photos)?.map(
+                        (url, index) => (
+                          <img
+                            key={index}
+                            src={url}
+                            alt={`Incident media ${index + 1}`}
+                            className="rounded-lg w-full h-24 object-cover cursor-pointer hover:opacity-80 transition-opacity"
+                            onClick={() => window.open(url, "_blank")}
+                          />
+                        ),
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
 
             {/* Additional Details */}
             <Card>

@@ -245,8 +245,18 @@ export default function ResponderAssignmentsPage({
                             <TableCell colSpan={7} className="p-4">
                               <StatusHistoryDisplay
                                 createdAt={incident.created_at || ""}
-                                currentStatus={incident.short_description?.includes("Status:") ? incident.short_description : undefined}
-                                statusSelectedAt={incident.updated_at ? new Date(incident.updated_at) : undefined}
+                                currentStatus={
+                                  incident.short_description?.includes(
+                                    "Status:",
+                                  )
+                                    ? incident.short_description
+                                    : undefined
+                                }
+                                statusSelectedAt={
+                                  incident.updated_at
+                                    ? new Date(incident.updated_at)
+                                    : undefined
+                                }
                                 statusColor="bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-200"
                                 compact={false}
                               />

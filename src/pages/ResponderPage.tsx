@@ -7,14 +7,18 @@ import IncidentDetailPanel from "@/components/IncidentDetailPanel";
 import ResponderDashboardView from "@/components/responder/ResponderDashboardView";
 import type { ResponderSession } from "@/components/responder/ResponderTypes";
 import { toast } from "sonner";
-import { useGetAccidents, useUpdateResponderResponse, useNotifyDispatcherOfResponse } from "@/hooks/useAccidents";
+import {
+  useGetAccidents,
+  useUpdateResponderResponse,
+  useNotifyDispatcherOfResponse,
+} from "@/hooks/useAccidents";
 import { useRealtimeUpdates } from "@/hooks/useRealtimeUpdates";
 import {
   useGetMyPendingDispatches,
   useAcceptDispatch,
   useRejectDispatch,
 } from "@/hooks/useResponders";
-import { mapBackendAccidentToIncident } from "@/lib/backend-api"
+import { mapBackendAccidentToIncident } from "@/lib/backend-api";
 
 const RESPONDER_SESSION_KEY = "swift-response-hub/responder-session/v1";
 
@@ -46,13 +50,16 @@ export default function ResponderPage() {
     }
   });
 
-  const [activeTab, setActiveTab] = useState<"active" | "completed" | "notifications">("active");
+  const [activeTab, setActiveTab] = useState<
+    "active" | "completed" | "notifications"
+  >("active");
   const [selectedIncidentId, setSelectedIncidentId] = useState<string | null>(
     null,
   );
 
   // React Query hooks
-  const { data: accidentsResponse, refetch: refetchAccidents } = useGetAccidents();
+  const { data: accidentsResponse, refetch: refetchAccidents } =
+    useGetAccidents();
   const { data: pendingDispatches = [] } = useGetMyPendingDispatches();
   const acceptDispatchMutation = useAcceptDispatch();
   const rejectDispatchMutation = useRejectDispatch();
@@ -144,10 +151,10 @@ export default function ResponderPage() {
   const handleStatusUpdate = async (incident: any, newStatus: string) => {
     try {
       const statusMap: Record<string, string> = {
-        "Accepted": "Accepted",
+        Accepted: "Accepted",
         "En Route": "In Progress",
         "On Scene": "In Progress",
-        "Completed": "Resolved",
+        Completed: "Resolved",
       };
 
       const backendStatus = statusMap[newStatus] || newStatus;

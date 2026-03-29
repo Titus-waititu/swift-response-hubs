@@ -89,11 +89,6 @@ const ResponderDashboard = () => {
           isDarkMode={isDarkMode}
           onToggleTheme={() => setIsDarkMode(!isDarkMode)}
           onLogout={handleLogout}
-          criticalIncidentCount={
-            incidents.filter(
-              (i) => i.severity_level === "Critical" && i.status !== "Closed",
-            ).length
-          }
         />
         <main className="flex-1 overflow-auto bg-slate-50 dark:bg-slate-900">
           <div className="p-6">{renderPage()}</div>

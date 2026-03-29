@@ -403,9 +403,7 @@ export default function ResponderDashboardView({
                               {incident.report_id}
                             </span>
                             <StatusBadge status={incident.status} />
-                            <SeverityBadge
-                              severity={incident.severity_level}
-                            />
+                            <SeverityBadge severity={incident.severity_level} />
                           </div>
 
                           <div className="mt-3">
@@ -640,7 +638,12 @@ export default function ResponderDashboardView({
               <Card className="border-border/80 bg-card/85 backdrop-blur-sm">
                 <CardHeader>
                   <CardTitle className="text-lg text-foreground">
-                    Notifications {unreadCount > 0 && <Badge variant="destructive" className="ml-2">{unreadCount}</Badge>}
+                    Notifications{" "}
+                    {unreadCount > 0 && (
+                      <Badge variant="destructive" className="ml-2">
+                        {unreadCount}
+                      </Badge>
+                    )}
                   </CardTitle>
                   <CardDescription>
                     {notificationsArray.length === 0
@@ -671,7 +674,9 @@ export default function ResponderDashboardView({
                               </p>
                             )}
                             <p className="text-xs text-muted-foreground mt-2">
-                              {new Date(notification.createdAt).toLocaleString()}
+                              {new Date(
+                                notification.createdAt,
+                              ).toLocaleString()}
                             </p>
                           </div>
                           <button
@@ -691,7 +696,8 @@ export default function ResponderDashboardView({
                         No notifications
                       </p>
                       <p className="text-sm text-muted-foreground mt-1">
-                        You'll receive notifications about assignments, status updates, and dispatch instructions here
+                        You'll receive notifications about assignments, status
+                        updates, and dispatch instructions here
                       </p>
                     </div>
                   )}

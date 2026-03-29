@@ -245,7 +245,14 @@ export const useBroadcastToResponders = () => {
     }: {
       title: string;
       message?: string;
-      type?: "accident_reported" | "accident_assigned" | "status_update" | "emergency_alert" | "system_notification" | "dispatch_instruction" | "responder_assignment";
+      type?:
+        | "accident_reported"
+        | "accident_assigned"
+        | "status_update"
+        | "emergency_alert"
+        | "system_notification"
+        | "dispatch_instruction"
+        | "responder_assignment";
       priority?: "low" | "medium" | "high" | "critical";
     }) =>
       apiClient.post("/notifications", {

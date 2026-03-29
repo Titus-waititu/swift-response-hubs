@@ -1,6 +1,13 @@
 import { useCallback, useMemo, useState } from "react";
-import { useGetAccidents, useUpdateResponderResponse, useNotifyDispatcherOfResponse } from "@/hooks/useAccidents";
-import { useGetUnreadNotifications, useMarkNotificationAsRead } from "@/hooks/useNotifications";
+import {
+  useGetAccidents,
+  useUpdateResponderResponse,
+  useNotifyDispatcherOfResponse,
+} from "@/hooks/useAccidents";
+import {
+  useGetUnreadNotifications,
+  useMarkNotificationAsRead,
+} from "@/hooks/useNotifications";
 import { useRealtimeUpdates } from "@/hooks/useRealtimeUpdates";
 import { mapBackendAccidentToIncident } from "@/lib/backend-api";
 import { toast } from "sonner";
@@ -24,13 +31,19 @@ export default function ResponderDashboardLayout({
   onLogout,
 }: ResponderDashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [selectedIncidentId, setSelectedIncidentId] = useState<string | null>(null);
+  const [selectedIncidentId, setSelectedIncidentId] = useState<string | null>(
+    null,
+  );
   const [searchQuery, setSearchQuery] = useState("");
-  const [updatingIncidentId, setUpdatingIncidentId] = useState<string | null>(null);
+  const [updatingIncidentId, setUpdatingIncidentId] = useState<string | null>(
+    null,
+  );
 
   // Data fetching
-  const { data: accidentsResponse, refetch: refetchAccidents } = useGetAccidents();
-  const { data: unreadNotificationsResponse = [] } = useGetUnreadNotifications();
+  const { data: accidentsResponse, refetch: refetchAccidents } =
+    useGetAccidents();
+  const { data: unreadNotificationsResponse = [] } =
+    useGetUnreadNotifications();
   const updateResponderMutation = useUpdateResponderResponse();
   const notifyDispatcherMutation = useNotifyDispatcherOfResponse();
   const markAsReadMutation = useMarkNotificationAsRead();
@@ -53,16 +66,23 @@ export default function ResponderDashboardLayout({
   // Filter incidents - only active/dispatched
   const activeIncidents = useMemo(() => {
     return accidentsData
-      .filter((i) => ["Submitted", "Under Review", "Dispatched", "In Progress"].includes(i.status))
+      .filter((i) =>
+        ["Submitted", "Under Review", "Dispatched", "In Progress"].includes(
+          i.status,
+        ),
+      )
       .sort((a, b) => {
         // Prioritize Critical > High > Medium > Low
         const severityOrder = { Critical: 0, High: 1, Medium: 2, Low: 3 };
         const severityDiff =
-          (severityOrder[a.severity_level as keyof typeof severityOrder] || 99) -
+          (severityOrder[a.severity_level as keyof typeof severityOrder] ||
+            99) -
           (severityOrder[b.severity_level as keyof typeof severityOrder] || 99);
         if (severityDiff !== 0) return severityDiff;
         // Then by time
-        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        return (
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
       });
   }, [accidentsData]);
 
@@ -93,10 +113,10 @@ export default function ResponderDashboardLayout({
       setUpdatingIncidentId(incident.report_id);
       try {
         const statusMap: Record<string, string> = {
-          "Accepted": "Accepted",
+          Accepted: "Accepted",
           "En Route": "In Progress",
           "On Scene": "In Progress",
-          "Completed": "Resolved",
+          Completed: "Resolved",
         };
 
         const accidentId = incident.backend_accident_id || incident.report_id;
@@ -170,23 +190,27 @@ export default function ResponderDashboardLayout({
                 <ActiveDispatchCard
                   incident={activeDispatch}
                   isUpdating={updatingIncidentId === activeDispatch.report_id}
-                  onStatusUpdate={(status) => handleStatusUpdate(activeDispatch, status)}
-                  onViewDetails={() => setSelectedIncidentId(activeDispatch.report_id)}
+                  onStatusUpdate={(status) =>
+                    handleStatusUpdate(activeDispatch, status)
+                  }
+                  onViewDetails={() =>
+                    setSelectedIncidentId(activeDispatch.report_id)
+                  }
                 />
               ) : (
                 <div className="rounded-lg border-2 border-dashed border-border bg-card p-8 text-center">
                   <div className="text-6xl mb-4">😌</div>
-                  <h3 className="text-lg font-semibold text-foreground">No Active Emergencies</h3>
-                  <p className="text-muted-foreground mt-2">You're all caught up. New dispatches will appear here.</p>
+                  <h3 className="text-lg font-semibold text-foreground">
+                    No Active Emergencies
+                  </h3>
+                  <p className="text-muted-foreground mt-2">
+                    You're all caught up. New dispatches will appear here.
+                  </p>
                 </div>
               )}
 
               {/* Timeline */}
-              {activeDispatch && (
-                <StatusTimeline
-                  incident={activeDispatch}
-                />
-              )}
+              {activeDispatch && <StatusTimeline incident={activeDispatch} />}
 
               {/* Dispatch Queue */}
               {dispatchQueue.length > 0 && (
@@ -210,7 +234,9 @@ export default function ResponderDashboardLayout({
               ) : (
                 <div className="flex-1 flex items-center justify-center p-4">
                   <div className="text-center">
-                    <p className="text-muted-foreground">Select an incident to view details</p>
+                    <p className="text-muted-foreground">
+                      Select an incident to view details
+                    </p>
                   </div>
                 </div>
               )}

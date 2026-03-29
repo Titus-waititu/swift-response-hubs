@@ -56,12 +56,18 @@ export const useCreateNotification = () => {
 export const useSendNotification = () => {
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
-  
+
   return useMutation({
     mutationFn: (data: {
       message: string;
       title?: string;
-      type?: "alert" | "info" | "warning" | "success" | "status_update" | "dispatch_instruction";
+      type?:
+        | "alert"
+        | "info"
+        | "warning"
+        | "success"
+        | "status_update"
+        | "dispatch_instruction";
       priority?: "low" | "medium" | "high" | "critical";
     }) =>
       apiClient.post("/notifications", {

@@ -22,7 +22,11 @@ export type IncidentType =
 
 export type SeverityLevel = "Critical" | "High" | "Medium" | "Low";
 
-export type UserRole = "Public Reporter" | "Responder" | "Dispatcher" | "Super Admin";
+export type UserRole =
+  | "Public Reporter"
+  | "Responder"
+  | "Dispatcher"
+  | "Super Admin";
 
 export interface IncidentReport {
   report_id: string;
@@ -67,6 +71,16 @@ export const INCIDENT_TYPES: IncidentType[] = [
   "Other",
 ];
 
-export const SEVERITY_LEVELS: SeverityLevel[] = ["Critical", "High", "Medium", "Low"];
+export const SEVERITY_LEVELS: SeverityLevel[] = [
+  "Critical",
+  "High",
+  "Medium",
+  "Low",
+];
 
-export const STATUS_FLOW: IncidentStatus[] = ["Submitted", "Under Review", "Resolved", "Closed"];
+export const STATUS_FLOW: IncidentStatus[] = [
+  "Submitted",
+  "Under Review",
+  "Resolved",
+  "Closed",
+];

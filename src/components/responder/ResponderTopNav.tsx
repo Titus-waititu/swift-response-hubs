@@ -14,7 +14,6 @@ interface ResponderTopNavProps {
   isDarkMode: boolean;
   onToggleTheme: () => void;
   onLogout: () => void;
-  criticalIncidentCount: number;
 }
 
 export default function ResponderTopNav({
@@ -22,7 +21,6 @@ export default function ResponderTopNav({
   isDarkMode,
   onToggleTheme,
   onLogout,
-  criticalIncidentCount,
 }: ResponderTopNavProps) {
   return (
     <header className="bg-blue-50 dark:bg-blue-950 border-b border-blue-100 dark:border-blue-900 px-6 py-4">

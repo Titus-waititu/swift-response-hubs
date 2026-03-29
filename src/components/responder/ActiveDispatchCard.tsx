@@ -1,4 +1,11 @@
-import { AlertTriangle, MapPin, Clock, PhoneCall, ChevronRight, Loader2 } from "lucide-react";
+import {
+  AlertTriangle,
+  MapPin,
+  Clock,
+  PhoneCall,
+  ChevronRight,
+  Loader2,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -72,8 +79,12 @@ export default function ActiveDispatchCard({
     : "Unknown";
 
   return (
-    <Card className={`border-2 overflow-hidden shadow-lg ${getSeverityColor(incident.severity_level)}`}>
-      <CardHeader className={`pb-3 ${getSeverityTextColor(incident.severity_level)}`}>
+    <Card
+      className={`border-2 overflow-hidden shadow-lg ${getSeverityColor(incident.severity_level)}`}
+    >
+      <CardHeader
+        className={`pb-3 ${getSeverityTextColor(incident.severity_level)}`}
+      >
         <div className="flex items-start justify-between">
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-2">
@@ -85,9 +96,7 @@ export default function ActiveDispatchCard({
             <CardTitle className="text-2xl md:text-3xl">
               {incident.incident_type}
             </CardTitle>
-            <p className="text-sm mt-2 opacity-90">
-              ID: {incident.report_id}
-            </p>
+            <p className="text-sm mt-2 opacity-90">ID: {incident.report_id}</p>
           </div>
           <Badge
             variant={getSeverityBadgeColor(incident.severity_level)}
@@ -113,13 +122,16 @@ export default function ActiveDispatchCard({
           <div className="flex items-start gap-2">
             <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
             <div className="min-w-0">
-              <p className="text-xs font-semibold text-muted-foreground uppercase">Location</p>
+              <p className="text-xs font-semibold text-muted-foreground uppercase">
+                Location
+              </p>
               <p className="text-sm font-medium text-foreground truncate">
                 {incident.location_address}
               </p>
               {incident.gps_latitude && incident.gps_longitude && (
                 <p className="text-xs text-muted-foreground">
-                  {incident.gps_latitude.toFixed(4)}, {incident.gps_longitude.toFixed(4)}
+                  {incident.gps_latitude.toFixed(4)},{" "}
+                  {incident.gps_longitude.toFixed(4)}
                 </p>
               )}
             </div>
@@ -129,20 +141,28 @@ export default function ActiveDispatchCard({
           <div className="flex items-start gap-2">
             <Clock className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
             <div>
-              <p className="text-xs font-semibold text-muted-foreground uppercase">Time Reported</p>
-              <p className="text-sm font-medium text-foreground">{timeElapsed}</p>
+              <p className="text-xs font-semibold text-muted-foreground uppercase">
+                Time Reported
+              </p>
+              <p className="text-sm font-medium text-foreground">
+                {timeElapsed}
+              </p>
             </div>
           </div>
         </div>
 
         {/* Status Progression */}
         <div className="space-y-2">
-          <span className="text-xs font-semibold text-muted-foreground uppercase">Current Status</span>
+          <span className="text-xs font-semibold text-muted-foreground uppercase">
+            Current Status
+          </span>
           <div className="flex items-center gap-2">
             <Badge variant="outline" className="text-base px-3 py-1">
               {incident.status}
             </Badge>
-            {nextStatus && <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+            {nextStatus && (
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            )}
           </div>
         </div>
 
@@ -185,7 +205,8 @@ export default function ActiveDispatchCard({
             variant="outline"
             className="w-full border-red-300 dark:border-red-800 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30"
             onClick={() => {
-              const phoneNumber = incident.phone_number_reporter || incident.phone_number;
+              const phoneNumber =
+                incident.phone_number_reporter || incident.phone_number;
               if (phoneNumber) {
                 window.location.href = `tel:${phoneNumber}`;
               }
@@ -202,19 +223,29 @@ export default function ActiveDispatchCard({
           <div className="bg-secondary/50 rounded-lg p-3 space-y-1 text-sm">
             {incident.number_of_victims && incident.number_of_victims > 0 && (
               <p className="text-muted-foreground">
-                👥 <span className="font-semibold">{incident.number_of_victims}</span> victim(s)
+                👥{" "}
+                <span className="font-semibold">
+                  {incident.number_of_victims}
+                </span>{" "}
+                victim(s)
               </p>
             )}
             {incident.vehicles_involved && incident.vehicles_involved > 0 && (
               <p className="text-muted-foreground">
-                🚗 <span className="font-semibold">{incident.vehicles_involved}</span> vehicle(s)
+                🚗{" "}
+                <span className="font-semibold">
+                  {incident.vehicles_involved}
+                </span>{" "}
+                vehicle(s)
               </p>
             )}
           </div>
         )}
 
         {/* Completion Status */}
-        {(incident.status === "Completed" || incident.status === "Resolved" || incident.status === "Closed") ? (
+        {incident.status === "Completed" ||
+        incident.status === "Resolved" ||
+        incident.status === "Closed" ? (
           <div className="bg-green-50 dark:bg-green-900/20 border border-green-300 dark:border-green-800 rounded-lg p-3 text-center">
             <p className="text-sm font-semibold text-green-800 dark:text-green-200">
               ✓ Incident Complete

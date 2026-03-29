@@ -89,7 +89,9 @@ export default function DispatchQueueList({
           <div className="text-center">
             <AlertTriangle className="h-12 w-12 text-muted-foreground/40 mx-auto mb-3" />
             <p className="text-muted-foreground">
-              {searchQuery ? "No matching dispatches found" : "No pending dispatches"}
+              {searchQuery
+                ? "No matching dispatches found"
+                : "No pending dispatches"}
             </p>
           </div>
         </CardContent>
@@ -113,7 +115,7 @@ export default function DispatchQueueList({
                 key={incident.report_id}
                 onClick={() => onSelect(incident.report_id)}
                 className={`w-full text-left transition-all rounded-lg p-3 ${getSeverityColor(
-                  incident.severity_level
+                  incident.severity_level,
                 )} ${
                   selectedId === incident.report_id
                     ? "ring-2 ring-primary bg-opacity-100"
@@ -127,7 +129,9 @@ export default function DispatchQueueList({
                       <h4 className="font-semibold text-sm text-foreground truncate">
                         {incident.incident_type}
                       </h4>
-                      <p className="text-xs text-muted-foreground">{incident.report_id}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {incident.report_id}
+                      </p>
                     </div>
                     <Badge
                       variant={getSeverityBadgeColor(incident.severity_level)}
@@ -155,7 +159,9 @@ export default function DispatchQueueList({
                     </Badge>
                     <div className="flex items-center gap-1 text-xs text-muted-foreground">
                       <Clock className="h-3 w-3" />
-                      {incident.created_at ? formatTimeAgo(incident.created_at) : "N/A"}
+                      {incident.created_at
+                        ? formatTimeAgo(incident.created_at)
+                        : "N/A"}
                     </div>
                   </div>
 
@@ -167,14 +173,17 @@ export default function DispatchQueueList({
                   )}
 
                   {/* Victims/Vehicles Quick Stats */}
-                  {(incident.number_of_victims || incident.vehicles_involved) && (
+                  {(incident.number_of_victims ||
+                    incident.vehicles_involved) && (
                     <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                      {incident.number_of_victims && incident.number_of_victims > 0 && (
-                        <span>👥 {incident.number_of_victims} victims</span>
-                      )}
-                      {incident.vehicles_involved && incident.vehicles_involved > 0 && (
-                        <span>🚗 {incident.vehicles_involved} vehicles</span>
-                      )}
+                      {incident.number_of_victims &&
+                        incident.number_of_victims > 0 && (
+                          <span>👥 {incident.number_of_victims} victims</span>
+                        )}
+                      {incident.vehicles_involved &&
+                        incident.vehicles_involved > 0 && (
+                          <span>🚗 {incident.vehicles_involved} vehicles</span>
+                        )}
                     </div>
                   )}
 

@@ -99,12 +99,12 @@ export default function SubmitAccidentReportPage({
       }
 
       try {
-        console.log(
-          "Submitting accident report with TanStack Form:",
-          parsed.data,
-        );
-        onSubmit?.(parsed.data);
+        await createReport.mutateAsync(parsed.data as any);
+        if (onSubmit) {
+          onSubmit(parsed.data);
+        }
         toast.success("Report submitted successfully!");
+        form.reset();
       } catch (error) {
         toast.error("Failed to submit report.");
       }

@@ -84,6 +84,7 @@ export default function ReportPage() {
   const { addIncident } = useIncidentStore();
   const [step, setStep] = useState(0);
   const [locationAttempted, setLocationAttempted] = useState(false);
+  const createReport = useCreateAccidentReport();
 
   const form = useForm<ReportFormValues>({
     defaultValues: {
@@ -131,7 +132,7 @@ export default function ReportPage() {
         };
 
         try {
-          const response = await createBackendAccidentReport(accidentData);
+          const response = await createReport.mutateAsync(accidentData as any);
           const incident = mapBackendAccidentToIncident(response);
           addIncident(incident);
           toast.success("Report submitted successfully!");
@@ -210,6 +211,27 @@ export default function ReportPage() {
     }
   }, [step, locationAttempted]);
 
+    const handleNext = () => {
+    const values = form.state.values;
+    let errors: string[] = [];
+    if (step === 0) {
+      if (!values.reporter_name) errors.push("Reporter Name is required");
+      if (!values.phone_number) errors.push("Phone Number is required");
+      if (!values.email) errors.push("Email is required");
+    } else if (step === 1) {
+      if (!values.incident_type) errors.push("Incident Type is required");
+      if (!values.severity_level) errors.push("Severity Level is required");
+      if (!values.short_description || values.short_description.length < 10) errors.push("Description requires at least 10 characters");
+    } else if (step === 2) {
+      if (!values.location_address) errors.push("Location Address is required");
+    }
+    
+    if (errors.length > 0) {
+      toast.error(errors.join("\n"));
+      return;
+    }
+    setStep(step + 1);
+  };
   const currentStep = stepConfig[step];
 
   return (
@@ -431,7 +453,7 @@ export default function ReportPage() {
                       {step < stepConfig.length - 1 ? (
                         <Button
                           type="button"
-                          onClick={() => setStep(step + 1)}
+                          onClick={handleNext}
                           disabled={isSubmitting}
                         >
                           Next

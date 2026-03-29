@@ -71,7 +71,7 @@ const AdminDashboard = () => {
   };
 
   return (
-    <div className="flex h-screen bg-white dark:bg-slate-950">
+    <div className="fixed inset-0 flex bg-white dark:bg-slate-950 overflow-hidden">
       {/* Sidebar */}
       <AdminSidebar
         currentPage={currentPage}
@@ -81,7 +81,7 @@ const AdminDashboard = () => {
       />
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
         {/* Top Navigation */}
         <AdminTopNav
           user={user}

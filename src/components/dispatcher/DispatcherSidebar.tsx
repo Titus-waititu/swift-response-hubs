@@ -37,7 +37,7 @@ export default function DispatcherSidebar({
 
   return (
     <aside
-      className={`bg-blue-50 dark:bg-blue-950 border-r border-blue-100 dark:border-blue-900 transition-all duration-300 flex flex-col ${
+      className={`bg-blue-50 dark:bg-blue-950 border-r border-blue-100 dark:border-blue-900 transition-all duration-300 flex flex-col z-10 ${
         sidebarOpen ? "w-64" : "w-20"
       }`}
     >

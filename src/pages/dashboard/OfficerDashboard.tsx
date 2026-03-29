@@ -98,7 +98,7 @@ const OfficerDashboard = () => {
   };
 
   return (
-    <div className="flex h-screen bg-white dark:bg-slate-950">
+    <div className="fixed inset-0 flex bg-white dark:bg-slate-950 overflow-hidden">
       <OfficerSidebar
         currentPage={currentPage}
         onPageChange={setCurrentPage}
@@ -106,7 +106,7 @@ const OfficerDashboard = () => {
         onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
         userName={user.name}
       />
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
         <OfficerTopNav
           userName={user.name}
           isDarkMode={isDarkMode}

@@ -65,7 +65,6 @@ export default function EmergencyServicesPage() {
   const [newService, setNewService] = useState({
     name: "",
     type: "ambulance" as const,
-    location: "",
     phone: "",
   });
   const [showEditModal, setShowEditModal] = useState(false);
@@ -75,7 +74,6 @@ export default function EmergencyServicesPage() {
   const [editingService, setEditingService] = useState({
     name: "",
     type: "ambulance" as "ambulance" | "fire" | "police" | "hazmat",
-    location: "",
     phone: "",
   });
 
@@ -144,12 +142,21 @@ export default function EmergencyServicesPage() {
   };
 
   const handleAddService = () => {
-    if (!newService.name || !newService.location || !newService.phone) {
+    if (!newService.name || !newService.phone) {
       toast.error("Please fill in all fields");
       return;
     }
 
-    createMutation.mutate(newService, {
+    // Map form fields to API DTO
+    const payload = {
+      type: newService.type,
+      serviceProvider: newService.name,
+      contactNumber: newService.phone,
+      status: "active", // Default status
+      accidentId: "", // Empty for standalone service, will be linked to accidents separately
+    };
+
+    createMutation.mutate(payload, {
       onSuccess: () => {
         toast.success(
           `Emergency service "${newService.name}" added successfully`,
@@ -158,7 +165,6 @@ export default function EmergencyServicesPage() {
         setNewService({
           name: "",
           type: "ambulance",
-          location: "",
           phone: "",
         });
       },
@@ -173,7 +179,6 @@ export default function EmergencyServicesPage() {
     setEditingService({
       name: service.responder?.fullName || "",
       type: service.type,
-      location: service.location,
       phone: service.responder?.phoneNumber || "",
     });
     setShowEditModal(true);
@@ -185,18 +190,12 @@ export default function EmergencyServicesPage() {
       return;
     }
 
-    // Only send the fields that changed
+    // Only send the fields that API accepts
     const updateData: any = {};
-    if (editingService.name)
-      updateData.responder = { fullName: editingService.name };
+    if (editingService.name) updateData.serviceProvider = editingService.name;
     if (editingService.type) updateData.type = editingService.type;
-    if (editingService.location) updateData.location = editingService.location;
-    if (editingService.phone) {
-      updateData.responder = {
-        ...updateData.responder,
-        phoneNumber: editingService.phone,
-      };
-    }
+    if (editingService.phone) updateData.contactNumber = editingService.phone;
+    // location and responder fields are not supported by the API
 
     updateMutation.mutate(
       { id: selectedService.id, data: updateData },
@@ -210,7 +209,6 @@ export default function EmergencyServicesPage() {
           setEditingService({
             name: "",
             type: "ambulance",
-            location: "",
             phone: "",
           });
         },
@@ -296,19 +294,6 @@ export default function EmergencyServicesPage() {
                     <SelectItem value="hazmat">Hazmat</SelectItem>
                   </SelectContent>
                 </Select>
-              </div>
-              <div>
-                <Label className="text-slate-700 dark:text-slate-300">
-                  Location
-                </Label>
-                <Input
-                  value={newService.location}
-                  onChange={(e) =>
-                    setNewService({ ...newService, location: e.target.value })
-                  }
-                  placeholder="Service location"
-                  className="bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-50 mt-1"
-                />
               </div>
               <div>
                 <Label className="text-slate-700 dark:text-slate-300">
@@ -618,22 +603,6 @@ export default function EmergencyServicesPage() {
                   <SelectItem value="hazmat">Hazmat</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
-            <div>
-              <Label className="text-slate-700 dark:text-slate-300">
-                Location
-              </Label>
-              <Input
-                value={editingService.location}
-                onChange={(e) =>
-                  setEditingService({
-                    ...editingService,
-                    location: e.target.value,
-                  })
-                }
-                placeholder="Service location"
-                className="bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-50 mt-1"
-              />
             </div>
             <div>
               <Label className="text-slate-700 dark:text-slate-300">

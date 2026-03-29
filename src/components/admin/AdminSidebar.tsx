@@ -58,7 +58,7 @@ const AdminSidebar = ({
       {/* Sidebar */}
       <aside
         className={cn(
-          "bg-blue-50 dark:bg-blue-950 text-blue-950 dark:text-blue-50 transition-all duration-300 flex flex-col border-r border-blue-100 dark:border-blue-900",
+          "bg-blue-50 dark:bg-blue-950 text-blue-950 dark:text-blue-50 transition-all duration-300 flex flex-col border-r border-blue-100 dark:border-blue-900 z-10",
           isOpen ? "w-64" : "w-20",
         )}
       >

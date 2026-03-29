@@ -161,7 +161,7 @@ export default function ResponderDashboardLayout({
   );
 
   return (
-    <div className="flex h-screen bg-background overflow-hidden">
+    <div className="fixed inset-0 flex bg-background overflow-hidden">
       {/* Sidebar */}
       <ResponderSidebar
         currentPage="dashboard"
@@ -172,7 +172,7 @@ export default function ResponderDashboardLayout({
       />
 
       {/* Main content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
         {/* Top bar */}
         <ResponderTopBar
           onSearchChange={setSearchQuery}

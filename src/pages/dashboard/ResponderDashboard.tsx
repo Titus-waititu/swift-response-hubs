@@ -75,7 +75,7 @@ const ResponderDashboard = () => {
   };
 
   return (
-    <div className="flex h-screen bg-white dark:bg-slate-950">
+    <div className="fixed inset-0 flex bg-white dark:bg-slate-950 overflow-hidden">
       <ResponderSidebar
         currentPage={currentPage}
         onPageChange={setCurrentPage}
@@ -83,7 +83,7 @@ const ResponderDashboard = () => {
         onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
         userName={user.name}
       />
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
         <ResponderTopNav
           userName={user.name}
           isDarkMode={isDarkMode}

@@ -18,10 +18,27 @@ export const useGetAccidents = () => {
 
   return useQuery({
     queryKey: accidentKeys.lists(),
-    queryFn: () => {
-      // All roles use the same /accidents/ endpoint
-      // Backend handles role-based filtering
-      return apiClient.get("/accidents/");
+    queryFn: async () => {
+      try {
+        // Try the main endpoint first (works for Dispatcher, Officer, Admin)
+        return await apiClient.get("/accidents/");
+      } catch (error: any) {
+        // If 403 Forbidden (likely a USER role), try user-specific endpoint
+        if (error?.response?.status === 403 && user?.role === "USER") {
+          try {
+            // Try alternative endpoint for user's own reports
+            return await apiClient.get("/user/incidents");
+          } catch (userError: any) {
+            if (userError?.response?.status === 404) {
+              // If user endpoints don't exist, try with query parameter
+              return await apiClient.get(`/accidents/?userId=${user?.id}`);
+            }
+            throw userError;
+          }
+        }
+        // Re-throw other errors
+        throw error;
+      }
     },
     enabled: !!user,
   });

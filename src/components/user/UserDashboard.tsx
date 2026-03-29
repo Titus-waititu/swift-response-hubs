@@ -9,6 +9,7 @@ import UserReportsPage from "@/components/user/pages/UserReportsPage";
 import UserVehiclesPage from "@/components/user/pages/UserVehiclesPage";
 import UserSettingsPage from "@/components/user/pages/UserSettingsPage";
 import { useGetAccidents } from "@/hooks/useAccidents";
+import { useRealtimeUpdates } from "@/hooks/useRealtimeUpdates";
 import { mapBackendAccidentToIncident } from "@/lib/backend-api";
 import type { IncidentReport } from "@/types/incident";
 
@@ -35,7 +36,15 @@ const UserDashboard = () => {
     localStorage.setItem("user-theme", isDarkMode ? "dark" : "light");
   }, [isDarkMode]);
 
-  const { data: accidents } = useGetAccidents();
+  // Enable real-time polling for user reports
+  const { data: accidents, refetch } = useGetAccidents();
+
+  useRealtimeUpdates({
+    queryKeys: [["accidents"]],
+    interval: 5000, // Poll every 5 seconds for real-time status updates
+    enabled: true,
+  });
+
   const accidentsArray = Array.isArray(accidents)
     ? accidents
     : accidents?.data || [];
@@ -71,7 +80,7 @@ const UserDashboard = () => {
   };
 
   return (
-    <div className="flex h-screen bg-white dark:bg-slate-950">
+    <div className="fixed inset-0 flex bg-white dark:bg-slate-950 overflow-hidden">
       <UserSidebar
         currentPage={currentPage}
         onPageChange={setCurrentPage}
@@ -79,17 +88,12 @@ const UserDashboard = () => {
         onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
         userName={user.name}
       />
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
         <UserTopNav
           userName={user.name}
           isDarkMode={isDarkMode}
           onToggleTheme={() => setIsDarkMode(!isDarkMode)}
           onLogout={handleLogout}
-          criticalIncidentCount={
-            incidents.filter(
-              (i) => i.severity_level === "Critical" && i.status !== "Closed",
-            ).length
-          }
         />
         <main className="flex-1 overflow-auto bg-slate-50 dark:bg-slate-900">
           <div className="p-6">{renderPage()}</div>

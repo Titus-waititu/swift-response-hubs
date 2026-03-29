@@ -24,6 +24,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { StatusBadge, SeverityBadge } from "@/components/StatusBadge";
 import NotificationsDropdown from "@/components/NotificationsDropdown";
+import { ResponderAIBriefing } from "@/components/ResponderAIBriefing";
 import { formatTimeAgo } from "@/lib/incident-utils";
 import {
   useGetUnreadNotifications,
@@ -429,24 +430,28 @@ export default function ResponderDashboardView({
                           </div>
                         </div>
 
-                        <div className="flex flex-col gap-2 rounded-2xl border border-border/70 bg-secondary/45 p-4">
-                          <div>
-                            <p className="font-mono text-[11px] uppercase tracking-[0.24em] text-muted-foreground">
-                              Case View
-                            </p>
-                            <p className="mt-2 text-sm font-medium text-foreground">
-                              Open the accident to inspect details from the
-                              responder workspace.
-                            </p>
-                          </div>
-                          <button
-                            type="button"
-                            className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-background/60 px-4 py-2 text-sm text-foreground hover:bg-background transition-colors"
-                            onClick={() => onSelectIncident(incident.report_id)}
-                          >
-                            Open Accident
-                            <ChevronRight className="h-4 w-4 text-info" />
-                          </button>
+                        <div className="flex flex-col gap-2 xl:max-w-xs">
+                          <ResponderAIBriefing
+                            severity={incident.severity_level}
+                            summary={incident.short_description}
+                            detectedInjuries={incident.number_of_victims}
+                            suggestedEquipment={[
+                              "Basic Life Support Kit",
+                              "Stabilization Equipment",
+                              "First Aid Supplies",
+                            ]}
+                            sceneHazards={
+                              incident.severity_level === "Critical"
+                                ? ["High-impact collision", "Potential fire hazard"]
+                                : []
+                            }
+                            criticalNotes={
+                              incident.severity_level === "Critical"
+                                ? "Critical case - Immediate dispatch required"
+                                : undefined
+                            }
+                            isLoading={false}
+                          />
                         </div>
                       </div>
 

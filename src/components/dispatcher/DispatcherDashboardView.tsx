@@ -17,19 +17,42 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StatusBadge, SeverityBadge } from "@/components/StatusBadge";
+import { AIAssessmentCard } from "@/components/AIAssessmentCard";
 import { formatTimeAgo } from "@/lib/incident-utils";
 import {
   formatAverageMinutes,
   isActiveIncident,
 } from "@/lib/incident-analytics";
 
-import { FocusRow, InfoChip, MetricStrip, SignalRow, TopSignalCard } from "./DispatcherShared";
-import type { DispatcherSession, DispatcherStatusOptions, DispatcherTimingItem } from "./DispatcherTypes";
+import {
+  FocusRow,
+  InfoChip,
+  MetricStrip,
+  SignalRow,
+  TopSignalCard,
+} from "./DispatcherShared";
+import type {
+  DispatcherSession,
+  DispatcherStatusOptions,
+  DispatcherTimingItem,
+} from "./DispatcherTypes";
 import type { IncidentReport, SeverityLevel } from "@/types/incident";
 
 const severityRailStyles: Record<SeverityLevel, string> = {
@@ -85,17 +108,37 @@ export default function DispatcherDashboardView({
   responseMetrics,
 }: DispatcherDashboardViewProps) {
   const criticalOpenCount = incidents.filter(
-    (incident) => isActiveIncident(incident.status) && incident.severity_level === "Critical",
+    (incident) =>
+      isActiveIncident(incident.status) &&
+      incident.severity_level === "Critical",
   ).length;
-  const openCases = incidents.filter((incident) => isActiveIncident(incident.status)).length;
-  const underReviewCount = incidents.filter((incident) => incident.status === "Under Review").length;
-  const closedCount = incidents.filter((incident) => incident.status === "Closed").length;
+  const openCases = incidents.filter((incident) =>
+    isActiveIncident(incident.status),
+  ).length;
+  const underReviewCount = incidents.filter(
+    (incident) => incident.status === "Under Review",
+  ).length;
+  const closedCount = incidents.filter(
+    (incident) => incident.status === "Closed",
+  ).length;
   const latestIncident = incidents[0];
   const timingItems: DispatcherTimingItem[] = [
-    { label: "Dispatch", value: formatAverageMinutes(responseMetrics.dispatchMinutes) },
-    { label: "Acceptance", value: formatAverageMinutes(responseMetrics.acceptanceMinutes) },
-    { label: "Arrival", value: formatAverageMinutes(responseMetrics.arrivalMinutes) },
-    { label: "Resolution", value: formatAverageMinutes(responseMetrics.resolutionMinutes) },
+    {
+      label: "Dispatch",
+      value: formatAverageMinutes(responseMetrics.dispatchMinutes),
+    },
+    {
+      label: "Acceptance",
+      value: formatAverageMinutes(responseMetrics.acceptanceMinutes),
+    },
+    {
+      label: "Arrival",
+      value: formatAverageMinutes(responseMetrics.arrivalMinutes),
+    },
+    {
+      label: "Resolution",
+      value: formatAverageMinutes(responseMetrics.resolutionMinutes),
+    },
   ];
 
   return (
@@ -121,7 +164,9 @@ export default function DispatcherDashboardView({
                     Coordinate the queue, review accidents, and move cases fast
                   </h1>
                   <p className="mt-3 max-w-3xl text-sm leading-7 text-muted-foreground md:text-base">
-                    Monitor the live queue, review incoming accident reports, and move cases through the backend-supported lifecycle from submission to closure.
+                    Monitor the live queue, review incoming accident reports,
+                    and move cases through the backend-supported lifecycle from
+                    submission to closure.
                   </p>
                 </div>
 
@@ -187,19 +232,29 @@ export default function DispatcherDashboardView({
                   <Siren className="h-5 w-5 text-warning" />
                 </div>
                 <div>
-                  <CardTitle className="text-lg text-foreground">Queue Signal</CardTitle>
-                  <CardDescription>Operational pressure in the current cycle.</CardDescription>
+                  <CardTitle className="text-lg text-foreground">
+                    Queue Signal
+                  </CardTitle>
+                  <CardDescription>
+                    Operational pressure in the current cycle.
+                  </CardDescription>
                 </div>
               </div>
             </CardHeader>
             <CardContent className="space-y-3">
-              <SignalRow label="Critical open accidents" value={String(criticalOpenCount)} />
-              <SignalRow label="Open submitted or review cases" value={String(openCases)} />
-              <SignalRow label="Cases currently under review" value={String(underReviewCount)} />
               <SignalRow
-                label="Closed accidents"
-                value={String(closedCount)}
+                label="Critical open accidents"
+                value={String(criticalOpenCount)}
               />
+              <SignalRow
+                label="Open submitted or review cases"
+                value={String(openCases)}
+              />
+              <SignalRow
+                label="Cases currently under review"
+                value={String(underReviewCount)}
+              />
+              <SignalRow label="Closed accidents" value={String(closedCount)} />
               <div className="rounded-2xl border border-border/70 bg-secondary/55 p-4">
                 <p className="font-mono text-[11px] uppercase tracking-[0.24em] text-muted-foreground">
                   Latest Queue Entry
@@ -217,7 +272,12 @@ export default function DispatcherDashboardView({
           </Card>
         </div>
 
-        <Tabs value={activeTab} onValueChange={(value) => onActiveTabChange(value as "queue" | "map" | "analytics")}>
+        <Tabs
+          value={activeTab}
+          onValueChange={(value) =>
+            onActiveTabChange(value as "queue" | "map" | "analytics")
+          }
+        >
           <TabsList className="mb-4 border border-border/70 bg-secondary/75">
             <TabsTrigger
               value="queue"
@@ -251,10 +311,15 @@ export default function DispatcherDashboardView({
                           className="border-border bg-secondary pl-10 text-foreground"
                           placeholder="Search by report ID, accident type, address, or description..."
                           value={search}
-                          onChange={(event) => onSearchChange(event.target.value)}
+                          onChange={(event) =>
+                            onSearchChange(event.target.value)
+                          }
                         />
                       </div>
-                      <Select value={statusFilter} onValueChange={onStatusFilterChange}>
+                      <Select
+                        value={statusFilter}
+                        onValueChange={onStatusFilterChange}
+                      >
                         <SelectTrigger className="border-border bg-secondary text-foreground">
                           <Filter className="mr-2 h-4 w-4" />
                           <SelectValue />
@@ -276,67 +341,105 @@ export default function DispatcherDashboardView({
                   {filteredIncidents.map((incident) => (
                     <Card
                       key={incident.report_id}
-                      className={`group relative overflow-hidden border-border/80 bg-card/85 backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-[0_16px_60px_rgba(0,0,0,0.28)] before:absolute before:inset-y-0 before:left-0 before:w-1.5 ${severityRailStyles[incident.severity_level]}`}
+                      className={`group relative overflow-hidden border-l-4 bg-card/85 backdrop-blur-sm transition-all duration-300 hover:shadow-lg ${severityRailStyles[incident.severity_level]}`}
                     >
-                      <button
-                        type="button"
-                        className="w-full text-left"
-                        onClick={() => onSelectIncident(incident.report_id)}
-                      >
-                        <CardContent className="p-5">
-                          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_190px]">
-                            <div className="min-w-0">
-                              <div className="flex flex-wrap items-center gap-2">
-                                <span className="font-mono text-xs tracking-wide text-muted-foreground">
-                                  {incident.report_id}
-                                </span>
-                                <StatusBadge status={incident.status} />
-                                <SeverityBadge severity={incident.severity_level} />
-                              </div>
+                      <CardContent className="p-5">
+                        <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-start">
+                          {/* Left Content - Clickable */}
+                          <button
+                            type="button"
+                            className="text-left hover:opacity-75 transition-opacity"
+                            onClick={() => onSelectIncident(incident.report_id)}
+                          >
+                            <div className="flex flex-wrap items-center gap-2 mb-3">
+                              <span className="font-mono text-xs tracking-wide text-muted-foreground">
+                                {incident.report_id}
+                              </span>
+                              <StatusBadge status={incident.status} />
+                              <SeverityBadge
+                                severity={incident.severity_level}
+                              />
+                            </div>
 
-                              <div className="mt-3 flex flex-wrap items-start gap-3">
-                                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-border/70 bg-secondary/70">
-                                  <AlertTriangle className="h-5 w-5 text-primary" />
-                                </div>
-                                <div className="min-w-0">
-                                  <p className="text-base font-semibold text-foreground">
+                            <div className="flex gap-3 mb-3">
+                              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-border/70 bg-secondary/70">
+                                <AlertTriangle className="h-5 w-5 text-primary" />
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <p className="text-base font-semibold text-foreground">
                                   {incident.incident_type}
-                                  </p>
-                                  <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                                    {incident.short_description}
-                                  </p>
-                                </div>
+                                </p>
+                                <p className="mt-1 text-sm leading-6 text-muted-foreground line-clamp-2">
+                                  {incident.short_description}
+                                </p>
                               </div>
+                            </div>
 
-                              <div className="mt-4 flex flex-wrap gap-2">
-                                <InfoChip icon={MapPin} label={incident.location_address} />
-                                <InfoChip icon={Clock} label={formatTimeAgo(incident.time_report_submitted)} />
-                                {incident.number_of_victims !== undefined && (
-                                  <InfoChip
-                                    icon={Users}
-                                    label={`${incident.number_of_victims} injur${incident.number_of_victims === 1 ? "y" : "ies"}`}
-                                  />
+                            <div className="flex flex-wrap gap-2">
+                              <InfoChip
+                                icon={MapPin}
+                                label={incident.location_address}
+                              />
+                              <InfoChip
+                                icon={Clock}
+                                label={formatTimeAgo(
+                                  incident.time_report_submitted,
                                 )}
-                              </div>
+                              />
+                              {incident.number_of_victims !== undefined && (
+                                <InfoChip
+                                  icon={Users}
+                                  label={`${incident.number_of_victims} injur${incident.number_of_victims === 1 ? "y" : "ies"}`}
+                                />
+                              )}
+                            </div>
+                          </button>
+
+                          {/* Right Action Panel */}
+                          <div className="flex flex-col items-end gap-3 lg:items-start w-full lg:max-w-xs">
+                            <div className="text-right lg:text-left w-full">
+                              <p className="font-mono text-[11px] uppercase tracking-[0.24em] text-muted-foreground">
+                                Status
+                              </p>
+                              <p className="mt-1 text-sm font-medium text-foreground">
+                                {incident.status === "Submitted"
+                                  ? "Needs Review"
+                                  : "In Progress"}
+                              </p>
                             </div>
 
-                            <div className="flex flex-row items-center justify-between gap-4 rounded-2xl border border-border/70 bg-secondary/45 p-4 lg:flex-col lg:items-start">
-                              <div>
-                                <p className="font-mono text-[11px] uppercase tracking-[0.24em] text-muted-foreground">
-                                  Queue State
-                                </p>
-                                <p className="mt-2 text-sm font-medium text-foreground">
-                                  {incident.status === "Submitted" ? "Waiting for dispatcher review" : "Lifecycle in progress"}
-                                </p>
-                              </div>
-                              <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-background/60 px-4 py-2 text-sm text-foreground transition-colors group-hover:border-primary/30">
-                                Open Accident
-                                <ArrowUpRight className="h-4 w-4 text-primary" />
-                              </div>
+                            {/* AI Assessment - Compact Mode */}
+                            <div className="w-full">
+                              <p className="font-mono text-[11px] uppercase tracking-[0.24em] text-muted-foreground mb-2">
+                                AI Assessment
+                              </p>
+                              <AIAssessmentCard
+                                severity={incident.severity_level}
+                                summary={incident.short_description}
+                                recommendations={[
+                                  `Priority: ${incident.severity_level} severity case`,
+                                  `Injuries: ${incident.number_of_victims || 0} victim${incident.number_of_victims !== 1 ? "s" : ""}`,
+                                  "Requires dispatcher review before dispatch",
+                                ]}
+                                detectedInjuries={incident.number_of_victims}
+                                isLoading={false}
+                                compact={true}
+                              />
                             </div>
+
+                            <Button
+                              onClick={() =>
+                                onSelectIncident(incident.report_id)
+                              }
+                              className="bg-primary hover:bg-primary/90 text-primary-foreground gap-2 w-fit lg:w-full"
+                              size="sm"
+                            >
+                              <ArrowUpRight className="h-4 w-4" />
+                              Open
+                            </Button>
                           </div>
-                        </CardContent>
-                      </button>
+                        </div>
+                      </CardContent>
                     </Card>
                   ))}
 
@@ -348,7 +451,8 @@ export default function DispatcherDashboardView({
                           No accidents match the current queue view
                         </p>
                         <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                          Adjust the search query or reset the status filter to bring accidents back into view.
+                          Adjust the search query or reset the status filter to
+                          bring accidents back into view.
                         </p>
                       </CardContent>
                     </Card>
@@ -359,8 +463,12 @@ export default function DispatcherDashboardView({
               <div className="space-y-4">
                 <Card className="border-border/80 bg-card/80 backdrop-blur-sm">
                   <CardHeader>
-                    <CardTitle className="text-lg text-foreground">Dispatch Focus</CardTitle>
-                    <CardDescription>Quick read on the current operational priorities.</CardDescription>
+                    <CardTitle className="text-lg text-foreground">
+                      Dispatch Focus
+                    </CardTitle>
+                    <CardDescription>
+                      Quick read on the current operational priorities.
+                    </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-3">
                     <FocusRow
@@ -383,12 +491,20 @@ export default function DispatcherDashboardView({
 
                 <Card className="border-border/80 bg-card/80 backdrop-blur-sm">
                   <CardHeader>
-                    <CardTitle className="text-lg text-foreground">Response Rhythm</CardTitle>
-                    <CardDescription>Average cycle times across the queue.</CardDescription>
+                    <CardTitle className="text-lg text-foreground">
+                      Response Rhythm
+                    </CardTitle>
+                    <CardDescription>
+                      Average cycle times across the queue.
+                    </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-3">
                     {timingItems.map((item) => (
-                      <MetricStrip key={item.label} label={item.label} value={item.value} />
+                      <MetricStrip
+                        key={item.label}
+                        label={item.label}
+                        value={item.value}
+                      />
                     ))}
                   </CardContent>
                 </Card>
@@ -405,9 +521,13 @@ export default function DispatcherDashboardView({
                     <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl border border-border/70 bg-secondary/70">
                       <MapPin className="h-8 w-8 text-info" />
                     </div>
-                    <h3 className="mt-5 text-2xl font-semibold text-foreground">Live map surface</h3>
+                    <h3 className="mt-5 text-2xl font-semibold text-foreground">
+                      Live map surface
+                    </h3>
                     <p className="mt-3 text-sm leading-7 text-muted-foreground">
-                      This view is ready for live GPS markers, hot-zone clustering, and responder routing overlays. The queue data is already structured to support that integration next.
+                      This view is ready for live GPS markers, hot-zone
+                      clustering, and responder routing overlays. The queue data
+                      is already structured to support that integration next.
                     </p>
                   </div>
                 </CardContent>
@@ -415,19 +535,35 @@ export default function DispatcherDashboardView({
 
               <Card className="border-border/80 bg-card/85 backdrop-blur-sm">
                 <CardHeader>
-                  <CardTitle className="text-lg text-foreground">Map Readiness</CardTitle>
-                  <CardDescription>Signals already available for a future geospatial layer.</CardDescription>
+                  <CardTitle className="text-lg text-foreground">
+                    Map Readiness
+                  </CardTitle>
+                  <CardDescription>
+                    Signals already available for a future geospatial layer.
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <SignalRow
                     label="Accidents with coordinates"
-                    value={String(incidents.filter((incident) => incident.gps_latitude && incident.gps_longitude).length)}
+                    value={String(
+                      incidents.filter(
+                        (incident) =>
+                          incident.gps_latitude && incident.gps_longitude,
+                      ).length,
+                    )}
                   />
                   <SignalRow
                     label="Open cases on the map"
-                    value={String(incidents.filter((incident) => isActiveIncident(incident.status)).length)}
+                    value={String(
+                      incidents.filter((incident) =>
+                        isActiveIncident(incident.status),
+                      ).length,
+                    )}
                   />
-                  <SignalRow label="Critical accidents to highlight" value={String(criticalOpenCount)} />
+                  <SignalRow
+                    label="Critical accidents to highlight"
+                    value={String(criticalOpenCount)}
+                  />
                 </CardContent>
               </Card>
             </div>
@@ -442,8 +578,12 @@ export default function DispatcherDashboardView({
                       <BarChart3 className="h-5 w-5 text-primary" />
                     </div>
                     <div>
-                      <CardTitle className="text-lg text-foreground">Accident distribution</CardTitle>
-                      <CardDescription>Type mix across the current data set.</CardDescription>
+                      <CardTitle className="text-lg text-foreground">
+                        Accident distribution
+                      </CardTitle>
+                      <CardDescription>
+                        Type mix across the current data set.
+                      </CardDescription>
                     </div>
                   </div>
                 </CardHeader>
@@ -451,8 +591,12 @@ export default function DispatcherDashboardView({
                   {incidentTypeBreakdown.map((item) => (
                     <div key={item.type} className="space-y-2">
                       <div className="flex items-center justify-between gap-3">
-                        <span className="text-sm text-foreground">{item.type}</span>
-                        <span className="font-mono text-sm text-muted-foreground">{item.count}</span>
+                        <span className="text-sm text-foreground">
+                          {item.type}
+                        </span>
+                        <span className="font-mono text-sm text-muted-foreground">
+                          {item.count}
+                        </span>
                       </div>
                       <div className="h-2.5 overflow-hidden rounded-full bg-secondary">
                         <div
@@ -471,32 +615,54 @@ export default function DispatcherDashboardView({
               <div className="space-y-4">
                 <Card className="border-border/80 bg-card/85 backdrop-blur-sm">
                   <CardHeader>
-                    <CardTitle className="text-lg text-foreground">Timing Summary</CardTitle>
-                    <CardDescription>Average operational timings across dispatch flow.</CardDescription>
+                    <CardTitle className="text-lg text-foreground">
+                      Timing Summary
+                    </CardTitle>
+                    <CardDescription>
+                      Average operational timings across dispatch flow.
+                    </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-3">
                     {timingItems.map((item) => (
-                      <MetricStrip key={item.label} label={item.label} value={item.value} />
+                      <MetricStrip
+                        key={item.label}
+                        label={item.label}
+                        value={item.value}
+                      />
                     ))}
                   </CardContent>
                 </Card>
 
                 <Card className="border-border/80 bg-card/85 backdrop-blur-sm">
                   <CardHeader>
-                    <CardTitle className="text-lg text-foreground">Queue Notes</CardTitle>
-                    <CardDescription>Fast interpretation of the current dashboard.</CardDescription>
+                    <CardTitle className="text-lg text-foreground">
+                      Queue Notes
+                    </CardTitle>
+                    <CardDescription>
+                      Fast interpretation of the current dashboard.
+                    </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-3 text-sm text-muted-foreground">
                     <p>
-                      Highest pressure is on <span className="text-foreground">{criticalOpenCount}</span> critical active accidents.
+                      Highest pressure is on{" "}
+                      <span className="text-foreground">
+                        {criticalOpenCount}
+                      </span>{" "}
+                      critical active accidents.
                     </p>
                     <p>
                       The most common accident type right now is{" "}
-                      <span className="text-foreground">{incidentTypeBreakdown[0]?.type ?? "N/A"}</span>.
+                      <span className="text-foreground">
+                        {incidentTypeBreakdown[0]?.type ?? "N/A"}
+                      </span>
+                      .
                     </p>
                     <p>
                       Average arrival time is{" "}
-                      <span className="text-foreground">{formatAverageMinutes(responseMetrics.arrivalMinutes)}</span>.
+                      <span className="text-foreground">
+                        {formatAverageMinutes(responseMetrics.arrivalMinutes)}
+                      </span>
+                      .
                     </p>
                   </CardContent>
                 </Card>

@@ -1,6 +1,8 @@
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { useForm } from "@tanstack/react-form";
 import { z } from "zod";
+import { toast } from "sonner";
 import { useAuthStore, type UserRole } from "@/stores/authStore";
 import LandingPageHeader from "@/components/LandingPageHeader";
 import { Button } from "@/components/ui/button";
@@ -14,94 +16,93 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, Loader2 } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 import { authAPI } from "@/lib/api";
 import { loginSchema, type LoginFormValues } from "@/lib/validation-schemas";
 
 const LoginPage = () => {
   const navigate = useNavigate();
   const { setUser, setAccessToken, setError: setAuthError } = useAuthStore();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [serverError, setServerError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setServerError(null);
-    setFieldErrors({});
-
-    try {
-      // Validate with Zod
-      const validated = await loginSchema.parseAsync({ email, password });
-
-      const response = await authAPI.login(
-        validated.email.trim().toLowerCase(),
-        validated.password,
-      );
-
-      const { user, tokens } = response.data || {};
-
-      if (!tokens || !tokens.accessToken) {
-        throw new Error("Invalid response: missing tokens or accessToken");
+  const form = useForm({
+    defaultValues: {
+      email: "",
+      password: "",
+    } as LoginFormValues,
+    onSubmit: async ({ value }) => {
+      const parsed = loginSchema.safeParse(value);
+      if (!parsed.success) {
+        // Show all validation errors in a toast
+        const errors = parsed.error.flatten().fieldErrors;
+        const errorMessages = Object.values(errors).flat().filter(Boolean);
+        toast.error(
+          errorMessages.join("\n") || "Please fix the errors in the form."
+        );
+        return {
+          success: false,
+          errors,
+        };
       }
+      setServerError(null);
+      try {
+        const response = await authAPI.login(
+          parsed.data.email.trim().toLowerCase(),
+          parsed.data.password,
+        );
 
-      const { accessToken } = tokens;
+        const { user, tokens } = response.data || {};
 
-      // Map backend roles to frontend roles
-      const roleMap: Record<string, UserRole> = {
-        admin: "ADMIN",
-        user: "USER",
-        officer: "OFFICER",
-        emergency_responder: "RESPONDER",
-        dispatcher: "DISPATCHER",
-      };
+        if (!tokens || !tokens.accessToken) {
+          throw new Error("Invalid response: missing tokens or accessToken");
+        }
 
-      const normalizedUser = {
-        id: user.id,
-        email: user.email,
-        name: user.fullName || user.name || "User",
-        role: roleMap[user.role] || ("USER" as UserRole),
-      };
+        const { accessToken } = tokens;
 
-      // Store in Zustand
-      setAccessToken(accessToken);
-      setUser(normalizedUser);
+        // Map backend roles to frontend roles
+        const roleMap: Record<string, UserRole> = {
+          admin: "ADMIN",
+          user: "USER",
+          officer: "OFFICER",
+          emergency_responder: "RESPONDER",
+          dispatcher: "DISPATCHER",
+        };
 
-      // Redirect based on role
-      const dashboardRoutes: Record<string, string> = {
-        USER: "/dashboard/user",
-        ADMIN: "/dashboard/admin",
-        OFFICER: "/dashboard/officer",
-        RESPONDER: "/dashboard/responder",
-        DISPATCHER: "/dashboard/dispatcher",
-      };
+        const normalizedUser = {
+          id: user.id,
+          email: user.email,
+          name: user.fullName || user.name || "User",
+          role: roleMap[user.role] || ("USER" as UserRole),
+        };
 
-      const redirectUrl =
-        dashboardRoutes[normalizedUser.role] || "/dashboard/user";
-      navigate(redirectUrl);
-    } catch (err: any) {
-      if (err instanceof z.ZodError) {
-        const errors: Record<string, string> = {};
-        err.errors.forEach((error) => {
-          const fieldName = error.path.join(".");
-          errors[fieldName] = error.message;
-        });
-        setFieldErrors(errors);
-      } else {
+        // Store in Zustand
+        setAccessToken(accessToken);
+        setUser(normalizedUser);
+        toast.success("Login successful!");
+
+        // Redirect based on role
+        const dashboardRoutes: Record<string, string> = {
+          USER: "/dashboard/user",
+          ADMIN: "/dashboard/admin",
+          OFFICER: "/dashboard/officer",
+          RESPONDER: "/dashboard/responder",
+          DISPATCHER: "/dashboard/dispatcher",
+        };
+
+        const redirectUrl =
+          dashboardRoutes[normalizedUser.role] || "/dashboard/user";
+        navigate(redirectUrl);
+      } catch (err: any) {
         const message =
           err.response?.data?.message ||
           err.message ||
           "Login failed. Please try again.";
         setServerError(message);
         setAuthError(message);
+        toast.error(message);
       }
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    },
+  });
 
   return (
     <>
@@ -117,99 +118,151 @@ const LoginPage = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                {/* Server Error Alert */}
-                {serverError && (
-                  <Alert variant="destructive">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertDescription>{serverError}</AlertDescription>
-                  </Alert>
-                )}
-
-                {/* Email Field */}
-                <div className="space-y-2">
-                  <Label htmlFor="email" className="text-sm font-medium">
-                    Email
-                  </Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="you@example.com"
-                    disabled={isLoading}
-                    className="h-10"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                  />
-                  {fieldErrors.email && (
-                    <p className="text-sm text-red-600 dark:text-red-400">
-                      {fieldErrors.email}
-                    </p>
-                  )}
-                </div>
-
-                {/* Password Field */}
-                <div className="space-y-2">
-                  <Label htmlFor="password" className="text-sm font-medium">
-                    Password
-                  </Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="••••••••"
-                    disabled={isLoading}
-                    className="h-10"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                  />
-                  {fieldErrors.password && (
-                    <p className="text-sm text-red-600 dark:text-red-400">
-                      {fieldErrors.password}
-                    </p>
-                  )}
-                </div>
-
-                {/* Submit Button */}
-                <Button
-                  type="submit"
-                  className="w-full h-10"
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Signing in...
-                    </>
-                  ) : (
-                    "Sign In"
-                  )}
-                </Button>
-
-                {/* Forgot Password Link */}
-                <div className="text-center">
-                  <button
-                    type="button"
-                    className="text-sm text-primary hover:underline"
-                    disabled={isLoading}
-                    onClick={() => navigate("/forgot-password")}
+              <form.Subscribe>
+                {({ isSubmitting }) => (
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      form.handleSubmit();
+                    }}
+                    className="space-y-4"
                   >
-                    Forgot your password?
-                  </button>
-                </div>
-              </form>
+                    {/* Server Error Alert */}
+                    {serverError && (
+                      <Alert variant="destructive">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertDescription>{serverError}</AlertDescription>
+                      </Alert>
+                    )}
+
+                    {/* Email Field */}
+                    <form.Field
+                      name="email"
+                      validators={{
+                        onChange: ({ value }) =>
+                          loginSchema.shape.email.safeParse(value).success
+                            ? undefined
+                            : "Invalid email address",
+                      }}
+                    >
+                      {(field) => (
+                        <div className="space-y-2">
+                          <Label htmlFor="email" className="text-sm font-medium">
+                            Email
+                          </Label>
+                          <Input
+                            id="email"
+                            name={field.name}
+                            type="email"
+                            placeholder="you@example.com"
+                            disabled={isSubmitting}
+                            className={`h-10 ${
+                              field.state.meta.errors.length
+                                ? "border-red-500 focus-visible:ring-red-500"
+                                : ""
+                            }`}
+                            value={field.state.value}
+                            onBlur={field.handleBlur}
+                            onChange={(e) => field.handleChange(e.target.value)}
+                          />
+                          {field.state.meta.errors.length > 0 && (
+                            <p className="text-sm text-red-600 dark:text-red-400">
+                              {field.state.meta.errors.join(", ")}
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </form.Field>
+
+                    {/* Password Field */}
+                    <form.Field
+                      name="password"
+                      validators={{
+                        onChange: ({ value }) =>
+                          loginSchema.shape.password.safeParse(value).success
+                            ? undefined
+                            : "Password must be at least 6 characters",
+                      }}
+                    >
+                      {(field) => (
+                        <div className="space-y-2">
+                          <Label htmlFor="password" className="text-sm font-medium">
+                            Password
+                          </Label>
+                          <Input
+                            id="password"
+                            name={field.name}
+                            type="password"
+                            placeholder="••••••••"
+                            disabled={isSubmitting}
+                            className={`h-10 ${
+                              field.state.meta.errors.length
+                                ? "border-red-500 focus-visible:ring-red-500"
+                                : ""
+                            }`}
+                            value={field.state.value}
+                            onBlur={field.handleBlur}
+                            onChange={(e) => field.handleChange(e.target.value)}
+                          />
+                          {field.state.meta.errors.length > 0 && (
+                            <p className="text-sm text-red-600 dark:text-red-400">
+                              {field.state.meta.errors.join(", ")}
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </form.Field>
+
+                    {/* Submit Button */}
+                    <div className="pt-2">
+                      <Button
+                        type="submit"
+                        className="w-full h-10"
+                        disabled={isSubmitting}
+                      >
+                        {isSubmitting ? (
+                          <>
+                            Logging in...
+                          </>
+                        ) : (
+                          "Sign In"
+                        )}
+                      </Button>
+                    </div>
+
+                    {/* Forgot Password Link */}
+                    <div className="text-center">
+                      <button
+                        type="button"
+                        className="text-sm text-primary hover:underline mt-2"
+                        disabled={isSubmitting}
+                        onClick={() => navigate("/forgot-password")}
+                      >
+                        Forgot your password?
+                      </button>
+                    </div>
+                  </form>
+                )}
+              </form.Subscribe>
 
               {/* Sign Up Link */}
               <div className="mt-6 pt-4 border-t text-center">
-                <p className="text-sm text-muted-foreground">
-                  Don't have an account?{" "}
-                  <button
-                    type="button"
-                    onClick={() => navigate("/register")}
-                    className="text-primary hover:underline font-medium"
-                    disabled={isLoading}
-                  >
-                    Sign up
-                  </button>
-                </p>
+                <form.Subscribe selector={(state) => [state.isSubmitting]}>
+                  {([isSubmitting]) => (
+                    <p className="text-sm text-muted-foreground">
+                      Don't have an account?{" "}
+                      <button
+                        type="button"
+                        onClick={() => navigate("/register")}
+                        className="text-primary hover:underline font-medium"
+                        disabled={isSubmitting}
+                      >
+                        Sign up
+                      </button>
+                    </p>
+                  )}
+                </form.Subscribe>
               </div>
             </CardContent>
           </Card>

@@ -35,7 +35,7 @@ export default function OfficerSidebar({
 
   return (
     <aside
-      className={`flex flex-col bg-blue-50 dark:bg-blue-950 border-r border-blue-100 dark:border-blue-900 transition-all duration-300 ${
+      className={`flex flex-col bg-blue-50 dark:bg-blue-950 border-r border-blue-100 dark:border-blue-900 transition-all duration-300 z-10 ${
         sidebarOpen ? "w-64" : "w-20"
       }`}
     >

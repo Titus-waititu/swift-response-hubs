@@ -207,6 +207,7 @@ export const userSubmitReportSchema = z
       }),
     airbagDeployed: z.boolean().default(false),
     rollover: z.boolean().default(false),
+    mediaFiles: z.array(z.instanceof(File)).optional().default([]),
   })
   .refine(
     (data) => {

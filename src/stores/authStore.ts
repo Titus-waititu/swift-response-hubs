@@ -19,15 +19,18 @@ export interface User {
 interface AuthState {
   user: User | null;
   accessToken: string | null;
+  refreshToken: string | null;
   isLoading: boolean;
   error: string | null;
 
   // Actions
   setUser: (user: User) => void;
   setAccessToken: (token: string) => void;
+  setRefreshToken: (token: string) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
   login: (email: string, password: string) => Promise<void>;
+  refreshAccessToken: () => Promise<boolean>;
   logout: () => void;
   hydrate: () => void;
 }
@@ -40,12 +43,15 @@ export const useAuthStore = create<AuthState>()(
     (set, get) => ({
       user: null,
       accessToken: null,
+      refreshToken: null,
       isLoading: false,
       error: null,
 
       setUser: (user: User) => set({ user }),
 
       setAccessToken: (token: string) => set({ accessToken: token }),
+
+      setRefreshToken: (token: string) => set({ refreshToken: token }),
 
       setLoading: (loading: boolean) => set({ isLoading: loading }),
 
@@ -71,6 +77,7 @@ export const useAuthStore = create<AuthState>()(
           // Store token and user
           set({
             accessToken: data.accessToken,
+            refreshToken: data.refreshToken || null,
             user: data.user,
             isLoading: false,
           });
@@ -82,8 +89,45 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
+      refreshAccessToken: async () => {
+        const { refreshToken } = get();
+
+        if (!refreshToken) {
+          console.warn("No refresh token available");
+          get().logout();
+          return false;
+        }
+
+        try {
+          const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({ refreshToken }),
+          });
+
+          if (!response.ok) {
+            console.warn("Token refresh failed");
+            get().logout();
+            return false;
+          }
+
+          const data = await response.json();
+          set({
+            accessToken: data.accessToken,
+            refreshToken: data.refreshToken || refreshToken,
+          });
+          console.log("Access token refreshed successfully");
+          return true;
+        } catch (error) {
+          console.error("Token refresh error:", error);
+          get().logout();
+          return false;
+        }
+      },
+
       logout: () => {
-        set({ user: null, accessToken: null, error: null });
+        set({ user: null, accessToken: null, refreshToken: null, error: null });
         // Clear from localStorage automatically via persist middleware
       },
 
@@ -96,6 +140,7 @@ export const useAuthStore = create<AuthState>()(
       name: "auth-store", // localStorage key
       partialize: (state) => ({
         accessToken: state.accessToken,
+        refreshToken: state.refreshToken,
         user: state.user,
       }),
     },

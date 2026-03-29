@@ -19,19 +19,8 @@ export const useGetAccidents = () => {
   return useQuery({
     queryKey: accidentKeys.lists(),
     queryFn: () => {
-      // Dispatcher and Officer need ALL accidents across the system
-      if (
-        user?.role === "DISPATCHER" ||
-        user?.role === "OFFICER" ||
-        user?.role === "ADMIN"
-      ) {
-        return apiClient.get("/accidents/");
-      }
-      // USER and RESPONDER fetch their specific/relevant accidents
-      if (user?.id) {
-        return apiClient.get(`/accidents/user/${user.id}`);
-      }
-      // Fallback to all accidents if user ID is not available
+      // All roles use the same /accidents/ endpoint
+      // Backend handles role-based filtering
       return apiClient.get("/accidents/");
     },
     enabled: !!user,
@@ -127,6 +116,69 @@ export const useUpdateAccidentStatus = () => {
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: accidentKeys.detail(id) });
       queryClient.invalidateQueries({ queryKey: accidentKeys.lists() });
+    },
+  });
+};
+
+export const useUpdateResponderResponse = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      accidentId,
+      description,
+    }: {
+      accidentId: string | number;
+      description?: string;
+    }) =>
+      apiClient.patch(`/accidents/${accidentId}`, {
+        description,
+      }),
+    onSuccess: (_, { accidentId }) => {
+      console.log("Responder response updated:", accidentId);
+      queryClient.invalidateQueries({
+        queryKey: accidentKeys.detail(accidentId),
+      });
+      queryClient.invalidateQueries({ queryKey: accidentKeys.lists() });
+    },
+    onError: (error: any) => {
+      console.error(
+        "Update responder response error:",
+        error?.response?.data || error,
+      );
+    },
+  });
+};
+
+export const useNotifyDispatcherOfResponse = () => {
+  const queryClient = useQueryClient();
+  const { user } = useAuthStore();
+
+  return useMutation({
+    mutationFn: ({
+      title,
+      message,
+      priority,
+      accidentId,
+    }: {
+      title: string;
+      message: string;
+      priority?: "low" | "medium" | "high" | "urgent";
+      accidentId?: string;
+    }) =>
+      apiClient.post("/notifications", {
+        userId: user?.id,
+        type: "status_update",
+        title,
+        message,
+        priority: priority || "high",
+        accidentId,
+        recipients: "dispatcher",
+      }),
+    onSuccess: () => {
+      console.log("Dispatcher notified of response update");
+    },
+    onError: (error: any) => {
+      console.error("Notify dispatcher error:", error?.response?.data || error);
     },
   });
 };

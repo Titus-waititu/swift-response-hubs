@@ -35,28 +35,61 @@ import {
 import { Search, Filter, Eye, CheckCheck, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import type { IncidentReport, IncidentStatus } from "../../../types/incident";
+import {
+  useGetAccidents,
+  useUpdateAccidentStatus,
+} from "../../../hooks/useAccidents";
 
 interface IncidentsQueuePageProps {
-  incidents: IncidentReport[];
+  incidents?: IncidentReport[];
 }
 
 export default function IncidentsQueuePage({
-  incidents,
+  incidents: initialIncidents = [],
 }: IncidentsQueuePageProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [severityFilter, setSeverityFilter] = useState<string>("all");
   const [viewingId, setViewingId] = useState<string | null>(null);
-  const [selectedStatus, setSelectedStatus] =
-    useState<IncidentStatus>("Submitted");
+
+  // Fetch incidents from API
+  const { data: apiIncidents = [], isLoading } = useGetAccidents();
+  const updateStatusMutation = useUpdateAccidentStatus();
+
+  // Log API response to debug
+  console.log("API Incidents Response:", apiIncidents);
+
+  // Use API data if available, otherwise use initial incidents
+  // Transform API response to match component expectations
+  const incidents = Array.isArray(apiIncidents)
+    ? apiIncidents.map((incident: any) => ({
+        report_id: incident.report_id || incident.id || "",
+        id: incident.id || incident.report_id || "",
+        backend_report_number:
+          incident.backend_report_number ||
+          incident.report_id ||
+          incident.id ||
+          "",
+        location_address: incident.location_address || incident.location || "",
+        reporter_name: incident.reporter_name || incident.reporter?.name || "",
+        status: incident.status || "Submitted",
+        severity_level:
+          incident.severity_level || incident.severity || "Medium",
+        incident_type:
+          incident.incident_type || incident.type || "Motor Vehicle",
+        ...incident, // Keep all original properties
+      }))
+    : initialIncidents;
 
   const filteredIncidents = incidents.filter((incident) => {
     const matchesSearch =
-      incident.backend_report_number?.includes(searchQuery) ||
-      incident.location_address
-        ?.toLowerCase()
+      (incident.backend_report_number || "").includes(searchQuery) ||
+      (incident.location_address || "")
+        .toLowerCase()
         .includes(searchQuery.toLowerCase()) ||
-      incident.reporter_name?.toLowerCase().includes(searchQuery.toLowerCase());
+      (incident.reporter_name || "")
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase());
 
     const matchesStatus =
       statusFilter === "all" || incident.status === statusFilter;
@@ -66,77 +99,99 @@ export default function IncidentsQueuePage({
     return matchesSearch && matchesStatus && matchesSeverity;
   });
 
-  const currentIncident = incidents.find((inc) => inc.report_id === viewingId);
+  const currentIncident = incidents.find(
+    (inc) => inc.report_id === viewingId || inc.id === viewingId,
+  );
 
   const getSeverityColor = (severity: string) => {
     switch (severity) {
       case "Critical":
-        return "bg-red-900 text-red-200";
+        return "bg-red-100 text-red-800";
       case "High":
-        return "bg-orange-900 text-orange-200";
+        return "bg-orange-100 text-orange-800";
       case "Medium":
-        return "bg-blue-900 text-blue-200";
+        return "bg-blue-100 text-blue-800";
       case "Low":
-        return "bg-green-900 text-green-200";
+        return "bg-green-100 text-green-800";
       default:
-        return "bg-slate-900 text-slate-200";
+        return "bg-slate-100 text-slate-800";
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case "Submitted":
-        return "bg-blue-900 text-blue-200";
+        return "bg-blue-100 text-blue-800";
       case "Under Review":
-        return "bg-purple-900 text-purple-200";
+        return "bg-purple-100 text-purple-800";
       case "Resolved":
-        return "bg-green-900 text-green-200";
+        return "bg-green-100 text-green-800";
       case "Closed":
-        return "bg-slate-900 text-slate-200";
+        return "bg-slate-100 text-slate-800";
       default:
-        return "bg-slate-900 text-slate-200";
+        return "bg-slate-100 text-slate-800";
     }
   };
 
   const handleUpdateStatus = (newStatus: IncidentStatus) => {
-    setSelectedStatus(newStatus);
-    toast.success(`Incident status updated to ${newStatus}`);
-    setViewingId(null);
+    if (!currentIncident) return;
+
+    updateStatusMutation.mutate(
+      {
+        id: currentIncident.report_id || currentIncident.id,
+        data: { status: newStatus },
+      },
+      {
+        onSuccess: () => {
+          toast.success(`Incident status updated to ${newStatus}`);
+          setViewingId(null);
+        },
+        onError: (error: any) => {
+          toast.error(error?.message || "Failed to update incident status");
+        },
+      },
+    );
   };
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-slate-50">Incidents Queue</h1>
-        <p className="text-slate-400 mt-1">
+        <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-50">
+          Incidents Queue
+        </h1>
+        <p className="text-slate-600 dark:text-slate-400 mt-1">
           Monitor and manage incoming incident reports
         </p>
       </div>
 
       {/* Filters and Search */}
-      <Card className="bg-slate-800 border-slate-700">
+      <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
         <CardContent className="pt-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
-              <Label className="text-xs text-slate-300">Search</Label>
+              <Label className="text-xs text-slate-700 dark:text-slate-300">
+                Search
+              </Label>
               <div className="relative mt-1">
-                <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+                <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-500 dark:text-slate-400" />
                 <Input
                   placeholder="Search by report # or location..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 bg-slate-800 border-slate-700 text-slate-50 placeholder-slate-500"
+                  className="pl-10 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-50 placeholder-slate-500 dark:placeholder-slate-400"
                 />
               </div>
             </div>
             <div>
-              <Label className="text-xs text-slate-300">Status</Label>
+              <Label className="text-xs text-slate-700 dark:text-slate-300">
+                Status
+              </Label>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="mt-1 bg-slate-800 border-slate-700 text-slate-50">
+                <SelectTrigger className="mt-1 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-50">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-slate-900 border-slate-800">
+                <SelectContent className="bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700">
                   <SelectItem value="all">All Status</SelectItem>
                   <SelectItem value="Submitted">Submitted</SelectItem>
                   <SelectItem value="Under Review">Under Review</SelectItem>
@@ -146,12 +201,14 @@ export default function IncidentsQueuePage({
               </Select>
             </div>
             <div>
-              <Label className="text-xs text-slate-300">Severity</Label>
+              <Label className="text-xs text-slate-700 dark:text-slate-300">
+                Severity
+              </Label>
               <Select value={severityFilter} onValueChange={setSeverityFilter}>
-                <SelectTrigger className="mt-1 bg-slate-800 border-slate-700 text-slate-50">
+                <SelectTrigger className="mt-1 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-50">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-slate-900 border-slate-800">
+                <SelectContent className="bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700">
                   <SelectItem value="all">All Severity</SelectItem>
                   <SelectItem value="Critical">Critical</SelectItem>
                   <SelectItem value="High">High</SelectItem>
@@ -171,16 +228,18 @@ export default function IncidentsQueuePage({
       </Card>
 
       {/* Incidents Table */}
-      <Card className="bg-slate-800 border-slate-700">
+      <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
         <CardHeader>
           <div className="flex justify-between items-center">
             <div>
-              <CardTitle className="text-slate-50">Incidents</CardTitle>
-              <CardDescription className="text-slate-400">
+              <CardTitle className="text-slate-900 dark:text-slate-50">
+                Incidents
+              </CardTitle>
+              <CardDescription className="text-slate-600 dark:text-slate-400">
                 Total: {filteredIncidents.length} incident(s)
               </CardDescription>
             </div>
-            <Filter className="h-4 w-4 text-slate-400" />
+            <Filter className="h-4 w-4 text-slate-400 dark:text-slate-500" />
           </div>
         </CardHeader>
         <CardContent>
@@ -201,35 +260,45 @@ export default function IncidentsQueuePage({
                 {filteredIncidents.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={7} className="text-center py-8">
-                      <p className="text-slate-400">No incidents found</p>
+                      <p className="text-slate-700 dark:text-slate-300">
+                        No incidents found
+                      </p>
                     </TableCell>
                   </TableRow>
                 ) : (
                   filteredIncidents.map((incident) => (
-                    <TableRow key={incident.report_id}>
-                      <TableCell className="font-medium text-slate-50">
-                        {incident.backend_report_number || incident.report_id}
+                    <TableRow key={incident.report_id || incident.id}>
+                      <TableCell className="font-medium text-slate-900 dark:text-slate-50">
+                        {incident.backend_report_number ||
+                          incident.report_id ||
+                          "N/A"}
                       </TableCell>
-                      <TableCell className="text-slate-300">
-                        {incident.incident_type}
+                      <TableCell className="text-slate-700 dark:text-slate-300">
+                        {incident.incident_type || "Motor Vehicle"}
                       </TableCell>
-                      <TableCell className="max-w-xs truncate text-slate-300">
-                        {incident.location_address}
+                      <TableCell className="max-w-xs truncate text-slate-700 dark:text-slate-300">
+                        {incident.location_address || "Unknown Location"}
                       </TableCell>
                       <TableCell>
                         <Badge
-                          className={getSeverityColor(incident.severity_level)}
+                          className={getSeverityColor(
+                            incident.severity_level || "Medium",
+                          )}
                         >
-                          {incident.severity_level}
+                          {incident.severity_level || "Medium"}
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <Badge className={getStatusColor(incident.status)}>
-                          {incident.status}
+                        <Badge
+                          className={getStatusColor(
+                            incident.status || "Submitted",
+                          )}
+                        >
+                          {incident.status || "Submitted"}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-slate-300">
-                        {incident.reporter_name}
+                      <TableCell className="text-slate-700 dark:text-slate-300">
+                        {incident.reporter_name || "Anonymous"}
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-1">
@@ -237,7 +306,7 @@ export default function IncidentsQueuePage({
                             variant="ghost"
                             size="sm"
                             onClick={() => setViewingId(incident.report_id)}
-                            className="h-8 w-8 p-0 text-slate-400 hover:text-slate-200 hover:bg-slate-700"
+                            className="h-8 w-8 p-0 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-50 hover:bg-slate-100 dark:hover:bg-slate-700"
                             title="View incident"
                           >
                             <Eye className="h-4 w-4" />
@@ -247,7 +316,7 @@ export default function IncidentsQueuePage({
                               variant="ghost"
                               size="sm"
                               onClick={() => handleUpdateStatus("Resolved")}
-                              className="h-8 w-8 p-0 text-slate-400 hover:text-green-400 hover:bg-slate-700"
+                              className="h-8 w-8 p-0 text-slate-600 dark:text-slate-400 hover:text-green-600 dark:hover:text-green-400 hover:bg-slate-100 dark:hover:bg-slate-700"
                               title="Mark as resolved"
                             >
                               <CheckCheck className="h-4 w-4" />
@@ -257,7 +326,7 @@ export default function IncidentsQueuePage({
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="h-8 w-8 p-0 text-slate-400 hover:text-red-400 hover:bg-slate-700"
+                              className="h-8 w-8 p-0 text-slate-600 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-slate-100 dark:hover:bg-slate-700"
                               title="Critical incident"
                             >
                               <AlertTriangle className="h-4 w-4" />
@@ -277,12 +346,12 @@ export default function IncidentsQueuePage({
       {/* View Incident Dialog */}
       {currentIncident && (
         <Dialog open={!!viewingId} onOpenChange={() => setViewingId(null)}>
-          <DialogContent className="max-w-2xl bg-slate-900 border-slate-800">
+          <DialogContent className="max-w-2xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
             <DialogHeader>
-              <DialogTitle className="text-slate-50">
+              <DialogTitle className="text-slate-900 dark:text-slate-50">
                 Incident Details
               </DialogTitle>
-              <DialogDescription className="text-slate-400">
+              <DialogDescription className="text-slate-600 dark:text-slate-400">
                 Report #
                 {currentIncident.backend_report_number ||
                   currentIncident.report_id}
@@ -292,13 +361,17 @@ export default function IncidentsQueuePage({
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-slate-300">Type</Label>
-                  <p className="text-slate-50 mt-1">
+                  <Label className="text-slate-700 dark:text-slate-300">
+                    Type
+                  </Label>
+                  <p className="text-slate-900 dark:text-slate-50 mt-1">
                     {currentIncident.incident_type}
                   </p>
                 </div>
                 <div>
-                  <Label className="text-slate-300">Severity</Label>
+                  <Label className="text-slate-700 dark:text-slate-300">
+                    Severity
+                  </Label>
                   <Badge
                     className={`mt-1 ${getSeverityColor(currentIncident.severity_level)}`}
                   >
@@ -308,36 +381,44 @@ export default function IncidentsQueuePage({
               </div>
 
               <div>
-                <Label className="text-slate-300">Location</Label>
-                <p className="text-slate-50 mt-1">
+                <Label className="text-slate-700 dark:text-slate-300">
+                  Location
+                </Label>
+                <p className="text-slate-900 dark:text-slate-50 mt-1">
                   {currentIncident.location_address}
                 </p>
               </div>
 
               <div>
-                <Label className="text-slate-300">Description</Label>
-                <p className="text-slate-50 mt-1">
+                <Label className="text-slate-700 dark:text-slate-300">
+                  Description
+                </Label>
+                <p className="text-slate-900 dark:text-slate-50 mt-1">
                   {currentIncident.short_description}
                 </p>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-slate-300">Reporter</Label>
-                  <p className="text-slate-50 mt-1">
+                  <Label className="text-slate-700 dark:text-slate-300">
+                    Reporter
+                  </Label>
+                  <p className="text-slate-900 dark:text-slate-50 mt-1">
                     {currentIncident.reporter_name}
                   </p>
                 </div>
                 <div>
-                  <Label className="text-slate-300">Status</Label>
+                  <Label className="text-slate-700 dark:text-slate-300">
+                    Status
+                  </Label>
                   <Select
                     value={currentIncident.status}
                     onValueChange={handleUpdateStatus}
                   >
-                    <SelectTrigger className="mt-1 bg-slate-800 border-slate-700 text-slate-50">
+                    <SelectTrigger className="mt-1 bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-50">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="bg-slate-900 border-slate-800">
+                    <SelectContent className="bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700">
                       <SelectItem value="Submitted">Submitted</SelectItem>
                       <SelectItem value="Under Review">Under Review</SelectItem>
                       <SelectItem value="Resolved">Resolved</SelectItem>

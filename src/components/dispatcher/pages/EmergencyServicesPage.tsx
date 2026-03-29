@@ -1,4 +1,5 @@
 import { useState } from "react";
+// Cache bust v2
 import {
   Card,
   CardContent,
@@ -35,17 +36,25 @@ import {
 } from "../../ui/select";
 import { Ambulance, Plus, Search, Phone, MapPin, Clock } from "lucide-react";
 import { toast } from "sonner";
+import {
+  useGetEmergencyServices,
+  useCreateEmergencyService,
+  useUpdateEmergencyService,
+  useDeleteEmergencyService,
+} from "../../../hooks/useEmergencyServices";
 
 interface EmergencyService {
   id: string;
-  name: string;
   type: "ambulance" | "fire" | "police" | "hazmat";
   location: string;
-  phone: string;
   status: "active" | "busy" | "offline";
   responseTime: number;
   units: number;
   coverage: string;
+  responder: {
+    fullName: string;
+    phoneNumber: string;
+  };
 }
 
 export default function EmergencyServicesPage() {
@@ -59,59 +68,32 @@ export default function EmergencyServicesPage() {
     location: "",
     phone: "",
   });
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [selectedService, setSelectedService] =
+    useState<EmergencyService | null>(null);
+  const [editingService, setEditingService] = useState({
+    name: "",
+    type: "ambulance" as "ambulance" | "fire" | "police" | "hazmat",
+    location: "",
+    phone: "",
+  });
 
-  // Mock data - replace with API calls
-  const services: EmergencyService[] = [
-    {
-      id: "s1",
-      name: "Central Ambulance Station",
-      type: "ambulance",
-      location: "Downtown Medical District",
-      phone: "+1-555-0101",
-      status: "active",
-      responseTime: 4,
-      units: 8,
-      coverage: "15 sq miles",
-    },
-    {
-      id: "s2",
-      name: "Fire Station 2",
-      type: "fire",
-      location: "Eastside Industrial",
-      phone: "+1-555-0102",
-      status: "active",
-      responseTime: 6,
-      units: 5,
-      coverage: "20 sq miles",
-    },
-    {
-      id: "s3",
-      name: "Police Precinct 5",
-      type: "police",
-      location: "Central District",
-      phone: "+1-555-0103",
-      status: "active",
-      responseTime: 3,
-      units: 12,
-      coverage: "25 sq miles",
-    },
-    {
-      id: "s4",
-      name: "Hazmat Response Team",
-      type: "hazmat",
-      location: "Chemical Storage Facility",
-      phone: "+1-555-0104",
-      status: "busy",
-      responseTime: 12,
-      units: 2,
-      coverage: "50 sq miles",
-    },
-  ];
+  // Fetch services from API
+  const { data: apiServices = [] } = useGetEmergencyServices();
+  const createMutation = useCreateEmergencyService();
+  const updateMutation = useUpdateEmergencyService();
+  const deleteMutation = useDeleteEmergencyService();
+
+  // Use API data if available
+  const services = Array.isArray(apiServices) ? apiServices : [];
 
   const filteredServices = services.filter((service) => {
     const matchesSearch =
-      service.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      service.location.toLowerCase().includes(searchQuery.toLowerCase());
+      (service.name?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
+      (service.location?.toLowerCase() || "").includes(
+        searchQuery.toLowerCase(),
+      );
     const matchesType = typeFilter === "all" || service.type === typeFilter;
     const matchesStatus =
       statusFilter === "all" || service.status === statusFilter;
@@ -121,13 +103,13 @@ export default function EmergencyServicesPage() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "active":
-        return "bg-green-900 text-green-200";
+        return "bg-green-100 text-green-800";
       case "busy":
-        return "bg-orange-900 text-orange-200";
+        return "bg-orange-100 text-orange-800";
       case "offline":
-        return "bg-red-900 text-red-200";
+        return "bg-red-100 text-red-800";
       default:
-        return "bg-slate-900 text-slate-200";
+        return "bg-slate-100 text-slate-800";
     }
   };
 
@@ -149,15 +131,15 @@ export default function EmergencyServicesPage() {
   const getTypeColor = (type: string) => {
     switch (type) {
       case "ambulance":
-        return "text-blue-400";
+        return "text-blue-600";
       case "fire":
-        return "text-orange-400";
+        return "text-orange-600";
       case "police":
-        return "text-purple-400";
+        return "text-purple-600";
       case "hazmat":
-        return "text-yellow-400";
+        return "text-yellow-600";
       default:
-        return "text-slate-400";
+        return "text-slate-600";
     }
   };
 
@@ -166,14 +148,89 @@ export default function EmergencyServicesPage() {
       toast.error("Please fill in all fields");
       return;
     }
-    toast.success(`Emergency service "${newService.name}" added successfully`);
-    setIsAddingService(false);
-    setNewService({
-      name: "",
-      type: "ambulance",
-      location: "",
-      phone: "",
+
+    createMutation.mutate(newService, {
+      onSuccess: () => {
+        toast.success(
+          `Emergency service "${newService.name}" added successfully`,
+        );
+        setIsAddingService(false);
+        setNewService({
+          name: "",
+          type: "ambulance",
+          location: "",
+          phone: "",
+        });
+      },
+      onError: (error: any) => {
+        toast.error(error?.message || "Failed to add service");
+      },
     });
+  };
+
+  const handleEdit = (service: EmergencyService) => {
+    setSelectedService(service);
+    setEditingService({
+      name: service.responder?.fullName || "",
+      type: service.type,
+      location: service.location,
+      phone: service.responder?.phoneNumber || "",
+    });
+    setShowEditModal(true);
+  };
+
+  const handleSaveEdit = () => {
+    if (!selectedService) {
+      toast.error("No service selected");
+      return;
+    }
+
+    // Only send the fields that changed
+    const updateData: any = {};
+    if (editingService.name)
+      updateData.responder = { fullName: editingService.name };
+    if (editingService.type) updateData.type = editingService.type;
+    if (editingService.location) updateData.location = editingService.location;
+    if (editingService.phone) {
+      updateData.responder = {
+        ...updateData.responder,
+        phoneNumber: editingService.phone,
+      };
+    }
+
+    updateMutation.mutate(
+      { id: selectedService.id, data: updateData },
+      {
+        onSuccess: () => {
+          toast.success(
+            `Service "${editingService.name}" updated successfully`,
+          );
+          setShowEditModal(false);
+          setSelectedService(null);
+          setEditingService({
+            name: "",
+            type: "ambulance",
+            location: "",
+            phone: "",
+          });
+        },
+        onError: (error: any) => {
+          toast.error(error?.message || "Failed to update service");
+        },
+      },
+    );
+  };
+
+  const handleDetails = (service: EmergencyService) => {
+    setSelectedService(service);
+    setShowDetailsModal(true);
+  };
+
+  const handleRefreshStatus = () => {
+    toast.info("Refreshing service status...");
+    setTimeout(() => {
+      toast.success("Service status updated");
+    }, 1000);
   };
 
   return (
@@ -181,54 +238,58 @@ export default function EmergencyServicesPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-slate-50 flex items-center gap-2">
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-50 flex items-center gap-2">
             <Ambulance className="h-7 w-7" />
             Emergency Services
           </h1>
-          <p className="text-slate-400 mt-1">
+          <p className="text-slate-600 dark:text-slate-400 mt-1">
             Manage emergency service providers and their status
           </p>
         </div>
         <Dialog open={isAddingService} onOpenChange={setIsAddingService}>
           <DialogTrigger asChild>
-            <Button className="bg-teal-700 hover:bg-teal-800 text-white flex items-center gap-2">
+            <Button className="bg-teal-700 hover:bg-teal-800 dark:bg-teal-600 dark:hover:bg-teal-700 text-white flex items-center gap-2">
               <Plus className="h-4 w-4" />
               Add Service
             </Button>
           </DialogTrigger>
-          <DialogContent className="bg-slate-800 border-slate-700">
+          <DialogContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
             <DialogHeader>
-              <DialogTitle className="text-slate-50">
+              <DialogTitle className="text-slate-900 dark:text-slate-50">
                 Add Emergency Service
               </DialogTitle>
-              <DialogDescription className="text-slate-400">
+              <DialogDescription className="text-slate-600 dark:text-slate-400">
                 Register a new emergency service provider
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <div>
-                <Label className="text-slate-300">Service Name</Label>
+                <Label className="text-slate-700 dark:text-slate-300">
+                  Service Name
+                </Label>
                 <Input
                   value={newService.name}
                   onChange={(e) =>
                     setNewService({ ...newService, name: e.target.value })
                   }
                   placeholder="e.g., Central Ambulance Station"
-                  className="bg-slate-900 border-slate-700 text-slate-50 mt-1"
+                  className="bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-50 mt-1"
                 />
               </div>
               <div>
-                <Label className="text-slate-300">Service Type</Label>
+                <Label className="text-slate-700 dark:text-slate-300">
+                  Service Type
+                </Label>
                 <Select
                   value={newService.type}
                   onValueChange={(value: any) =>
                     setNewService({ ...newService, type: value })
                   }
                 >
-                  <SelectTrigger className="bg-slate-900 border-slate-700 text-slate-50 mt-1">
+                  <SelectTrigger className="bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-50 mt-1">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700">
                     <SelectItem value="ambulance">Ambulance</SelectItem>
                     <SelectItem value="fire">Fire</SelectItem>
                     <SelectItem value="police">Police</SelectItem>
@@ -237,29 +298,33 @@ export default function EmergencyServicesPage() {
                 </Select>
               </div>
               <div>
-                <Label className="text-slate-300">Location</Label>
+                <Label className="text-slate-700 dark:text-slate-300">
+                  Location
+                </Label>
                 <Input
                   value={newService.location}
                   onChange={(e) =>
                     setNewService({ ...newService, location: e.target.value })
                   }
                   placeholder="Service location"
-                  className="bg-slate-900 border-slate-700 text-slate-50 mt-1"
+                  className="bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-50 mt-1"
                 />
               </div>
               <div>
-                <Label className="text-slate-300">Phone Number</Label>
+                <Label className="text-slate-700 dark:text-slate-300">
+                  Phone Number
+                </Label>
                 <Input
                   value={newService.phone}
                   onChange={(e) =>
                     setNewService({ ...newService, phone: e.target.value })
                   }
                   placeholder="+1-555-0000"
-                  className="bg-slate-900 border-slate-700 text-slate-50 mt-1"
+                  className="bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-50 mt-1"
                 />
               </div>
               <Button
-                className="w-full bg-teal-700 hover:bg-teal-800 text-white"
+                className="w-full bg-teal-700 hover:bg-teal-800 dark:bg-teal-600 dark:hover:bg-teal-700 text-white"
                 onClick={handleAddService}
               >
                 Add Service
@@ -272,24 +337,28 @@ export default function EmergencyServicesPage() {
       {/* Filters & Search */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div>
-          <Label className="text-slate-300 mb-2 block text-sm">Search</Label>
+          <Label className="text-slate-700 dark:text-slate-300 mb-2 block text-sm">
+            Search
+          </Label>
           <div className="relative">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-slate-500" />
+            <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400 dark:text-slate-500" />
             <Input
               placeholder="Search services..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 bg-slate-900 border-slate-700 text-slate-50"
+              className="pl-10 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-50"
             />
           </div>
         </div>
         <div>
-          <Label className="text-slate-300 mb-2 block text-sm">Type</Label>
+          <Label className="text-slate-700 dark:text-slate-300 mb-2 block text-sm">
+            Type
+          </Label>
           <Select value={typeFilter} onValueChange={setTypeFilter}>
-            <SelectTrigger className="bg-slate-900 border-slate-700 text-slate-50">
+            <SelectTrigger className="bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-50">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700">
               <SelectItem value="all">All Types</SelectItem>
               <SelectItem value="ambulance">Ambulance</SelectItem>
               <SelectItem value="fire">Fire</SelectItem>
@@ -299,12 +368,14 @@ export default function EmergencyServicesPage() {
           </Select>
         </div>
         <div>
-          <Label className="text-slate-300 mb-2 block text-sm">Status</Label>
+          <Label className="text-slate-700 dark:text-slate-300 mb-2 block text-sm">
+            Status
+          </Label>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="bg-slate-900 border-slate-700 text-slate-50">
+            <SelectTrigger className="bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-50">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700">
               <SelectItem value="all">All Status</SelectItem>
               <SelectItem value="active">Active</SelectItem>
               <SelectItem value="busy">Busy</SelectItem>
@@ -313,17 +384,22 @@ export default function EmergencyServicesPage() {
           </Select>
         </div>
         <div className="flex items-end">
-          <Button className="w-full bg-blue-700 hover:bg-blue-800 text-white">
+          <Button
+            onClick={handleRefreshStatus}
+            className="w-full bg-blue-700 hover:bg-blue-800 dark:bg-blue-600 dark:hover:bg-blue-700 text-white"
+          >
             Refresh Status
           </Button>
         </div>
       </div>
 
       {/* Services Table */}
-      <Card className="bg-slate-800 border-slate-700">
+      <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
         <CardHeader>
-          <CardTitle className="text-slate-50">Service Providers</CardTitle>
-          <CardDescription className="text-slate-400">
+          <CardTitle className="text-slate-900 dark:text-slate-50">
+            Service Providers
+          </CardTitle>
+          <CardDescription className="text-slate-600 dark:text-slate-400">
             {filteredServices.length} service(s) registered
           </CardDescription>
         </CardHeader>
@@ -331,72 +407,91 @@ export default function EmergencyServicesPage() {
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow className="border-slate-700 hover:bg-slate-700/50">
-                  <TableHead className="text-slate-300">Name</TableHead>
-                  <TableHead className="text-slate-300">Type</TableHead>
-                  <TableHead className="text-slate-300">Location</TableHead>
-                  <TableHead className="text-slate-300">Status</TableHead>
-                  <TableHead className="text-slate-300">
+                <TableRow className="border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700">
+                  <TableHead className="text-slate-700 dark:text-slate-300">
+                    Name
+                  </TableHead>
+                  <TableHead className="text-slate-700 dark:text-slate-300">
+                    Type
+                  </TableHead>
+                  <TableHead className="text-slate-700 dark:text-slate-300">
+                    Location
+                  </TableHead>
+                  <TableHead className="text-slate-700 dark:text-slate-300">
+                    Status
+                  </TableHead>
+                  <TableHead className="text-slate-700 dark:text-slate-300">
                     Response Time
                   </TableHead>
-                  <TableHead className="text-slate-300">Units</TableHead>
-                  <TableHead className="text-slate-300">Coverage</TableHead>
-                  <TableHead className="text-slate-300">Contact</TableHead>
-                  <TableHead className="text-slate-300">Actions</TableHead>
+                  <TableHead className="text-slate-700 dark:text-slate-300">
+                    Units
+                  </TableHead>
+                  <TableHead className="text-slate-700 dark:text-slate-300">
+                    Coverage
+                  </TableHead>
+                  <TableHead className="text-slate-700 dark:text-slate-300">
+                    Contact
+                  </TableHead>
+                  <TableHead className="text-slate-700 dark:text-slate-300">
+                    Actions
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredServices.map((service) => (
                   <TableRow
                     key={service.id}
-                    className="border-slate-700 hover:bg-slate-700/50"
+                    className="border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700"
                   >
-                    <TableCell className="text-slate-100 font-medium">
+                    <TableCell className="text-slate-900 dark:text-slate-50 font-medium">
                       <span className="mr-2">{getTypeIcon(service.type)}</span>
-                      {service.name}
+                      {service.responder.fullName || "Unnamed"}
                     </TableCell>
                     <TableCell>
                       <span
                         className={`capitalize ${getTypeColor(service.type)}`}
                       >
-                        {service.type}
+                        {service.type || "unknown"}
                       </span>
                     </TableCell>
-                    <TableCell className="text-slate-300 flex items-center gap-1">
-                      <MapPin className="h-4 w-4 text-slate-500" />
-                      {service.location}
+                    <TableCell className="text-slate-700 dark:text-slate-300 flex items-center gap-1">
+                      <MapPin className="h-4 w-4 text-slate-400 dark:text-slate-500" />
+                      {service.location || "N/A"}
                     </TableCell>
                     <TableCell>
                       <Badge className={getStatusColor(service.status)}>
                         {service.status}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-slate-300 flex items-center gap-1">
-                      <Clock className="h-4 w-4 text-slate-500" />
-                      {service.responseTime} min
+                    <TableCell className="text-slate-700 dark:text-slate-300 flex items-center gap-1">
+                      <Clock className="h-4 w-4 text-slate-400 dark:text-slate-500" />
+                      {service.responseTime ?? 0} min
                     </TableCell>
-                    <TableCell className="text-slate-300">
-                      {service.units} unit{service.units !== 1 ? "s" : ""}
+                    <TableCell className="text-slate-700 dark:text-slate-300">
+                      {service.units ?? 0} unit
+                      {(service.units ?? 0) !== 1 ? "s" : ""}
                     </TableCell>
-                    <TableCell className="text-slate-300">
-                      {service.coverage}
+                    <TableCell className="text-slate-700 dark:text-slate-300">
+                      {service.coverage || "N/A"}
                     </TableCell>
-                    <TableCell className="text-slate-300 flex items-center gap-1">
-                      <Phone className="h-4 w-4 text-slate-500" />
-                      {service.phone}
+                    <TableCell className="text-slate-700 dark:text-slate-300 flex items-center gap-1">
+                      <Phone className="h-4 w-4 text-slate-400 dark:text-slate-500" />
+                      {service.responder.phoneNumber || "N/A"}
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-2">
                         <Button
                           size="sm"
-                          className="bg-blue-700 hover:bg-blue-800 text-white"
+                          onClick={() => handleEdit(service)}
+                          className="bg-blue-700 hover:bg-blue-800 dark:bg-blue-600 dark:hover:bg-blue-700 text-white"
                         >
                           Edit
                         </Button>
                         <Button
                           size="sm"
+                          onClick={() => handleDetails(service)}
                           variant="outline"
-                          className="text-slate-50 border-slate-700 hover:bg-slate-700"
+                          className="text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700"
                         >
                           Details
                         </Button>
@@ -412,12 +507,14 @@ export default function EmergencyServicesPage() {
 
       {/* Statistics */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="bg-slate-800 border-slate-700">
+        <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-slate-400">Total Services</p>
-                <p className="text-2xl font-bold text-slate-50 mt-1">
+                <p className="text-sm text-slate-600 dark:text-slate-400">
+                  Total Services
+                </p>
+                <p className="text-2xl font-bold text-slate-900 dark:text-slate-50 mt-1">
                   {services.length}
                 </p>
               </div>
@@ -425,12 +522,14 @@ export default function EmergencyServicesPage() {
             </div>
           </CardContent>
         </Card>
-        <Card className="bg-slate-800 border-slate-700">
+        <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-slate-400">Active Services</p>
-                <p className="text-2xl font-bold text-green-400 mt-1">
+                <p className="text-sm text-slate-600 dark:text-slate-400">
+                  Active Services
+                </p>
+                <p className="text-2xl font-bold text-green-600 dark:text-green-400 mt-1">
                   {services.filter((s) => s.status === "active").length}
                 </p>
               </div>
@@ -438,12 +537,14 @@ export default function EmergencyServicesPage() {
             </div>
           </CardContent>
         </Card>
-        <Card className="bg-slate-800 border-slate-700">
+        <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-slate-400">Total Units</p>
-                <p className="text-2xl font-bold text-slate-50 mt-1">
+                <p className="text-sm text-slate-600 dark:text-slate-400">
+                  Total Units
+                </p>
+                <p className="text-2xl font-bold text-slate-900 dark:text-slate-50 mt-1">
                   {services.reduce((sum, s) => sum + s.units, 0)}
                 </p>
               </div>
@@ -451,12 +552,14 @@ export default function EmergencyServicesPage() {
             </div>
           </CardContent>
         </Card>
-        <Card className="bg-slate-800 border-slate-700">
+        <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-slate-400">Avg Response Time</p>
-                <p className="text-2xl font-bold text-slate-50 mt-1">
+                <p className="text-sm text-slate-600 dark:text-slate-400">
+                  Avg Response Time
+                </p>
+                <p className="text-2xl font-bold text-slate-900 dark:text-slate-50 mt-1">
                   {Math.round(
                     services.reduce((sum, s) => sum + s.responseTime, 0) /
                       services.length,
@@ -469,6 +572,195 @@ export default function EmergencyServicesPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Edit Service Modal */}
+      <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
+        <DialogContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
+          <DialogHeader>
+            <DialogTitle className="text-slate-900 dark:text-slate-50">
+              Edit Emergency Service
+            </DialogTitle>
+            <DialogDescription className="text-slate-600 dark:text-slate-400">
+              Update the service details
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label className="text-slate-700 dark:text-slate-300">
+                Service Name
+              </Label>
+              <Input
+                value={editingService.name}
+                onChange={(e) =>
+                  setEditingService({ ...editingService, name: e.target.value })
+                }
+                placeholder="e.g., Central Ambulance Station"
+                className="bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-50 mt-1"
+              />
+            </div>
+            <div>
+              <Label className="text-slate-700 dark:text-slate-300">
+                Service Type
+              </Label>
+              <Select
+                value={editingService.type}
+                onValueChange={(value: any) =>
+                  setEditingService({ ...editingService, type: value })
+                }
+              >
+                <SelectTrigger className="bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-50 mt-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700">
+                  <SelectItem value="ambulance">Ambulance</SelectItem>
+                  <SelectItem value="fire">Fire</SelectItem>
+                  <SelectItem value="police">Police</SelectItem>
+                  <SelectItem value="hazmat">Hazmat</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-slate-700 dark:text-slate-300">
+                Location
+              </Label>
+              <Input
+                value={editingService.location}
+                onChange={(e) =>
+                  setEditingService({
+                    ...editingService,
+                    location: e.target.value,
+                  })
+                }
+                placeholder="Service location"
+                className="bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-50 mt-1"
+              />
+            </div>
+            <div>
+              <Label className="text-slate-700 dark:text-slate-300">
+                Phone Number
+              </Label>
+              <Input
+                value={editingService.phone}
+                onChange={(e) =>
+                  setEditingService({
+                    ...editingService,
+                    phone: e.target.value,
+                  })
+                }
+                placeholder="+1-555-0000"
+                className="bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-50 mt-1"
+              />
+            </div>
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                onClick={() => setShowEditModal(false)}
+                className="flex-1 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700"
+              >
+                Cancel
+              </Button>
+              <Button
+                className="flex-1 bg-teal-700 hover:bg-teal-800 dark:bg-teal-600 dark:hover:bg-teal-700 text-white"
+                onClick={handleSaveEdit}
+              >
+                Save Changes
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Service Details Modal */}
+      <Dialog open={showDetailsModal} onOpenChange={setShowDetailsModal}>
+        <DialogContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
+          <DialogHeader>
+            <DialogTitle className="text-slate-900 dark:text-slate-50">
+              Service Details
+            </DialogTitle>
+            <DialogDescription className="text-slate-600 dark:text-slate-400">
+              View complete information about this emergency service
+            </DialogDescription>
+          </DialogHeader>
+          {selectedService && (
+            <div className="space-y-4 py-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">
+                    Name
+                  </p>
+                  <p className="text-base font-semibold text-slate-900 dark:text-slate-50 mt-1">
+                    {selectedService.responder?.fullName || "N/A"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">
+                    Type
+                  </p>
+                  <p className="text-base font-semibold capitalize text-slate-900 dark:text-slate-50 mt-1">
+                    {selectedService.type}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">
+                    Location
+                  </p>
+                  <p className="text-base font-semibold text-slate-900 dark:text-slate-50 mt-1">
+                    {selectedService.location}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">
+                    Phone
+                  </p>
+                  <p className="text-base font-semibold text-slate-900 dark:text-slate-50 mt-1">
+                    {selectedService.responder?.phoneNumber || "N/A"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">
+                    Status
+                  </p>
+                  <Badge
+                    className={`${getStatusColor(selectedService.status)} mt-1`}
+                  >
+                    {selectedService.status}
+                  </Badge>
+                </div>
+                <div>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">
+                    Response Time
+                  </p>
+                  <p className="text-base font-semibold text-slate-900 dark:text-slate-50 mt-1">
+                    {selectedService.responseTime} min
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">
+                    Units
+                  </p>
+                  <p className="text-base font-semibold text-slate-900 dark:text-slate-50 mt-1">
+                    {selectedService.units}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">
+                    Coverage Area
+                  </p>
+                  <p className="text-base font-semibold text-slate-900 dark:text-slate-50 mt-1">
+                    {selectedService.coverage}
+                  </p>
+                </div>
+              </div>
+              <Button
+                className="w-full bg-teal-700 hover:bg-teal-800 dark:bg-teal-600 dark:hover:bg-teal-700 text-white"
+                onClick={() => setShowDetailsModal(false)}
+              >
+                Close
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -8,6 +8,11 @@ import ResponderDashboardView from "@/components/responder/ResponderDashboardVie
 import type { ResponderSession } from "@/components/responder/ResponderTypes";
 import { toast } from "sonner";
 import { useGetAccidents } from "@/hooks/useAccidents";
+import {
+  useGetMyPendingDispatches,
+  useAcceptDispatch,
+  useRejectDispatch,
+} from "@/hooks/useResponders";
 import { mapBackendAccidentToIncident } from "@/lib/backend-api";
 
 const RESPONDER_SESSION_KEY = "swift-response-hub/responder-session/v1";
@@ -47,6 +52,9 @@ export default function ResponderPage() {
 
   // React Query hooks
   const { data: accidentsResponse } = useGetAccidents();
+  const { data: pendingDispatches = [] } = useGetMyPendingDispatches();
+  const acceptDispatchMutation = useAcceptDispatch();
+  const rejectDispatchMutation = useRejectDispatch();
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -95,6 +103,32 @@ export default function ResponderPage() {
   const handleResponderHome = () => {
     setSelectedIncidentId(null);
     setActiveTab("active");
+  };
+
+  const handleAcceptDispatch = (dispatchId: string) => {
+    acceptDispatchMutation.mutate(dispatchId, {
+      onSuccess: () => {
+        toast.success("Dispatch accepted! New assignment added.");
+      },
+      onError: (error: any) => {
+        toast.error(
+          error?.response?.data?.message || "Failed to accept dispatch",
+        );
+      },
+    });
+  };
+
+  const handleRejectDispatch = (dispatchId: string) => {
+    rejectDispatchMutation.mutate(dispatchId, {
+      onSuccess: () => {
+        toast.success("Dispatch rejected.");
+      },
+      onError: (error: any) => {
+        toast.error(
+          error?.response?.data?.message || "Failed to reject dispatch",
+        );
+      },
+    });
   };
 
   const handleLogout = () => {
@@ -147,8 +181,11 @@ export default function ResponderPage() {
         activeTab={activeTab}
         activeIncidents={activeIncidents}
         completedIncidents={completedIncidents}
+        pendingDispatches={pendingDispatches}
         onActiveTabChange={setActiveTab}
         onSelectIncident={setSelectedIncidentId}
+        onAcceptDispatch={handleAcceptDispatch}
+        onRejectDispatch={handleRejectDispatch}
         onLogout={handleLogout}
       />
     </div>

@@ -1,8 +1,22 @@
 import { useState, useMemo } from "react";
-import { Search } from "lucide-react";
+import {
+  Search,
+  ChevronRight,
+  MapPin,
+  Clock,
+  MessageSquare,
+  ChevronDown,
+} from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -18,6 +32,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import ResponderIncidentResponse from "@/components/responder/ResponderIncidentResponse";
+import IncidentDetailsPanel from "@/components/responder/IncidentDetailsPanel";
+import StatusHistoryDisplay from "@/components/responder/StatusHistoryDisplay";
 import type { IncidentReport } from "@/types/incident";
 
 interface ResponderAssignmentsPageProps {
@@ -29,6 +46,13 @@ export default function ResponderAssignmentsPage({
 }: ResponderAssignmentsPageProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [selectedIncident, setSelectedIncident] =
+    useState<IncidentReport | null>(null);
+  const [selectedIncidentForDetails, setSelectedIncidentForDetails] =
+    useState<IncidentReport | null>(null);
+  const [expandedIncidents, setExpandedIncidents] = useState<Set<string>>(
+    new Set(),
+  );
 
   const filteredIncidents = useMemo(() => {
     return incidents.filter((incident) => {
@@ -36,7 +60,9 @@ export default function ResponderAssignmentsPage({
         incident.incident_type
           ?.toLowerCase()
           .includes(searchTerm.toLowerCase()) ||
-        incident.location?.toLowerCase().includes(searchTerm.toLowerCase());
+        incident.location_address
+          ?.toLowerCase()
+          .includes(searchTerm.toLowerCase());
       const matchesStatus =
         statusFilter === "all" || incident.status === statusFilter;
       return matchesSearch && matchesStatus;
@@ -52,6 +78,16 @@ export default function ResponderAssignmentsPage({
       default:
         return "outline";
     }
+  };
+
+  const toggleExpanded = (reportId: string) => {
+    const newExpanded = new Set(expandedIncidents);
+    if (newExpanded.has(reportId)) {
+      newExpanded.delete(reportId);
+    } else {
+      newExpanded.add(reportId);
+    }
+    setExpandedIncidents(newExpanded);
   };
 
   return (
@@ -109,6 +145,7 @@ export default function ResponderAssignmentsPage({
             <Table>
               <TableHeader className="bg-slate-50 dark:bg-slate-900">
                 <TableRow className="border-slate-200 dark:border-slate-700">
+                  <TableHead className="w-10 text-slate-900 dark:text-slate-50"></TableHead>
                   <TableHead className="text-slate-900 dark:text-slate-50">
                     Type
                   </TableHead>
@@ -124,20 +161,35 @@ export default function ResponderAssignmentsPage({
                   <TableHead className="text-slate-900 dark:text-slate-50">
                     Reported
                   </TableHead>
+                  <TableHead className="text-slate-900 dark:text-slate-50 text-right">
+                    Actions
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredIncidents.length > 0 ? (
-                  filteredIncidents.map((incident) => (
+                  filteredIncidents.flatMap((incident) => [
                     <TableRow
-                      key={incident.id}
-                      className="border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-900/50"
+                      key={incident.report_id}
+                      className="border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors"
                     >
+                      <TableCell className="w-10">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => toggleExpanded(incident.report_id!)}
+                          className="h-8 w-8 p-0"
+                        >
+                          <ChevronDown
+                            className={`h-4 w-4 transition-transform ${expandedIncidents.has(incident.report_id!) ? "rotate-180" : ""}`}
+                          />
+                        </Button>
+                      </TableCell>
                       <TableCell className="font-medium text-slate-900 dark:text-slate-50">
                         {incident.incident_type}
                       </TableCell>
                       <TableCell className="text-slate-600 dark:text-slate-400">
-                        {incident.location}
+                        {incident.location_address}
                       </TableCell>
                       <TableCell>
                         <Badge
@@ -150,14 +202,61 @@ export default function ResponderAssignmentsPage({
                         <Badge variant="outline">{incident.status}</Badge>
                       </TableCell>
                       <TableCell className="text-sm text-slate-600 dark:text-slate-400">
-                        {new Date(incident.reported_time!).toLocaleDateString()}
+                        {new Date(
+                          incident.time_report_submitted!,
+                        ).toLocaleDateString()}
                       </TableCell>
-                    </TableRow>
-                  ))
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedIncident(incident);
+                            }}
+                            className="bg-teal-600 hover:bg-teal-700 dark:bg-teal-600 dark:hover:bg-teal-700 text-white"
+                            title="Update response status"
+                          >
+                            <MapPin className="h-4 w-4 mr-1" />
+                            Respond
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedIncidentForDetails(incident);
+                            }}
+                            className="dark:text-slate-400 dark:hover:bg-slate-700"
+                            title="View incident details"
+                          >
+                            <Clock className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>,
+                    // Expandable Status History Row
+                    ...(expandedIncidents.has(incident.report_id!)
+                      ? [
+                          <TableRow
+                            key={`${incident.report_id}-details`}
+                            className="bg-slate-50 dark:bg-slate-900/30 border-slate-200 dark:border-slate-700"
+                          >
+                            <TableCell colSpan={7} className="p-4">
+                              <StatusHistoryDisplay
+                                createdAt={incident.created_at || ""}
+                                statusColor="bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-200"
+                                compact={false}
+                              />
+                            </TableCell>
+                          </TableRow>,
+                        ]
+                      : []),
+                  ])
                 ) : (
                   <TableRow>
                     <TableCell
-                      colSpan={5}
+                      colSpan={7}
                       className="text-center py-8 text-slate-600 dark:text-slate-400"
                     >
                       No assignments found
@@ -169,6 +268,43 @@ export default function ResponderAssignmentsPage({
           </div>
         </CardContent>
       </Card>
+
+      {/* Response Modal */}
+      <Dialog
+        open={!!selectedIncident}
+        onOpenChange={(open) => !open && setSelectedIncident(null)}
+      >
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+          <DialogHeader>
+            <DialogTitle className="text-slate-900 dark:text-slate-50">
+              Update Response Status
+            </DialogTitle>
+          </DialogHeader>
+          {selectedIncident && (
+            <ResponderIncidentResponse
+              incident={selectedIncident}
+              onClose={() => setSelectedIncident(null)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Details Modal */}
+      <Dialog
+        open={!!selectedIncidentForDetails}
+        onOpenChange={(open) => !open && setSelectedIncidentForDetails(null)}
+      >
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+          <DialogHeader>
+            <DialogTitle className="text-slate-900 dark:text-slate-50">
+              Incident Details
+            </DialogTitle>
+          </DialogHeader>
+          {selectedIncidentForDetails && (
+            <IncidentDetailsPanel incident={selectedIncidentForDetails} />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

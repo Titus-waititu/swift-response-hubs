@@ -1,6 +1,7 @@
-import { Bell, LogOut, Search, User, Moon, Sun } from "lucide-react";
+import { LogOut, Search, User, Moon, Sun } from "lucide-react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
+import NotificationsDropdown from "../NotificationsDropdown";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -40,16 +41,8 @@ export default function DispatcherTopNav({
 
         {/* Right section */}
         <div className="flex items-center gap-3">
-          {/* Alerts */}
-          <Button
-            variant="ghost"
-            className="text-teal-700 dark:text-teal-300 hover:text-teal-950 dark:hover:text-teal-50 hover:bg-blue-100 dark:hover:bg-blue-900 relative"
-          >
-            <Bell className="h-5 w-5" />
-            {criticalIncidentCount > 0 && (
-              <span className="absolute top-1 right-1 w-2 h-2 bg-red-600 rounded-full animate-pulse" />
-            )}
-          </Button>
+          {/* Notifications */}
+          <NotificationsDropdown />
 
           {/* Theme Toggle */}
           <Button

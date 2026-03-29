@@ -7,14 +7,27 @@ import {
   MapPin,
   Shield,
   Eye,
+  AlertCircle,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 import { StatusBadge, SeverityBadge } from "@/components/StatusBadge";
 import { formatTimeAgo } from "@/lib/incident-utils";
-import { FocusRow, InfoChip, SignalRow, TopSignalCard } from "@/components/dispatcher/DispatcherShared";
+import {
+  FocusRow,
+  InfoChip,
+  SignalRow,
+  TopSignalCard,
+} from "@/components/dispatcher/DispatcherShared";
 import type { IncidentReport } from "@/types/incident";
 
 import type { ResponderSession } from "./ResponderTypes";
@@ -31,8 +44,11 @@ interface ResponderDashboardViewProps {
   activeTab: "active" | "completed";
   activeIncidents: IncidentReport[];
   completedIncidents: IncidentReport[];
+  pendingDispatches?: any[];
   onActiveTabChange: (value: "active" | "completed") => void;
   onSelectIncident: (reportId: string) => void;
+  onAcceptDispatch?: (dispatchId: string) => void;
+  onRejectDispatch?: (dispatchId: string) => void;
   onLogout: () => void;
 }
 
@@ -41,13 +57,22 @@ export default function ResponderDashboardView({
   activeTab,
   activeIncidents,
   completedIncidents,
+  pendingDispatches = [],
   onActiveTabChange,
   onSelectIncident,
+  onAcceptDispatch,
+  onRejectDispatch,
   onLogout,
 }: ResponderDashboardViewProps) {
-  const submittedCount = activeIncidents.filter((incident) => incident.status === "Submitted").length;
-  const underReviewCount = activeIncidents.filter((incident) => incident.status === "Under Review").length;
-  const criticalActiveCount = activeIncidents.filter((incident) => incident.severity_level === "Critical").length;
+  const submittedCount = activeIncidents.filter(
+    (incident) => incident.status === "Submitted",
+  ).length;
+  const underReviewCount = activeIncidents.filter(
+    (incident) => incident.status === "Under Review",
+  ).length;
+  const criticalActiveCount = activeIncidents.filter(
+    (incident) => incident.severity_level === "Critical",
+  ).length;
   const latestAccident = activeIncidents[0] ?? completedIncidents[0];
 
   return (
@@ -73,7 +98,10 @@ export default function ResponderDashboardView({
                     Review backend accident intake from the responder workspace
                   </h1>
                   <p className="mt-3 max-w-3xl text-sm leading-7 text-muted-foreground md:text-base">
-                    This backend currently supports responder visibility into accident records, but not the richer prototype field workflow. Use this dashboard to track open and completed accidents while status control stays with dispatch.
+                    This backend currently supports responder visibility into
+                    accident records, but not the richer prototype field
+                    workflow. Use this dashboard to track open and completed
+                    accidents while status control stays with dispatch.
                   </p>
                 </div>
 
@@ -135,15 +163,28 @@ export default function ResponderDashboardView({
                   <Shield className="h-5 w-5 text-info" />
                 </div>
                 <div>
-                  <CardTitle className="text-lg text-foreground">Field Signal</CardTitle>
-                  <CardDescription>Current pressure across the unit workspace.</CardDescription>
+                  <CardTitle className="text-lg text-foreground">
+                    Field Signal
+                  </CardTitle>
+                  <CardDescription>
+                    Current pressure across the unit workspace.
+                  </CardDescription>
                 </div>
               </div>
             </CardHeader>
             <CardContent className="space-y-3">
-              <SignalRow label="Critical open accidents" value={String(criticalActiveCount)} />
-              <SignalRow label="Open accidents" value={String(activeIncidents.length)} />
-              <SignalRow label="Completed accidents" value={String(completedIncidents.length)} />
+              <SignalRow
+                label="Critical open accidents"
+                value={String(criticalActiveCount)}
+              />
+              <SignalRow
+                label="Open accidents"
+                value={String(activeIncidents.length)}
+              />
+              <SignalRow
+                label="Completed accidents"
+                value={String(completedIncidents.length)}
+              />
               <SignalRow label="Unit status" value="On Duty" />
               <div className="rounded-2xl border border-border/70 bg-secondary/55 p-4">
                 <p className="font-mono text-[11px] uppercase tracking-[0.24em] text-muted-foreground">
@@ -162,7 +203,89 @@ export default function ResponderDashboardView({
           </Card>
         </div>
 
-        <Tabs value={activeTab} onValueChange={(value) => onActiveTabChange(value as "active" | "completed")}>
+        {/* Pending Dispatches Section */}
+        {pendingDispatches && pendingDispatches.length > 0 && (
+          <Card className="mb-6 border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                  <CardTitle className="text-amber-900 dark:text-amber-100">
+                    Pending Dispatch Requests ({pendingDispatches.length})
+                  </CardTitle>
+                </div>
+              </div>
+              <CardDescription className="text-amber-800 dark:text-amber-200">
+                You have new dispatch assignments waiting for your response
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {pendingDispatches.map((dispatch: any) => (
+                <div
+                  key={dispatch.id}
+                  className="flex flex-col gap-3 rounded-lg border border-amber-300 dark:border-amber-700 bg-white dark:bg-slate-900/50 p-4"
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-foreground">
+                        {dispatch.incidentDescription ||
+                          dispatch.description ||
+                          "Dispatch Assignment"}
+                      </h3>
+                      <div className="mt-2 space-y-1 text-sm text-muted-foreground">
+                        <p>
+                          <strong>Service Type:</strong> {dispatch.serviceType}
+                        </p>
+                        <p>
+                          <strong>Severity:</strong>{" "}
+                          {typeof dispatch.severity === "number"
+                            ? dispatch.severity
+                            : dispatch.severity}
+                          /100
+                        </p>
+                        {dispatch.latitude && dispatch.longitude && (
+                          <p className="flex items-center gap-1">
+                            <MapPin className="h-4 w-4" />
+                            <strong>Location:</strong> {dispatch.latitude},{" "}
+                            {dispatch.longitude}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex gap-2 justify-end">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() =>
+                        onRejectDispatch && onRejectDispatch(dispatch.id)
+                      }
+                      className="border-red-300 dark:border-red-800 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30"
+                    >
+                      Reject
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={() =>
+                        onAcceptDispatch && onAcceptDispatch(dispatch.id)
+                      }
+                      className="bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800"
+                    >
+                      Accept & Respond
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        )}
+
+        <Tabs
+          value={activeTab}
+          onValueChange={(value) =>
+            onActiveTabChange(value as "active" | "completed")
+          }
+        >
           <TabsList className="mb-4 border border-border/70 bg-secondary/75">
             <TabsTrigger
               value="active"
@@ -199,19 +322,31 @@ export default function ResponderDashboardView({
                                 {incident.report_id}
                               </span>
                               <StatusBadge status={incident.status} />
-                              <SeverityBadge severity={incident.severity_level} />
+                              <SeverityBadge
+                                severity={incident.severity_level}
+                              />
                             </div>
 
                             <div className="mt-3">
-                              <p className="text-base font-semibold text-foreground">{incident.incident_type}</p>
+                              <p className="text-base font-semibold text-foreground">
+                                {incident.incident_type}
+                              </p>
                               <p className="mt-1 text-sm leading-6 text-muted-foreground">
                                 {incident.short_description}
                               </p>
                             </div>
 
                             <div className="mt-4 flex flex-wrap gap-2">
-                              <InfoChip icon={MapPin} label={incident.location_address} />
-                              <InfoChip icon={Clock} label={formatTimeAgo(incident.time_report_submitted)} />
+                              <InfoChip
+                                icon={MapPin}
+                                label={incident.location_address}
+                              />
+                              <InfoChip
+                                icon={Clock}
+                                label={formatTimeAgo(
+                                  incident.time_report_submitted,
+                                )}
+                              />
                             </div>
                           </div>
 
@@ -221,7 +356,8 @@ export default function ResponderDashboardView({
                                 Case View
                               </p>
                               <p className="mt-2 text-sm font-medium text-foreground">
-                                Open the accident to inspect details from the responder workspace.
+                                Open the accident to inspect details from the
+                                responder workspace.
                               </p>
                             </div>
                             <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-background/60 px-4 py-2 text-sm text-foreground">
@@ -243,7 +379,8 @@ export default function ResponderDashboardView({
                         No open accidents in the responder queue
                       </p>
                       <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                        New accidents will show up here when the backend exposes them to responder accounts.
+                        New accidents will show up here when the backend exposes
+                        them to responder accounts.
                       </p>
                     </CardContent>
                   </Card>
@@ -253,8 +390,12 @@ export default function ResponderDashboardView({
               <div className="space-y-4">
                 <Card className="border-border/80 bg-card/80 backdrop-blur-sm">
                   <CardHeader>
-                    <CardTitle className="text-lg text-foreground">Field Priorities</CardTitle>
-                    <CardDescription>Fast read on what the unit should act on next.</CardDescription>
+                    <CardTitle className="text-lg text-foreground">
+                      Field Priorities
+                    </CardTitle>
+                    <CardDescription>
+                      Fast read on what the unit should act on next.
+                    </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-3">
                     <FocusRow
@@ -302,7 +443,9 @@ export default function ResponderDashboardView({
                             </span>
                             <StatusBadge status={incident.status} />
                           </div>
-                          <p className="mt-2 text-base font-semibold text-foreground">{incident.incident_type}</p>
+                          <p className="mt-2 text-base font-semibold text-foreground">
+                            {incident.incident_type}
+                          </p>
                           <p className="mt-1 text-sm leading-6 text-muted-foreground">
                             {"Resolved and logged"}
                           </p>
@@ -321,7 +464,8 @@ export default function ResponderDashboardView({
                         Completed accidents will appear here
                       </p>
                       <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                        Closed accidents will appear here as the backend lifecycle advances.
+                        Closed accidents will appear here as the backend
+                        lifecycle advances.
                       </p>
                     </CardContent>
                   </Card>
@@ -331,13 +475,26 @@ export default function ResponderDashboardView({
               <div className="space-y-4">
                 <Card className="border-border/80 bg-card/80 backdrop-blur-sm">
                   <CardHeader>
-                    <CardTitle className="text-lg text-foreground">Completion Signal</CardTitle>
-                    <CardDescription>High-level read on closed field activity.</CardDescription>
+                    <CardTitle className="text-lg text-foreground">
+                      Completion Signal
+                    </CardTitle>
+                    <CardDescription>
+                      High-level read on closed field activity.
+                    </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-3">
-                    <SignalRow label="Resolved accidents" value={String(completedIncidents.length)} />
-                    <SignalRow label="Current open accidents" value={String(activeIncidents.length)} />
-                    <SignalRow label="Responder unit" value={session.unitLabel} />
+                    <SignalRow
+                      label="Resolved accidents"
+                      value={String(completedIncidents.length)}
+                    />
+                    <SignalRow
+                      label="Current open accidents"
+                      value={String(activeIncidents.length)}
+                    />
+                    <SignalRow
+                      label="Responder unit"
+                      value={session.unitLabel}
+                    />
                   </CardContent>
                 </Card>
               </div>

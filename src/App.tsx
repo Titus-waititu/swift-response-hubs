@@ -25,6 +25,7 @@ import DispatcherDashboard from "./pages/dashboard/DispatcherDashboard";
 // Legacy Pages (for backward compatibility)
 import ReportPage from "./pages/ReportPage";
 import ResponderPage from "./pages/ResponderPage";
+import IncidentStatusPage from "./pages/IncidentStatusPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import UserLoginPage from "./pages/UserLoginPage";
 import UserDashboardPage from "./pages/UserDashboardPage";
@@ -101,6 +102,10 @@ const App = () => (
               <Route path="/forgot-password" element={<ForgotPasswordPage />} />
               <Route path="/user-login" element={<UserLoginPage />} />
               <Route path="/report" element={<ReportPage />} />
+              <Route
+                path="/incident-status/:reportId"
+                element={<IncidentStatusPage />}
+              />
               <Route
                 path="/dispatcher"
                 element={

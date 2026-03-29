@@ -125,7 +125,7 @@ export default function ReportPage() {
           const incident = mapBackendAccidentToIncident(response);
           addIncident(incident);
           toast.success("Report submitted successfully!");
-          navigate("/user-dashboard");
+          navigate(`/incident-status/${incident.report_id}`);
         } catch (backendError) {
           console.warn(
             "[REPORT SUBMIT] Backend error, using fallback:",
@@ -157,7 +157,7 @@ export default function ReportPage() {
 
           addIncident(incident);
           toast.success("Report submitted locally!");
-          navigate("/user-dashboard");
+          navigate(`/incident-status/${incident.report_id}`);
         }
       } catch (err) {
         console.error("[REPORT SUBMIT] Error:", err);

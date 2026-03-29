@@ -13,6 +13,7 @@ import { Switch } from "../../ui/switch";
 import { Alert, AlertDescription } from "../../ui/alert";
 import { toast } from "sonner";
 import { Settings, Bell, Lock, AlertCircle, CheckCircle2 } from "lucide-react";
+import { apiClient } from "../../../api/client";
 
 interface DispatcherSettings {
   autoNotifications: boolean;
@@ -38,10 +39,10 @@ export default function DispatcherSettingsPage() {
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await apiClient.patch("/dispatcher/settings", settings);
       toast.success("Settings saved successfully");
-    } catch (error) {
-      toast.error("Failed to save settings");
+    } catch (error: any) {
+      toast.error(error?.message || "Failed to save settings");
     } finally {
       setIsSaving(false);
     }
@@ -51,29 +52,33 @@ export default function DispatcherSettingsPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-slate-50">Settings</h1>
-        <p className="text-slate-400 mt-1">
+        <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-50">
+          Settings
+        </h1>
+        <p className="text-slate-600 dark:text-slate-400 mt-1">
           Manage dispatcher preferences and system settings
         </p>
       </div>
 
       {/* Alerts & Notifications */}
-      <Card className="bg-slate-800 border-slate-700">
+      <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-slate-50">
+          <CardTitle className="flex items-center gap-2 text-slate-900 dark:text-slate-50">
             <Bell className="h-5 w-5" />
             Alerts & Notifications
           </CardTitle>
-          <CardDescription className="text-slate-400">
+          <CardDescription className="text-slate-600 dark:text-slate-400">
             Configure notification preferences
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 border border-slate-700 rounded-lg bg-slate-900">
+            <div className="flex items-center justify-between p-4 border border-slate-200 dark:border-slate-700 rounded-lg bg-slate-50 dark:bg-slate-700">
               <div>
-                <p className="font-medium text-slate-50">Auto Notifications</p>
-                <p className="text-sm text-slate-400">
+                <p className="font-medium text-slate-900 dark:text-slate-50">
+                  Auto Notifications
+                </p>
+                <p className="text-sm text-slate-600 dark:text-slate-400">
                   Automatically notify for new incidents
                 </p>
               </div>
@@ -85,10 +90,12 @@ export default function DispatcherSettingsPage() {
               />
             </div>
 
-            <div className="flex items-center justify-between p-4 border border-slate-700 rounded-lg bg-slate-900">
+            <div className="flex items-center justify-between p-4 border border-slate-200 dark:border-slate-700 rounded-lg bg-slate-50 dark:bg-slate-700">
               <div>
-                <p className="font-medium text-slate-50">Sound Alerts</p>
-                <p className="text-sm text-slate-400">
+                <p className="font-medium text-slate-900 dark:text-slate-50">
+                  Sound Alerts
+                </p>
+                <p className="text-sm text-slate-600 dark:text-slate-400">
                   Enable audio alerts for critical incidents
                 </p>
               </div>
@@ -100,12 +107,12 @@ export default function DispatcherSettingsPage() {
               />
             </div>
 
-            <div className="flex items-center justify-between p-4 border border-slate-700 rounded-lg bg-slate-900">
+            <div className="flex items-center justify-between p-4 border border-slate-200 dark:border-slate-700 rounded-lg bg-slate-50 dark:bg-slate-700">
               <div>
-                <p className="font-medium text-slate-50">
+                <p className="font-medium text-slate-900 dark:text-slate-50">
                   Critical Highlighting
                 </p>
-                <p className="text-sm text-slate-400">
+                <p className="text-sm text-slate-600 dark:text-slate-400">
                   Highlight critical incidents in queue
                 </p>
               </div>
@@ -121,16 +128,21 @@ export default function DispatcherSettingsPage() {
       </Card>
 
       {/* Performance Settings */}
-      <Card className="bg-slate-800 border-slate-700">
+      <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
         <CardHeader>
-          <CardTitle className="text-slate-50">Performance Settings</CardTitle>
-          <CardDescription className="text-slate-400">
+          <CardTitle className="text-slate-900 dark:text-slate-50">
+            Performance Settings
+          </CardTitle>
+          <CardDescription className="text-slate-600 dark:text-slate-400">
             Optimize dispatcher console performance
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <Label htmlFor="responseTime" className="text-slate-300">
+            <Label
+              htmlFor="responseTime"
+              className="text-slate-700 dark:text-slate-300"
+            >
               Response Time Alert Threshold (minutes)
             </Label>
             <Input
@@ -143,15 +155,18 @@ export default function DispatcherSettingsPage() {
                   responseTimeAlert: parseInt(e.target.value),
                 })
               }
-              className="mt-1 bg-slate-900 border-slate-700 text-slate-50 placeholder-slate-500"
+              className="mt-1 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-50 placeholder-slate-500 dark:placeholder-slate-400"
             />
-            <p className="text-xs text-slate-500 mt-1">
+            <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
               Alert when response exceeds this time
             </p>
           </div>
 
           <div>
-            <Label htmlFor="maxQueue" className="text-slate-300">
+            <Label
+              htmlFor="maxQueue"
+              className="text-slate-700 dark:text-slate-300"
+            >
               Max Queue Items
             </Label>
             <Input
@@ -164,9 +179,9 @@ export default function DispatcherSettingsPage() {
                   maxQueueItems: parseInt(e.target.value),
                 })
               }
-              className="mt-1 bg-slate-900 border-slate-700 text-slate-50 placeholder-slate-500"
+              className="mt-1 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-50 placeholder-slate-500 dark:placeholder-slate-400"
             />
-            <p className="text-xs text-slate-500 mt-1">
+            <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
               Maximum incidents to display in queue
             </p>
           </div>
@@ -174,53 +189,71 @@ export default function DispatcherSettingsPage() {
       </Card>
 
       {/* System Status */}
-      <Card className="bg-slate-800 border-slate-700">
+      <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
         <CardHeader>
-          <CardTitle className="text-slate-50">System Status</CardTitle>
-          <CardDescription className="text-slate-400">
+          <CardTitle className="text-slate-900 dark:text-slate-50">
+            System Status
+          </CardTitle>
+          <CardDescription className="text-slate-600 dark:text-slate-400">
             Current system health and connectivity
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
-          <div className="flex items-center justify-between p-3 bg-slate-900 rounded-lg border border-green-900">
-            <span className="text-sm font-medium text-green-400">
+          <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-700 rounded-lg border border-green-200 dark:border-green-900">
+            <span className="text-sm font-medium text-green-700 dark:text-green-400">
               API Status
             </span>
-            <Badge className="bg-green-900 text-green-200">Connected</Badge>
+            <Badge className="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">
+              Connected
+            </Badge>
           </div>
-          <div className="flex items-center justify-between p-3 bg-slate-900 rounded-lg border border-green-900">
-            <span className="text-sm font-medium text-green-400">Database</span>
-            <Badge className="bg-green-900 text-green-200">Connected</Badge>
+          <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-700 rounded-lg border border-green-200 dark:border-green-900">
+            <span className="text-sm font-medium text-green-700 dark:text-green-400">
+              Database
+            </span>
+            <Badge className="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">
+              Connected
+            </Badge>
           </div>
-          <div className="flex items-center justify-between p-3 bg-slate-900 rounded-lg border border-green-900">
-            <span className="text-sm font-medium text-green-400">
+          <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-700 rounded-lg border border-green-200 dark:border-green-900">
+            <span className="text-sm font-medium text-green-700 dark:text-green-400">
               Queue Service
             </span>
-            <Badge className="bg-green-900 text-green-200">Active</Badge>
+            <Badge className="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">
+              Active
+            </Badge>
           </div>
         </CardContent>
       </Card>
 
       {/* API & Security */}
-      <Card className="bg-slate-800 border-slate-700">
+      <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-slate-50">
+          <CardTitle className="flex items-center gap-2 text-slate-900 dark:text-slate-50">
             <Lock className="h-5 w-5" />
             API & Security
           </CardTitle>
-          <CardDescription className="text-slate-400">
+          <CardDescription className="text-slate-600 dark:text-slate-400">
             Manage API access
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="p-4 bg-slate-900 border border-slate-600 rounded-lg">
-            <p className="text-sm font-mono text-slate-400 break-all">
+          <div className="p-4 bg-slate-50 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg">
+            <p className="text-sm font-mono text-slate-700 dark:text-slate-300 break-all">
               api_key_dispatcher_xxxxxxxxxxxxxxxxxxxx
             </p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline">Copy API Key</Button>
-            <Button variant="outline" className="text-red-400 border-red-600">
+            <Button
+              variant="outline"
+              className="dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
+            >
+              Copy API Key
+            </Button>
+            <Button
+              variant="outline"
+              className="text-red-600 dark:text-red-400 border-red-300 dark:border-red-600 hover:bg-red-50 dark:hover:bg-red-950"
+            >
               Regenerate Key
             </Button>
           </div>
@@ -228,23 +261,23 @@ export default function DispatcherSettingsPage() {
       </Card>
 
       {/* Maintenance Mode */}
-      <Card className="border-orange-900 bg-slate-800">
+      <Card className="border-orange-200 dark:border-orange-900 bg-white dark:bg-slate-800">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-orange-500">
+          <CardTitle className="flex items-center gap-2 text-orange-600 dark:text-orange-400">
             <AlertCircle className="h-5 w-5" />
             Maintenance Mode
           </CardTitle>
-          <CardDescription className="text-teal-700">
+          <CardDescription className="text-slate-600 dark:text-slate-400">
             Temporarily disable dispatcher console
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center justify-between p-4 border border-teal-700 rounded-lg bg-slate-900">
+          <div className="flex items-center justify-between p-4 border border-slate-200 dark:border-slate-700 rounded-lg bg-slate-50 dark:bg-slate-700">
             <div>
-              <p className="font-medium text-orange-500">
+              <p className="font-medium text-orange-600 dark:text-orange-400">
                 Enable Maintenance Mode
               </p>
-              <p className="text-sm text-orange-400">
+              <p className="text-sm text-orange-600 dark:text-orange-400">
                 Disable access temporarily
               </p>
             </div>
@@ -257,9 +290,9 @@ export default function DispatcherSettingsPage() {
           </div>
 
           {settings.maintenanceMode && (
-            <Alert className="border-teal-700 bg-teal-950">
-              <AlertCircle className="h-4 w-4 text-orange-500" />
-              <AlertDescription className="text-orange-400">
+            <Alert className="border-orange-200 dark:border-orange-900 bg-orange-50 dark:bg-orange-950">
+              <AlertCircle className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+              <AlertDescription className="text-orange-700 dark:text-orange-300">
                 Maintenance mode is active. Dispatcher console will be
                 inaccessible.
               </AlertDescription>
@@ -270,7 +303,12 @@ export default function DispatcherSettingsPage() {
 
       {/* Save Button */}
       <div className="flex justify-end gap-2">
-        <Button variant="outline">Discard Changes</Button>
+        <Button
+          variant="outline"
+          className="dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
+        >
+          Discard Changes
+        </Button>
         <Button onClick={handleSave} disabled={isSaving} className="gap-2">
           {isSaving ? (
             <>

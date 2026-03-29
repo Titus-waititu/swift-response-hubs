@@ -243,7 +243,7 @@ export const useBroadcastToResponders = () => {
       type?: "alert" | "info" | "warning" | "success";
       priority?: "low" | "medium" | "high" | "critical";
     }) =>
-      apiClient.post("/notifications/send", {
+      apiClient.post("/notifications", {
         message,
         type,
         priority,

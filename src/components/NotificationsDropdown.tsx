@@ -9,12 +9,14 @@ import {
   useGetUnreadNotifications,
   useMarkNotificationAsRead,
 } from "@/hooks/useNotifications";
-import { useCallback } from "react";
+import { useAuthStore } from "@/stores/authStore";
+import { useCallback, useMemo } from "react";
 import { toast } from "sonner";
 
 export default function NotificationsDropdown() {
   const { data: unreadNotifications = [] } = useGetUnreadNotifications();
   const markAsReadMutation = useMarkNotificationAsRead();
+  const { user } = useAuthStore();
 
   // Ensure we always have an array
   const notificationsArray = Array.isArray(unreadNotifications)
@@ -23,7 +25,37 @@ export default function NotificationsDropdown() {
       ? unreadNotifications.data
       : [];
 
-  const unreadCount = notificationsArray.length;
+  // Filter notifications based on user role
+  const filteredNotifications = useMemo(() => {
+    if (!user) return notificationsArray;
+
+    return notificationsArray.filter((notification: any) => {
+      const message = notification.message || "";
+      const notificationType = notification.type || "";
+
+      // Dispatcher should not see responder-specific notifications
+      if (user.role === "DISPATCHER") {
+        // Hide "You have been assigned to an incident" - responder only
+        if (
+          message.includes("You have been assigned to an incident") ||
+          message.includes("assigned to an incident at Location coordinates")
+        ) {
+          return false;
+        }
+      }
+
+      // Responder should not see certain dispatcher-only notifications
+      if (user.role === "RESPONDER") {
+        // Responders can see assignment and dispatch notifications
+        // Add responder-specific filters here if needed
+      }
+
+      // Show all other notifications to all roles
+      return true;
+    });
+  }, [notificationsArray, user]);
+
+  const unreadCount = filteredNotifications.length;
 
   const handleMarkAsRead = useCallback(
     (notificationId: string) => {
@@ -102,7 +134,7 @@ export default function NotificationsDropdown() {
         {/* Notifications List */}
         {unreadCount > 0 ? (
           <div className="space-y-2 p-2">
-            {notificationsArray.map((notification: any) => (
+            {filteredNotifications.map((notification: any) => (
               <div
                 key={notification.id}
                 className={`rounded-lg p-3 space-y-1 flex items-start gap-3 transition-all ${getNotificationBg(

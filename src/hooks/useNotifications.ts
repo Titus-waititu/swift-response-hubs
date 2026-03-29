@@ -61,7 +61,7 @@ export const useSendNotification = () => {
       recipients?: "all" | "dispatcher" | "responder" | "officer" | string[];
       priority?: "low" | "medium" | "high" | "critical";
     }) =>
-      apiClient.post("/notifications/send", {
+      apiClient.post("/notifications", {
         message: data.message,
         type: data.type || "info",
         recipients: data.recipients || "all",

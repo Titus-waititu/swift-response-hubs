@@ -1,6 +1,18 @@
 import { useState, useMemo } from "react";
-import { Search, Download, MapPin, Calendar, AlertTriangle } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Search,
+  Download,
+  MapPin,
+  Calendar,
+  AlertTriangle,
+} from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -30,7 +42,9 @@ export default function UserReportsPage({ incidents }: UserReportsPageProps) {
         incident.incident_type
           ?.toLowerCase()
           .includes(searchTerm.toLowerCase()) ||
-        incident.location_address?.toLowerCase().includes(searchTerm.toLowerCase());
+        incident.location_address
+          ?.toLowerCase()
+          .includes(searchTerm.toLowerCase());
       const matchesStatus =
         statusFilter === "all" || incident.status === statusFilter;
       return matchesSearch && matchesStatus;
@@ -96,7 +110,8 @@ export default function UserReportsPage({ incidents }: UserReportsPageProps) {
       {filteredIncidents.length > 0 ? (
         <div className="space-y-4">
           <div className="text-sm text-muted-foreground">
-            Showing {filteredIncidents.length} report{filteredIncidents.length !== 1 ? "s" : ""}
+            Showing {filteredIncidents.length} report
+            {filteredIncidents.length !== 1 ? "s" : ""}
           </div>
           {filteredIncidents.map((incident) => (
             <Card
@@ -140,25 +155,32 @@ export default function UserReportsPage({ incidents }: UserReportsPageProps) {
                     <div className="min-w-0">
                       <p className="text-xs text-muted-foreground">Reported</p>
                       <p className="text-sm font-medium text-foreground">
-                        {new Date(incident.time_report_submitted).toLocaleDateString(
-                          "en-US",
-                          { month: "short", day: "numeric", year: "numeric" }
-                        )}
+                        {new Date(
+                          incident.time_report_submitted,
+                        ).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        })}
                       </p>
                     </div>
                   </div>
                 </div>
 
                 {/* Victims Info (if available) */}
-                {incident.number_of_victims && incident.number_of_victims > 0 && (
-                  <div className="flex gap-2 rounded-md bg-orange-50 dark:bg-orange-950/20 p-3">
-                    <AlertTriangle className="h-4 w-4 text-orange-600 dark:text-orange-400 flex-shrink-0 mt-0.5" />
-                    <p className="text-sm text-orange-800 dark:text-orange-200">
-                      <span className="font-semibold">{incident.number_of_victims}</span> victim
-                      {incident.number_of_victims !== 1 ? "s" : ""} reported
-                    </p>
-                  </div>
-                )}
+                {incident.number_of_victims &&
+                  incident.number_of_victims > 0 && (
+                    <div className="flex gap-2 rounded-md bg-orange-50 dark:bg-orange-950/20 p-3">
+                      <AlertTriangle className="h-4 w-4 text-orange-600 dark:text-orange-400 flex-shrink-0 mt-0.5" />
+                      <p className="text-sm text-orange-800 dark:text-orange-200">
+                        <span className="font-semibold">
+                          {incident.number_of_victims}
+                        </span>{" "}
+                        victim
+                        {incident.number_of_victims !== 1 ? "s" : ""} reported
+                      </p>
+                    </div>
+                  )}
 
                 {/* AI Assessment - Show for analyzed incidents */}
                 {incident.status !== "Submitted" && (
@@ -190,7 +212,9 @@ export default function UserReportsPage({ incidents }: UserReportsPageProps) {
         <Card className="border-dashed border-border/50 bg-card/50">
           <CardContent className="flex flex-col items-center justify-center py-12">
             <AlertTriangle className="h-12 w-12 text-muted-foreground/30 mb-4" />
-            <p className="mb-2 text-lg font-semibold text-foreground">No reports found</p>
+            <p className="mb-2 text-lg font-semibold text-foreground">
+              No reports found
+            </p>
             <p className="text-center text-sm text-muted-foreground">
               {searchTerm || statusFilter !== "all"
                 ? "Try adjusting your search or filter"

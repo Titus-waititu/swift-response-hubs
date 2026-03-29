@@ -1,5 +1,18 @@
-import { Zap, AlertTriangle, CheckCircle2, Clock, AlertCircle, Brain } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Zap,
+  AlertTriangle,
+  CheckCircle2,
+  Clock,
+  AlertCircle,
+  Brain,
+} from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
 interface AIAssessmentCardProps {
@@ -57,13 +70,29 @@ export function AIAssessmentCard({
   const getSeverityColor = (sev: string) => {
     switch (sev) {
       case "Critical":
-        return { bg: "bg-red-100 dark:bg-red-900/30", badge: "destructive", icon: "🔴" };
+        return {
+          bg: "bg-red-100 dark:bg-red-900/30",
+          badge: "destructive",
+          icon: "🔴",
+        };
       case "High":
-        return { bg: "bg-orange-100 dark:bg-orange-900/30", badge: "secondary", icon: "🟠" };
+        return {
+          bg: "bg-orange-100 dark:bg-orange-900/30",
+          badge: "secondary",
+          icon: "🟠",
+        };
       case "Medium":
-        return { bg: "bg-yellow-100 dark:bg-yellow-900/30", badge: "default", icon: "🟡" };
+        return {
+          bg: "bg-yellow-100 dark:bg-yellow-900/30",
+          badge: "default",
+          icon: "🟡",
+        };
       default:
-        return { bg: "bg-green-100 dark:bg-green-900/30", badge: "outline", icon: "🟢" };
+        return {
+          bg: "bg-green-100 dark:bg-green-900/30",
+          badge: "outline",
+          icon: "🟢",
+        };
     }
   };
 
@@ -81,10 +110,14 @@ export function AIAssessmentCard({
               AI Assessment
             </p>
           </div>
-          <Badge variant={colors.badge as any}>{colors.icon} {severity}</Badge>
+          <Badge variant={colors.badge as any}>
+            {colors.icon} {severity}
+          </Badge>
         </div>
         {summary && (
-          <p className="text-xs text-slate-700 dark:text-slate-300 line-clamp-2">{summary}</p>
+          <p className="text-xs text-slate-700 dark:text-slate-300 line-clamp-2">
+            {summary}
+          </p>
         )}
       </div>
     );
@@ -118,7 +151,9 @@ export function AIAssessmentCard({
             <p className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase mb-1">
               Analysis
             </p>
-            <p className="text-sm text-slate-700 dark:text-slate-300">{summary}</p>
+            <p className="text-sm text-slate-700 dark:text-slate-300">
+              {summary}
+            </p>
           </div>
         )}
 
@@ -131,7 +166,8 @@ export function AIAssessmentCard({
                 Detected Injuries
               </p>
               <p className="text-sm font-medium text-slate-900 dark:text-slate-50">
-                {detectedInjuries} {detectedInjuries === 1 ? "person" : "people"}
+                {detectedInjuries}{" "}
+                {detectedInjuries === 1 ? "person" : "people"}
               </p>
             </div>
           </div>
@@ -165,7 +201,10 @@ export function AIAssessmentCard({
             </p>
             <ul className="space-y-2">
               {recommendations.map((rec, idx) => (
-                <li key={idx} className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-300">
+                <li
+                  key={idx}
+                  className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-300"
+                >
                   <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
                   <span>{rec}</span>
                 </li>
@@ -175,7 +214,8 @@ export function AIAssessmentCard({
         )}
 
         <p className="text-xs text-slate-500 dark:text-slate-500 italic">
-          💡 Tip: Use this AI assessment to guide your decisions, but always apply human judgment.
+          💡 Tip: Use this AI assessment to guide your decisions, but always
+          apply human judgment.
         </p>
       </CardContent>
     </Card>

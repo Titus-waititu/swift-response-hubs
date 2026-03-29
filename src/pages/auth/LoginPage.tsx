@@ -37,7 +37,7 @@ const LoginPage = () => {
         const errors = parsed.error.flatten().fieldErrors;
         const errorMessages = Object.values(errors).flat().filter(Boolean);
         toast.error(
-          errorMessages.join("\n") || "Please fix the errors in the form."
+          errorMessages.join("\n") || "Please fix the errors in the form.",
         );
         return {
           success: false,
@@ -148,7 +148,10 @@ const LoginPage = () => {
                     >
                       {(field) => (
                         <div className="space-y-2">
-                          <Label htmlFor="email" className="text-sm font-medium">
+                          <Label
+                            htmlFor="email"
+                            className="text-sm font-medium"
+                          >
                             Email
                           </Label>
                           <Input
@@ -187,7 +190,10 @@ const LoginPage = () => {
                     >
                       {(field) => (
                         <div className="space-y-2">
-                          <Label htmlFor="password" className="text-sm font-medium">
+                          <Label
+                            htmlFor="password"
+                            className="text-sm font-medium"
+                          >
                             Password
                           </Label>
                           <Input
@@ -221,13 +227,7 @@ const LoginPage = () => {
                         className="w-full h-10"
                         disabled={isSubmitting}
                       >
-                        {isSubmitting ? (
-                          <>
-                            Logging in...
-                          </>
-                        ) : (
-                          "Sign In"
-                        )}
+                        {isSubmitting ? <>Logging in...</> : "Sign In"}
                       </Button>
                     </div>
 

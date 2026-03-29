@@ -442,7 +442,10 @@ export default function ResponderDashboardView({
                             ]}
                             sceneHazards={
                               incident.severity_level === "Critical"
-                                ? ["High-impact collision", "Potential fire hazard"]
+                                ? [
+                                    "High-impact collision",
+                                    "Potential fire hazard",
+                                  ]
                                 : []
                             }
                             criticalNotes={

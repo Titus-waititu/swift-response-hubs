@@ -29,13 +29,13 @@ interface AIToolResult {
 
 /**
  * OfficerAIToolsPanel Component
- * 
+ *
  * Workspace for officers to use AI-powered tools:
  * - Extract Text: OCR on images for report data extraction
  * - Classify Severity: Analyze incident description and suggest severity level
  * - Analyze Accident: Full AI analysis of an incident
  * - Generate Report: Auto-generate formatted incident report
- * 
+ *
  * Used in OfficerDashboard as a dedicated AI tools workspace
  */
 export function OfficerAIToolsPanel() {
@@ -85,7 +85,11 @@ export function OfficerAIToolsPanel() {
 
   // Simulate Classify Severity
   const handleClassifySeverity = async () => {
-    setClassifyResult({ ...classifyResult, status: "loading", type: "classify" });
+    setClassifyResult({
+      ...classifyResult,
+      status: "loading",
+      type: "classify",
+    });
     try {
       // Simulate API call
       await new Promise((resolve) => setTimeout(resolve, 1500));
@@ -136,10 +140,7 @@ export function OfficerAIToolsPanel() {
             "Cervical Collars",
             "Trauma Supplies",
           ],
-          sceneHazards: [
-            "Active traffic area",
-            "Potential vehicle fire risk",
-          ],
+          sceneHazards: ["Active traffic area", "Potential vehicle fire risk"],
         },
         timestamp: new Date(),
       });
@@ -207,14 +208,19 @@ Status: UNDER_REVIEW`,
             <div>
               <CardTitle className="text-lg">AI Tools Workspace</CardTitle>
               <CardDescription>
-                AI-powered tools for incident analysis, classification, and report generation
+                AI-powered tools for incident analysis, classification, and
+                report generation
               </CardDescription>
             </div>
           </div>
         </CardHeader>
 
         <CardContent>
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <Tabs
+            value={activeTab}
+            onValueChange={setActiveTab}
+            className="w-full"
+          >
             <TabsList className="grid w-full grid-cols-4 border border-border/70 bg-secondary/75">
               <TabsTrigger
                 value="extract"
@@ -282,7 +288,8 @@ Status: UNDER_REVIEW`,
                       </CardTitle>
                     </div>
                     <p className="text-xs text-green-800 dark:text-green-200">
-                      Confidence: {(extractResult.data.confidence * 100).toFixed(0)}%
+                      Confidence:{" "}
+                      {(extractResult.data.confidence * 100).toFixed(0)}%
                     </p>
                   </CardHeader>
                   <CardContent className="space-y-3">
@@ -355,7 +362,8 @@ Status: UNDER_REVIEW`,
                       </span>
                     </div>
                     <p className="text-xs text-blue-800 dark:text-blue-200">
-                      Confidence: {(classifyResult.data.confidence * 100).toFixed(0)}%
+                      Confidence:{" "}
+                      {(classifyResult.data.confidence * 100).toFixed(0)}%
                     </p>
                   </CardHeader>
                   <CardContent className="space-y-3">
@@ -366,7 +374,10 @@ Status: UNDER_REVIEW`,
                       <ul className="space-y-1">
                         {classifyResult.data.reasoning.map(
                           (reason: string, idx: number) => (
-                            <li key={idx} className="text-xs text-muted-foreground">
+                            <li
+                              key={idx}
+                              className="text-xs text-muted-foreground"
+                            >
                               • {reason}
                             </li>
                           ),

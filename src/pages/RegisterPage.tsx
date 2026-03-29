@@ -8,7 +8,10 @@ import { toast } from "sonner";
 import Navigation from "@/components/premium/Navigation";
 import Footer from "@/components/premium/Footer";
 import { createUserAccount, signInToBackend } from "@/lib/backend-api";
-import { registerSchema, type RegisterFormValues } from "@/lib/validation-schemas";
+import {
+  registerSchema,
+  type RegisterFormValues,
+} from "@/lib/validation-schemas";
 
 const USER_SESSION_KEY = "swift-response-hub/user-session/v1";
 
@@ -28,7 +31,7 @@ export default function RegisterPage() {
         const errors = parsed.error.flatten().fieldErrors;
         const errorMessages = Object.values(errors).flat().filter(Boolean);
         toast.error(
-          errorMessages.join("\n") || "Please fix the errors in the form."
+          errorMessages.join("\n") || "Please fix the errors in the form.",
         );
         return { success: false, errors };
       }
@@ -57,12 +60,18 @@ export default function RegisterPage() {
             refreshToken: authResponse.tokens.refreshToken,
           };
 
-          window.localStorage.setItem(USER_SESSION_KEY, JSON.stringify(session));
+          window.localStorage.setItem(
+            USER_SESSION_KEY,
+            JSON.stringify(session),
+          );
           toast.success("Account created successfully!");
           navigate("/dashboard");
         }
       } catch (err) {
-        const msg = err instanceof Error ? err.message : "Registration failed. Please try again.";
+        const msg =
+          err instanceof Error
+            ? err.message
+            : "Registration failed. Please try again.";
         toast.error(msg);
       }
     },
@@ -263,7 +272,9 @@ export default function RegisterPage() {
                           />
                           <button
                             type="button"
-                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                            onClick={() =>
+                              setShowConfirmPassword(!showConfirmPassword)
+                            }
                             className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
                             disabled={isSubmitting}
                           >

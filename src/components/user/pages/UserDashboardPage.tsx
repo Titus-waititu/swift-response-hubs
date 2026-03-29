@@ -207,7 +207,7 @@ export default function UserDashboardPage({
                                   }`}
                                 />
                               )}
-                              
+
                               <div
                                 className={`relative z-10 flex h-8 w-8 items-center justify-center rounded-full transition-all ${
                                   isCompleted
@@ -220,7 +220,9 @@ export default function UserDashboardPage({
                                 <StepIcon className="h-4 w-4" />
                               </div>
                               <div className="mt-3 flex flex-col items-center text-center px-1">
-                                <p className={`text-xs font-semibold whitespace-nowrap ${isCurrent ? "text-blue-600 dark:text-blue-400" : isCompleted ? "text-slate-900 dark:text-white" : "text-slate-500 dark:text-slate-400"}`}>
+                                <p
+                                  className={`text-xs font-semibold whitespace-nowrap ${isCurrent ? "text-blue-600 dark:text-blue-400" : isCompleted ? "text-slate-900 dark:text-white" : "text-slate-500 dark:text-slate-400"}`}
+                                >
                                   {step.label}
                                 </p>
                                 <p className="mt-1 text-[10px] text-slate-500 dark:text-slate-400 hidden sm:block text-center balance">

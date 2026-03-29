@@ -71,7 +71,7 @@ export const useAccidentAnalysis = (accidentData: any) => {
   return useMutation({
     mutationFn: async (data: any = accidentData) => {
       if (!data) throw new Error("No accident data provided");
-      
+
       const response = await apiClient.post("/ai/analyze-accident", {
         description: data.description,
         latitude: data.latitude,
@@ -80,7 +80,7 @@ export const useAccidentAnalysis = (accidentData: any) => {
         numberOfInjuries: data.numberOfInjuries,
         numberOfVehicles: data.numberOfVehicles,
       });
-      
+
       return response;
     },
   });

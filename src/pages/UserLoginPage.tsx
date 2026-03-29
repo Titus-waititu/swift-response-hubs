@@ -41,12 +41,14 @@ export default function UserLoginPage() {
     },
     onSubmit: async ({ value }) => {
       setError("");
-      
+
       const parsed = loginSchema.safeParse(value);
       if (!parsed.success) {
         const errors = parsed.error.flatten().fieldErrors;
         const errorMessages = Object.values(errors).flat().filter(Boolean);
-        toast.error(errorMessages.join("\n") || "Please fix the errors in the form.");
+        toast.error(
+          errorMessages.join("\n") || "Please fix the errors in the form.",
+        );
         return;
       }
 
@@ -66,7 +68,10 @@ export default function UserLoginPage() {
             refreshToken: authResponse.tokens.refreshToken,
           };
 
-          window.localStorage.setItem(USER_SESSION_KEY, JSON.stringify(session));
+          window.localStorage.setItem(
+            USER_SESSION_KEY,
+            JSON.stringify(session),
+          );
           toast.success(`Welcome back, ${authResponse.user.fullName}!`);
           navigate("/user-dashboard");
         } else {
@@ -74,7 +79,9 @@ export default function UserLoginPage() {
         }
       } catch (err) {
         setError(
-          err instanceof Error ? err.message : "Login failed. Please try again.",
+          err instanceof Error
+            ? err.message
+            : "Login failed. Please try again.",
         );
       }
     },
@@ -107,12 +114,12 @@ export default function UserLoginPage() {
             {/* Form */}
             <form.Subscribe>
               {({ isSubmitting }) => (
-                <form 
+                <form
                   onSubmit={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
                     form.handleSubmit();
-                  }} 
+                  }}
                   className="space-y-6"
                 >
                   {/* Email */}
@@ -121,8 +128,10 @@ export default function UserLoginPage() {
                     validators={{
                       onChange: ({ value }) => {
                         const parsed = loginSchema.shape.email.safeParse(value);
-                        return parsed.success ? undefined : parsed.error.issues[0].message;
-                      }
+                        return parsed.success
+                          ? undefined
+                          : parsed.error.issues[0].message;
+                      },
                     }}
                   >
                     {(field) => (
@@ -143,13 +152,17 @@ export default function UserLoginPage() {
                             onBlur={field.handleBlur}
                             onChange={(e) => field.handleChange(e.target.value)}
                             className={`pl-10 bg-blue-50 dark:bg-blue-800 border-blue-200 dark:border-blue-700 ${
-                              field.state.meta.errors.length ? "border-red-500 focus-visible:ring-red-500" : ""
+                              field.state.meta.errors.length
+                                ? "border-red-500 focus-visible:ring-red-500"
+                                : ""
                             }`}
                             disabled={isSubmitting}
                           />
                         </div>
                         {field.state.meta.errors.length > 0 && (
-                          <p className="text-sm text-red-500 mt-1">{field.state.meta.errors.join(", ")}</p>
+                          <p className="text-sm text-red-500 mt-1">
+                            {field.state.meta.errors.join(", ")}
+                          </p>
                         )}
                       </div>
                     )}
@@ -160,9 +173,12 @@ export default function UserLoginPage() {
                     name="password"
                     validators={{
                       onChange: ({ value }) => {
-                        const parsed = loginSchema.shape.password.safeParse(value);
-                        return parsed.success ? undefined : parsed.error.issues[0].message;
-                      }
+                        const parsed =
+                          loginSchema.shape.password.safeParse(value);
+                        return parsed.success
+                          ? undefined
+                          : parsed.error.issues[0].message;
+                      },
                     }}
                   >
                     {(field) => (
@@ -183,7 +199,9 @@ export default function UserLoginPage() {
                             onBlur={field.handleBlur}
                             onChange={(e) => field.handleChange(e.target.value)}
                             className={`pl-10 pr-10 bg-blue-50 dark:bg-blue-800 border-blue-200 dark:border-blue-700 ${
-                              field.state.meta.errors.length ? "border-red-500 focus-visible:ring-red-500" : ""
+                              field.state.meta.errors.length
+                                ? "border-red-500 focus-visible:ring-red-500"
+                                : ""
                             }`}
                             disabled={isSubmitting}
                           />
@@ -193,11 +211,17 @@ export default function UserLoginPage() {
                             className="absolute right-3 top-3 text-blue-400 hover:text-blue-600 disabled:opacity-50"
                             disabled={isSubmitting}
                           >
-                            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                            {showPassword ? (
+                              <EyeOff size={18} />
+                            ) : (
+                              <Eye size={18} />
+                            )}
                           </button>
                         </div>
                         {field.state.meta.errors.length > 0 && (
-                          <p className="text-sm text-red-500 mt-1">{field.state.meta.errors.join(", ")}</p>
+                          <p className="text-sm text-red-500 mt-1">
+                            {field.state.meta.errors.join(", ")}
+                          </p>
                         )}
                       </div>
                     )}

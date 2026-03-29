@@ -107,7 +107,7 @@ export default function ReportPage() {
         const errors = parsed.error.flatten().fieldErrors;
         const errorMessages = Object.values(errors).flat().filter(Boolean);
         toast.error(
-          errorMessages.join("\n") || "Please fix the errors in the form."
+          errorMessages.join("\n") || "Please fix the errors in the form.",
         );
         return { success: false, errors };
       }
@@ -214,250 +214,252 @@ export default function ReportPage() {
 
   return (
     <form.Subscribe selector={(state) => [state.isSubmitting]}>
-    {([isSubmitting]) => (
-    <div className="min-h-screen bg-background">
-      <AppHeader
-        brandTo="/report"
-        brandLabel="Accident Report"
-        navItems={[
-          { label: "Accident Intake", path: "/report", icon: FileText },
-        ]}
-      />
+      {([isSubmitting]) => (
+        <div className="min-h-screen bg-background">
+          <AppHeader
+            brandTo="/report"
+            brandLabel="Accident Report"
+            navItems={[
+              { label: "Accident Intake", path: "/report", icon: FileText },
+            ]}
+          />
 
-      <div className="relative overflow-hidden">
-        <div className="absolute inset-0 grid-pattern opacity-25" />
-        <div className="absolute left-[-8rem] top-20 h-64 w-64 rounded-full bg-primary/10 blur-3xl" />
-        <div className="absolute right-[-6rem] top-32 h-72 w-72 rounded-full bg-warning/10 blur-3xl" />
+          <div className="relative overflow-hidden">
+            <div className="absolute inset-0 grid-pattern opacity-25" />
+            <div className="absolute left-[-8rem] top-20 h-64 w-64 rounded-full bg-primary/10 blur-3xl" />
+            <div className="absolute right-[-6rem] top-32 h-72 w-72 rounded-full bg-warning/10 blur-3xl" />
 
-        <div className="relative mx-auto max-w-7xl px-4 py-8 md:py-12">
-          {/* Header */}
-          <div className="mb-8 max-w-3xl">
-            <h1 className="text-3xl font-black tracking-tight text-foreground md:text-5xl">
-              Report an accident with detail for immediate response
-            </h1>
-            <p className="mt-4 text-base leading-7 text-muted-foreground">
-              Move through the intake steps and dispatch your report directly
-              into the live queue.
-            </p>
-          </div>
+            <div className="relative mx-auto max-w-7xl px-4 py-8 md:py-12">
+              {/* Header */}
+              <div className="mb-8 max-w-3xl">
+                <h1 className="text-3xl font-black tracking-tight text-foreground md:text-5xl">
+                  Report an accident with detail for immediate response
+                </h1>
+                <p className="mt-4 text-base leading-7 text-muted-foreground">
+                  Move through the intake steps and dispatch your report
+                  directly into the live queue.
+                </p>
+              </div>
 
-          {/* Main Form */}
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              form.handleSubmit();
-            }}
-            className="grid gap-6 lg:grid-cols-[1fr]"
-          >
-            <Card className="overflow-hidden border-border/80 bg-card/85 backdrop-blur-sm">
-              <CardHeader>
-                <div className="flex items-center gap-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-border/70 bg-secondary/85">
-                    <currentStep.icon className="h-6 w-6 text-primary" />
-                  </div>
-                  <div>
-                    <p className="font-mono text-xs uppercase text-primary">
-                      {currentStep.eyebrow}
-                    </p>
-                    <CardTitle className="text-xl">
-                      {currentStep.title}
-                    </CardTitle>
-                    <CardDescription>{currentStep.description}</CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-
-              <CardContent className="space-y-6 pb-8">
-                {/* Step 0: Reporter Info */}
-                {step === 0 && (
-                  <div className="space-y-6">
-                    <FormField
-                      label="Full Name"
-                      fieldName="reporter_name"
-                      form={form}
-                      type="text"
-                      placeholder="John Doe"
-                      disabled={isSubmitting}
-                    />
-                    <FormField
-                      label="Phone Number"
-                      fieldName="phone_number"
-                      form={form}
-                      type="tel"
-                      placeholder="+1 (555) 000-0000"
-                      disabled={isSubmitting}
-                    />
-                    <FormField
-                      label="Email (Optional)"
-                      fieldName="email"
-                      form={form}
-                      type="email"
-                      placeholder="your@email.com"
-                      disabled={isSubmitting}
-                    />
-                  </div>
-                )}
-
-                {/* Step 1: Accident Details */}
-                {step === 1 && (
-                  <div className="space-y-6">
-                    <SelectField
-                      label="Incident Type"
-                      fieldName="incident_type"
-                      form={form}
-                      options={INCIDENT_TYPES}
-                      disabled={isSubmitting}
-                    />
-                    <SelectField
-                      label="Severity Level"
-                      fieldName="severity_level"
-                      form={form}
-                      options={SEVERITY_LEVELS}
-                      disabled={isSubmitting}
-                    />
-                    <FormField
-                      label="Description"
-                      fieldName="short_description"
-                      form={form}
-                      type="textarea"
-                      placeholder="Describe what happened..."
-                      disabled={isSubmitting}
-                    />
-                    <div className="grid grid-cols-2 gap-4">
-                      <FormField
-                        label="Number of Victims"
-                        fieldName="number_of_victims"
-                        form={form}
-                        type="number"
-                        placeholder="0"
-                        disabled={isSubmitting}
-                      />
-                      <FormField
-                        label="Vehicles Involved"
-                        fieldName="vehicles_involved"
-                        form={form}
-                        type="number"
-                        placeholder="0"
-                        disabled={isSubmitting}
-                      />
+              {/* Main Form */}
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  form.handleSubmit();
+                }}
+                className="grid gap-6 lg:grid-cols-[1fr]"
+              >
+                <Card className="overflow-hidden border-border/80 bg-card/85 backdrop-blur-sm">
+                  <CardHeader>
+                    <div className="flex items-center gap-4">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-border/70 bg-secondary/85">
+                        <currentStep.icon className="h-6 w-6 text-primary" />
+                      </div>
+                      <div>
+                        <p className="font-mono text-xs uppercase text-primary">
+                          {currentStep.eyebrow}
+                        </p>
+                        <CardTitle className="text-xl">
+                          {currentStep.title}
+                        </CardTitle>
+                        <CardDescription>
+                          {currentStep.description}
+                        </CardDescription>
+                      </div>
                     </div>
-                  </div>
-                )}
+                  </CardHeader>
 
-                {/* Step 2: Location */}
-                {step === 2 && (
-                  <div className="space-y-6">
-                    <FormField
-                      label="Location Address"
-                      fieldName="location_address"
-                      form={form}
-                      type="text"
-                      placeholder="123 Main St, City, State"
-                      disabled={isSubmitting}
-                    />
-                    <div className="grid grid-cols-2 gap-4">
-                      <FormField
-                        label="Latitude"
-                        fieldName="gps_latitude"
-                        form={form}
-                        type="number"
-                        placeholder="-90 to 90"
-                        disabled={isSubmitting}
-                        step="any"
-                      />
-                      <FormField
-                        label="Longitude"
-                        fieldName="gps_longitude"
-                        form={form}
-                        type="number"
-                        placeholder="-180 to 180"
-                        disabled={isSubmitting}
-                        step="any"
-                      />
-                    </div>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={getLocationAuto}
-                      disabled={isSubmitting}
-                      className="w-full"
-                    >
-                      {locationAttempted
-                        ? "Re-detect Location"
-                        : "Auto-Detect Location"}
-                    </Button>
-                  </div>
-                )}
+                  <CardContent className="space-y-6 pb-8">
+                    {/* Step 0: Reporter Info */}
+                    {step === 0 && (
+                      <div className="space-y-6">
+                        <FormField
+                          label="Full Name"
+                          fieldName="reporter_name"
+                          form={form}
+                          type="text"
+                          placeholder="John Doe"
+                          disabled={isSubmitting}
+                        />
+                        <FormField
+                          label="Phone Number"
+                          fieldName="phone_number"
+                          form={form}
+                          type="tel"
+                          placeholder="+1 (555) 000-0000"
+                          disabled={isSubmitting}
+                        />
+                        <FormField
+                          label="Email (Optional)"
+                          fieldName="email"
+                          form={form}
+                          type="email"
+                          placeholder="your@email.com"
+                          disabled={isSubmitting}
+                        />
+                      </div>
+                    )}
 
-                {/* Step 3: Time & Evidence */}
-                {step === 3 && (
-                  <div className="space-y-6">
-                    <FormField
-                      label="Time of Incident"
-                      fieldName="time_of_incident"
-                      form={form}
-                      type="datetime-local"
-                      disabled={isSubmitting}
-                    />
-                    <div className="rounded-lg border border-border/50 bg-secondary/30 p-4">
-                      <p className="text-sm text-muted-foreground">
-                        Photos can be attached during submission. Maximum 5
-                        files, 10MB each.
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
+                    {/* Step 1: Accident Details */}
+                    {step === 1 && (
+                      <div className="space-y-6">
+                        <SelectField
+                          label="Incident Type"
+                          fieldName="incident_type"
+                          form={form}
+                          options={INCIDENT_TYPES}
+                          disabled={isSubmitting}
+                        />
+                        <SelectField
+                          label="Severity Level"
+                          fieldName="severity_level"
+                          form={form}
+                          options={SEVERITY_LEVELS}
+                          disabled={isSubmitting}
+                        />
+                        <FormField
+                          label="Description"
+                          fieldName="short_description"
+                          form={form}
+                          type="textarea"
+                          placeholder="Describe what happened..."
+                          disabled={isSubmitting}
+                        />
+                        <div className="grid grid-cols-2 gap-4">
+                          <FormField
+                            label="Number of Victims"
+                            fieldName="number_of_victims"
+                            form={form}
+                            type="number"
+                            placeholder="0"
+                            disabled={isSubmitting}
+                          />
+                          <FormField
+                            label="Vehicles Involved"
+                            fieldName="vehicles_involved"
+                            form={form}
+                            type="number"
+                            placeholder="0"
+                            disabled={isSubmitting}
+                          />
+                        </div>
+                      </div>
+                    )}
 
-              {/* Navigation */}
-              <CardContent className="border-t border-border/50 bg-secondary/30 p-6">
-                <div className="flex items-center justify-between gap-4">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => step > 0 && setStep(step - 1)}
-                    disabled={step === 0 || isSubmitting}
-                  >
-                    <ChevronLeft className="mr-2 h-4 w-4" />
-                    Previous
-                  </Button>
+                    {/* Step 2: Location */}
+                    {step === 2 && (
+                      <div className="space-y-6">
+                        <FormField
+                          label="Location Address"
+                          fieldName="location_address"
+                          form={form}
+                          type="text"
+                          placeholder="123 Main St, City, State"
+                          disabled={isSubmitting}
+                        />
+                        <div className="grid grid-cols-2 gap-4">
+                          <FormField
+                            label="Latitude"
+                            fieldName="gps_latitude"
+                            form={form}
+                            type="number"
+                            placeholder="-90 to 90"
+                            disabled={isSubmitting}
+                            step="any"
+                          />
+                          <FormField
+                            label="Longitude"
+                            fieldName="gps_longitude"
+                            form={form}
+                            type="number"
+                            placeholder="-180 to 180"
+                            disabled={isSubmitting}
+                            step="any"
+                          />
+                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={getLocationAuto}
+                          disabled={isSubmitting}
+                          className="w-full"
+                        >
+                          {locationAttempted
+                            ? "Re-detect Location"
+                            : "Auto-Detect Location"}
+                        </Button>
+                      </div>
+                    )}
 
-                  <div className="text-sm text-muted-foreground">
-                    Step {step + 1} of {stepConfig.length}
-                  </div>
+                    {/* Step 3: Time & Evidence */}
+                    {step === 3 && (
+                      <div className="space-y-6">
+                        <FormField
+                          label="Time of Incident"
+                          fieldName="time_of_incident"
+                          form={form}
+                          type="datetime-local"
+                          disabled={isSubmitting}
+                        />
+                        <div className="rounded-lg border border-border/50 bg-secondary/30 p-4">
+                          <p className="text-sm text-muted-foreground">
+                            Photos can be attached during submission. Maximum 5
+                            files, 10MB each.
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
 
-                  {step < stepConfig.length - 1 ? (
-                    <Button
-                      type="button"
-                      onClick={() => setStep(step + 1)}
-                      disabled={isSubmitting}
-                    >
-                      Next
-                      <ChevronRight className="ml-2 h-4 w-4" />
-                    </Button>
-                  ) : (
-                    <Button type="submit" disabled={isSubmitting}>
-                      {isSubmitting ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Submitting...
-                        </>
-                      ) : (
-                        <>
-                          Submit Report
+                  {/* Navigation */}
+                  <CardContent className="border-t border-border/50 bg-secondary/30 p-6">
+                    <div className="flex items-center justify-between gap-4">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => step > 0 && setStep(step - 1)}
+                        disabled={step === 0 || isSubmitting}
+                      >
+                        <ChevronLeft className="mr-2 h-4 w-4" />
+                        Previous
+                      </Button>
+
+                      <div className="text-sm text-muted-foreground">
+                        Step {step + 1} of {stepConfig.length}
+                      </div>
+
+                      {step < stepConfig.length - 1 ? (
+                        <Button
+                          type="button"
+                          onClick={() => setStep(step + 1)}
+                          disabled={isSubmitting}
+                        >
+                          Next
                           <ChevronRight className="ml-2 h-4 w-4" />
-                        </>
+                        </Button>
+                      ) : (
+                        <Button type="submit" disabled={isSubmitting}>
+                          {isSubmitting ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Submitting...
+                            </>
+                          ) : (
+                            <>
+                              Submit Report
+                              <ChevronRight className="ml-2 h-4 w-4" />
+                            </>
+                          )}
+                        </Button>
                       )}
-                    </Button>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </form>
+                    </div>
+                  </CardContent>
+                </Card>
+              </form>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
-    )}
+      )}
     </form.Subscribe>
   );
 }
@@ -485,9 +487,12 @@ function FormField({
       name={fieldName}
       validators={{
         onChange: ({ value }: any) => {
-          const parsed = reportFormSchema.shape[fieldName as keyof ReportFormValues].safeParse(value);
+          const parsed =
+            reportFormSchema.shape[
+              fieldName as keyof ReportFormValues
+            ].safeParse(value);
           return parsed.success ? undefined : parsed.error.issues[0].message;
-        }
+        },
       }}
     >
       {(field: any) => (
@@ -501,7 +506,11 @@ function FormField({
               onChange={(e) => field.handleChange(e.target.value)}
               onBlur={field.handleBlur}
               disabled={disabled}
-              className={field.state.meta.errors.length ? "border-red-500 focus:ring-red-500" : ""}
+              className={
+                field.state.meta.errors.length
+                  ? "border-red-500 focus:ring-red-500"
+                  : ""
+              }
             />
           ) : (
             <Input
@@ -512,7 +521,11 @@ function FormField({
               onChange={(e) => field.handleChange(e.target.value)}
               onBlur={field.handleBlur}
               disabled={disabled}
-              className={field.state.meta.errors.length ? "border-red-500 focus:ring-red-500" : ""}
+              className={
+                field.state.meta.errors.length
+                  ? "border-red-500 focus:ring-red-500"
+                  : ""
+              }
               step={step}
             />
           )}
@@ -545,9 +558,12 @@ function SelectField({
       name={fieldName}
       validators={{
         onChange: ({ value }: any) => {
-          const parsed = reportFormSchema.shape[fieldName as keyof ReportFormValues].safeParse(value);
+          const parsed =
+            reportFormSchema.shape[
+              fieldName as keyof ReportFormValues
+            ].safeParse(value);
           return parsed.success ? undefined : parsed.error.issues[0].message;
-        }
+        },
       }}
     >
       {(field: any) => (
@@ -558,7 +574,9 @@ function SelectField({
             onValueChange={(value) => field.handleChange(value)}
             disabled={disabled}
           >
-            <SelectTrigger className={field.state.meta.errors.length ? "border-red-500" : ""}>
+            <SelectTrigger
+              className={field.state.meta.errors.length ? "border-red-500" : ""}
+            >
               <SelectValue placeholder={`Select ${label.toLowerCase()}`} />
             </SelectTrigger>
             <SelectContent>

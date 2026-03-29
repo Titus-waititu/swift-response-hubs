@@ -212,7 +212,7 @@ export default function RespondersManagementPage({}: RespondersManagementPagePro
     }
 
     broadcastMutation.mutate(
-      { message: broadcastMessage },
+      { title: broadcastMessage },
       {
         onSuccess: () => {
           toast.success(

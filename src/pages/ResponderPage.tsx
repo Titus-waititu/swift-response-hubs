@@ -7,13 +7,14 @@ import IncidentDetailPanel from "@/components/IncidentDetailPanel";
 import ResponderDashboardView from "@/components/responder/ResponderDashboardView";
 import type { ResponderSession } from "@/components/responder/ResponderTypes";
 import { toast } from "sonner";
-import { useGetAccidents } from "@/hooks/useAccidents";
+import { useGetAccidents, useUpdateResponderResponse, useNotifyDispatcherOfResponse } from "@/hooks/useAccidents";
+import { useRealtimeUpdates } from "@/hooks/useRealtimeUpdates";
 import {
   useGetMyPendingDispatches,
   useAcceptDispatch,
   useRejectDispatch,
 } from "@/hooks/useResponders";
-import { mapBackendAccidentToIncident } from "@/lib/backend-api";
+import { mapBackendAccidentToIncident } from "@/lib/backend-api"
 
 const RESPONDER_SESSION_KEY = "swift-response-hub/responder-session/v1";
 
@@ -45,16 +46,25 @@ export default function ResponderPage() {
     }
   });
 
-  const [activeTab, setActiveTab] = useState<"active" | "completed">("active");
+  const [activeTab, setActiveTab] = useState<"active" | "completed" | "notifications">("active");
   const [selectedIncidentId, setSelectedIncidentId] = useState<string | null>(
     null,
   );
 
   // React Query hooks
-  const { data: accidentsResponse } = useGetAccidents();
+  const { data: accidentsResponse, refetch: refetchAccidents } = useGetAccidents();
   const { data: pendingDispatches = [] } = useGetMyPendingDispatches();
   const acceptDispatchMutation = useAcceptDispatch();
   const rejectDispatchMutation = useRejectDispatch();
+  const updateResponderMutation = useUpdateResponderResponse();
+  const notifyDispatcherMutation = useNotifyDispatcherOfResponse();
+
+  // Enable real-time polling
+  useRealtimeUpdates({
+    queryKeys: [["accidents"]],
+    interval: 5000,
+    enabled: !!session,
+  });
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -131,6 +141,38 @@ export default function ResponderPage() {
     });
   };
 
+  const handleStatusUpdate = async (incident: any, newStatus: string) => {
+    try {
+      const statusMap: Record<string, string> = {
+        "Accepted": "Accepted",
+        "En Route": "In Progress",
+        "On Scene": "In Progress",
+        "Completed": "Resolved",
+      };
+
+      const backendStatus = statusMap[newStatus] || newStatus;
+      const accidentId = incident.backend_accident_id || incident.report_id;
+
+      await updateResponderMutation.mutateAsync({
+        accidentId,
+        description: `Responder status: ${newStatus}`,
+      });
+
+      // Notify dispatcher
+      await notifyDispatcherMutation.mutateAsync({
+        title: `Responder Update - ${incident.incident_type}`,
+        message: `Responder status updated to ${newStatus} at ${incident.location_address}`,
+        priority: newStatus === "On Scene" ? "urgent" : "high",
+        accidentId,
+      });
+
+      toast.success(`Status updated to ${newStatus}`);
+      refetchAccidents();
+    } catch (error: any) {
+      toast.error(error?.message || "Failed to update status");
+    }
+  };
+
   const handleLogout = () => {
     window.localStorage.removeItem(RESPONDER_SESSION_KEY);
     setSelectedIncidentId(null);
@@ -186,6 +228,7 @@ export default function ResponderPage() {
         onSelectIncident={setSelectedIncidentId}
         onAcceptDispatch={handleAcceptDispatch}
         onRejectDispatch={handleRejectDispatch}
+        onStatusUpdate={handleStatusUpdate}
         onLogout={handleLogout}
       />
     </div>

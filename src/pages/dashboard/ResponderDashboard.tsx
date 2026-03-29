@@ -7,6 +7,7 @@ import ResponderDashboardPage from "@/components/responder/pages/ResponderDashbo
 import ResponderAssignmentsPage from "@/components/responder/pages/ResponderAssignmentsPage";
 import ResponderProfilePage from "@/components/responder/pages/ResponderProfilePage";
 import { useGetAccidents } from "@/hooks/useAccidents";
+import { useRealtimeUpdates } from "@/hooks/useRealtimeUpdates";
 import { mapBackendAccidentToIncident } from "@/lib/backend-api";
 import type { IncidentReport } from "@/types/incident";
 
@@ -33,13 +34,20 @@ const ResponderDashboard = () => {
     localStorage.setItem("responder-theme", isDarkMode ? "dark" : "light");
   }, [isDarkMode]);
 
-  const { data: accidents } = useGetAccidents();
+  const { data: accidents, refetch: refetchAccidents } = useGetAccidents();
   const accidentsArray = Array.isArray(accidents)
     ? accidents
     : accidents?.data || [];
   const incidents: IncidentReport[] = accidentsArray.map(
     mapBackendAccidentToIncident,
   );
+
+  // Enable real-time polling for incidents
+  useRealtimeUpdates({
+    queryKeys: [["accidents"]],
+    interval: 5000,
+    enabled: !!user,
+  });
 
   const handleLogout = () => {
     logout();

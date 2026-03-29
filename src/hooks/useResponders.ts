@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "../api/client";
+import { useAuthStore } from "@/stores/authStore";
 
 // Query Keys
 export const respondersKeys = {
@@ -233,21 +234,26 @@ export const useDispatchResponder = () => {
 
 export const useBroadcastToResponders = () => {
   const queryClient = useQueryClient();
+  const { user } = useAuthStore();
+
   return useMutation({
     mutationFn: ({
+      title,
       message,
-      type = "alert",
+      type = "system_notification",
       priority = "high",
     }: {
-      message: string;
-      type?: "alert" | "info" | "warning" | "success";
+      title: string;
+      message?: string;
+      type?: "accident_reported" | "accident_assigned" | "status_update" | "emergency_alert" | "system_notification" | "dispatch_instruction" | "responder_assignment";
       priority?: "low" | "medium" | "high" | "critical";
     }) =>
       apiClient.post("/notifications", {
-        message,
+        userId: user?.id,
+        title,
+        message: message || title,
         type,
         priority,
-        recipients: "responder", // Send to responder role
       }),
     onSuccess: (data) => {
       console.log("Broadcast sent successfully:", data);

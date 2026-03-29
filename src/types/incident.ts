@@ -1,7 +1,13 @@
 export type IncidentStatus =
   | "Submitted"
   | "Under Review"
+  | "Dispatched"
+  | "In Progress"
+  | "Accepted"
+  | "En Route"
+  | "On Scene"
   | "Resolved"
+  | "Completed"
   | "Closed";
 
 export type IncidentType =
@@ -25,21 +31,29 @@ export interface IncidentReport {
   status: IncidentStatus;
   reporter_name: string;
   phone_number: string;
+  phone_number_reporter?: string;
   email?: string;
   incident_type: IncidentType;
   severity_level: SeverityLevel;
   short_description: string;
+  detailed_description?: string;
   number_of_victims?: number;
   vehicles_involved?: number;
+  number_of_vehicles?: number;
   gps_latitude: number;
   gps_longitude: number;
+  latitude?: number;
+  longitude?: number;
   location_address: string;
   photos: string[];
+  image_urls?: string[];
   time_of_incident: string;
   time_report_submitted: string;
   created_at: string;
   updated_at: string;
   resolved_time?: string;
+  ai_insights?: string;
+  assigned_to?: string;
 }
 
 export const INCIDENT_TYPES: IncidentType[] = [

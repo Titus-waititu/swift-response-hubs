@@ -234,6 +234,8 @@ export default function ResponderDashboardPage({
                     <div className="mt-2 p-3 bg-slate-50 dark:bg-slate-900/30 rounded-lg">
                       <StatusHistoryDisplay
                         createdAt={incident.created_at || ""}
+                        currentStatus={incident.short_description?.includes("Status:") ? incident.short_description : undefined}
+                        statusSelectedAt={incident.updated_at ? new Date(incident.updated_at) : undefined}
                         statusColor="bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-200"
                         compact={false}
                       />

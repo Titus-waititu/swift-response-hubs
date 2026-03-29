@@ -1,6 +1,7 @@
-import { Search, Bell, Moon, Sun, LogOut, User } from "lucide-react";
+import { Search, Moon, Sun, LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import NotificationsDropdown from "@/components/NotificationsDropdown";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -39,19 +40,8 @@ export default function ResponderTopNav({
 
         {/* Right Section */}
         <div className="flex items-center gap-4">
-          {/* Alerts */}
-          <div className="relative">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-teal-700 dark:text-teal-300 hover:text-teal-950 dark:hover:text-teal-50"
-            >
-              <Bell className="h-5 w-5" />
-              {criticalIncidentCount > 0 && (
-                <span className="absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full animate-pulse" />
-              )}
-            </Button>
-          </div>
+          {/* Notifications */}
+          <NotificationsDropdown />
 
           {/* Theme Toggle */}
           <Button

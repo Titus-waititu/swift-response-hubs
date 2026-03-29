@@ -172,7 +172,6 @@ export const useNotifyDispatcherOfResponse = () => {
         message,
         priority: priority || "high",
         accidentId,
-        recipients: "dispatcher",
       }),
     onSuccess: () => {
       console.log("Dispatcher notified of response update");

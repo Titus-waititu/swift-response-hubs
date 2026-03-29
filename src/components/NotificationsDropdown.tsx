@@ -72,11 +72,20 @@ export default function NotificationsDropdown() {
     switch (type) {
       case "alert":
       case "critical":
+      case "emergency_alert":
         return <AlertCircle className="h-4 w-4 text-red-500" />;
       case "success":
         return <CheckCircle className="h-4 w-4 text-green-500" />;
       case "warning":
         return <AlertCircle className="h-4 w-4 text-yellow-500" />;
+      case "status_update":
+      case "dispatch_instruction":
+      case "responder_assignment":
+      case "accident_assigned":
+        return <Info className="h-4 w-4 text-teal-500" />;
+      case "accident_reported":
+        return <AlertCircle className="h-4 w-4 text-blue-500" />;
+      case "system_notification":
       case "info":
       default:
         return <Info className="h-4 w-4 text-blue-500" />;
@@ -87,11 +96,20 @@ export default function NotificationsDropdown() {
     switch (type) {
       case "alert":
       case "critical":
+      case "emergency_alert":
         return "bg-red-50 dark:bg-red-950/30";
       case "success":
         return "bg-green-50 dark:bg-green-950/30";
       case "warning":
         return "bg-yellow-50 dark:bg-yellow-950/30";
+      case "status_update":
+      case "dispatch_instruction":
+      case "responder_assignment":
+      case "accident_assigned":
+        return "bg-teal-50 dark:bg-teal-950/30";
+      case "accident_reported":
+        return "bg-blue-50 dark:bg-blue-950/30";
+      case "system_notification":
       case "info":
       default:
         return "bg-blue-50 dark:bg-blue-950/30";

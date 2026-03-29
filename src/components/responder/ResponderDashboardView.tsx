@@ -8,6 +8,8 @@ import {
   Shield,
   Eye,
   AlertCircle,
+  Bell,
+  X,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -21,7 +23,13 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { StatusBadge, SeverityBadge } from "@/components/StatusBadge";
+import NotificationsDropdown from "@/components/NotificationsDropdown";
 import { formatTimeAgo } from "@/lib/incident-utils";
+import {
+  useGetUnreadNotifications,
+  useGetNotifications,
+  useMarkNotificationAsRead,
+} from "@/hooks/useNotifications";
 import {
   FocusRow,
   InfoChip,
@@ -41,14 +49,15 @@ const severityRailStyles = {
 
 interface ResponderDashboardViewProps {
   session: ResponderSession;
-  activeTab: "active" | "completed";
+  activeTab: "active" | "completed" | "notifications";
   activeIncidents: IncidentReport[];
   completedIncidents: IncidentReport[];
   pendingDispatches?: any[];
-  onActiveTabChange: (value: "active" | "completed") => void;
+  onActiveTabChange: (value: "active" | "completed" | "notifications") => void;
   onSelectIncident: (reportId: string) => void;
   onAcceptDispatch?: (dispatchId: string) => void;
   onRejectDispatch?: (dispatchId: string) => void;
+  onStatusUpdate?: (incident: any, newStatus: string) => void;
   onLogout: () => void;
 }
 
@@ -62,8 +71,75 @@ export default function ResponderDashboardView({
   onSelectIncident,
   onAcceptDispatch,
   onRejectDispatch,
+  onStatusUpdate,
   onLogout,
 }: ResponderDashboardViewProps) {
+  const { data: unreadNotifications = [] } = useGetUnreadNotifications();
+  const { data: allNotifications = [] } = useGetNotifications();
+  const markAsReadMutation = useMarkNotificationAsRead();
+
+  // Ensure we always have an array
+  const notificationsArray = Array.isArray(allNotifications)
+    ? allNotifications
+    : allNotifications?.data && Array.isArray(allNotifications.data)
+      ? allNotifications.data
+      : [];
+
+  const unreadArray = Array.isArray(unreadNotifications)
+    ? unreadNotifications
+    : unreadNotifications?.data && Array.isArray(unreadNotifications.data)
+      ? unreadNotifications.data
+      : [];
+
+  const unreadCount = unreadArray.length;
+
+  const handleMarkAsRead = (notificationId: string) => {
+    markAsReadMutation.mutate(notificationId, {
+      onError: (error: any) => {
+        console.error("Failed to mark notification as read:", error);
+      },
+    });
+  };
+
+  const getNotificationIcon = (type: string) => {
+    switch (type) {
+      case "alert":
+      case "critical":
+      case "emergency_alert":
+        return <AlertCircle className="h-4 w-4 text-red-500" />;
+      case "status_update":
+      case "dispatch_instruction":
+      case "responder_assignment":
+      case "accident_assigned":
+        return <Bell className="h-4 w-4 text-teal-500" />;
+      case "accident_reported":
+        return <AlertCircle className="h-4 w-4 text-blue-500" />;
+      case "system_notification":
+      case "info":
+      default:
+        return <Bell className="h-4 w-4 text-blue-500" />;
+    }
+  };
+
+  const getNotificationBg = (type: string) => {
+    switch (type) {
+      case "alert":
+      case "critical":
+      case "emergency_alert":
+        return "bg-red-50 dark:bg-red-950/30";
+      case "status_update":
+      case "dispatch_instruction":
+      case "responder_assignment":
+      case "accident_assigned":
+        return "bg-teal-50 dark:bg-teal-950/30";
+      case "accident_reported":
+        return "bg-blue-50 dark:bg-blue-950/30";
+      case "system_notification":
+      case "info":
+      default:
+        return "bg-blue-50 dark:bg-blue-950/30";
+    }
+  };
   const submittedCount = activeIncidents.filter(
     (incident) => incident.status === "Submitted",
   ).length;
@@ -112,6 +188,7 @@ export default function ResponderDashboardView({
                   <div className="rounded-full border border-border/70 bg-secondary/70 px-4 py-2 text-sm text-foreground">
                     {session.unitLabel}
                   </div>
+                  <NotificationsDropdown />
                   <Button
                     variant="outline"
                     className="border-border text-foreground hover:bg-secondary"
@@ -283,7 +360,7 @@ export default function ResponderDashboardView({
         <Tabs
           value={activeTab}
           onValueChange={(value) =>
-            onActiveTabChange(value as "active" | "completed")
+            onActiveTabChange(value as "active" | "completed" | "notifications")
           }
         >
           <TabsList className="mb-4 border border-border/70 bg-secondary/75">
@@ -299,6 +376,12 @@ export default function ResponderDashboardView({
             >
               Completed Log
             </TabsTrigger>
+            <TabsTrigger
+              value="notifications"
+              className="data-[state=active]:bg-card data-[state=active]:text-foreground text-muted-foreground"
+            >
+              Notifications {unreadCount > 0 && `(${unreadCount})`}
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="active" className="mt-0">
@@ -309,65 +392,116 @@ export default function ResponderDashboardView({
                     key={incident.report_id}
                     className={`group relative overflow-hidden border-border/80 bg-card/85 backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-info/30 hover:shadow-[0_16px_60px_rgba(0,0,0,0.28)] before:absolute before:inset-y-0 before:left-0 before:w-1.5 ${severityRailStyles[incident.severity_level]}`}
                   >
-                    <button
-                      type="button"
-                      className="w-full text-left"
-                      onClick={() => onSelectIncident(incident.report_id)}
-                    >
-                      <CardContent className="p-5">
-                        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_210px]">
-                          <div className="min-w-0">
-                            <div className="flex flex-wrap items-center gap-2">
-                              <span className="font-mono text-xs tracking-wide text-muted-foreground">
-                                {incident.report_id}
-                              </span>
-                              <StatusBadge status={incident.status} />
-                              <SeverityBadge
-                                severity={incident.severity_level}
-                              />
-                            </div>
-
-                            <div className="mt-3">
-                              <p className="text-base font-semibold text-foreground">
-                                {incident.incident_type}
-                              </p>
-                              <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                                {incident.short_description}
-                              </p>
-                            </div>
-
-                            <div className="mt-4 flex flex-wrap gap-2">
-                              <InfoChip
-                                icon={MapPin}
-                                label={incident.location_address}
-                              />
-                              <InfoChip
-                                icon={Clock}
-                                label={formatTimeAgo(
-                                  incident.time_report_submitted,
-                                )}
-                              />
-                            </div>
+                    <CardContent className="p-5">
+                      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_210px]">
+                        <div
+                          className="min-w-0 cursor-pointer"
+                          onClick={() => onSelectIncident(incident.report_id)}
+                        >
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="font-mono text-xs tracking-wide text-muted-foreground">
+                              {incident.report_id}
+                            </span>
+                            <StatusBadge status={incident.status} />
+                            <SeverityBadge
+                              severity={incident.severity_level}
+                            />
                           </div>
 
-                          <div className="flex flex-col gap-2 rounded-2xl border border-border/70 bg-secondary/45 p-4">
-                            <div>
-                              <p className="font-mono text-[11px] uppercase tracking-[0.24em] text-muted-foreground">
-                                Case View
-                              </p>
-                              <p className="mt-2 text-sm font-medium text-foreground">
-                                Open the accident to inspect details from the
-                                responder workspace.
-                              </p>
-                            </div>
-                            <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-background/60 px-4 py-2 text-sm text-foreground">
-                              Open Accident
-                              <ChevronRight className="h-4 w-4 text-info" />
-                            </div>
+                          <div className="mt-3">
+                            <p className="text-base font-semibold text-foreground">
+                              {incident.incident_type}
+                            </p>
+                            <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                              {incident.short_description}
+                            </p>
+                          </div>
+
+                          <div className="mt-4 flex flex-wrap gap-2">
+                            <InfoChip
+                              icon={MapPin}
+                              label={incident.location_address}
+                            />
+                            <InfoChip
+                              icon={Clock}
+                              label={formatTimeAgo(
+                                incident.time_report_submitted,
+                              )}
+                            />
                           </div>
                         </div>
-                      </CardContent>
-                    </button>
+
+                        <div className="flex flex-col gap-2 rounded-2xl border border-border/70 bg-secondary/45 p-4">
+                          <div>
+                            <p className="font-mono text-[11px] uppercase tracking-[0.24em] text-muted-foreground">
+                              Case View
+                            </p>
+                            <p className="mt-2 text-sm font-medium text-foreground">
+                              Open the accident to inspect details from the
+                              responder workspace.
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-background/60 px-4 py-2 text-sm text-foreground hover:bg-background transition-colors"
+                            onClick={() => onSelectIncident(incident.report_id)}
+                          >
+                            Open Accident
+                            <ChevronRight className="h-4 w-4 text-info" />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Status Update Buttons */}
+                      {incident.status !== "Closed" && onStatusUpdate && (
+                        <div className="mt-4 pt-4 border-t border-border/50 space-y-2">
+                          <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
+                            Update Status
+                          </p>
+                          <div className="grid grid-cols-2 gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() =>
+                                onStatusUpdate(incident, "Accepted")
+                              }
+                              className="text-xs"
+                            >
+                              Accept
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() =>
+                                onStatusUpdate(incident, "En Route")
+                              }
+                              className="text-xs"
+                            >
+                              En Route
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() =>
+                                onStatusUpdate(incident, "On Scene")
+                              }
+                              className="text-xs bg-amber-50 dark:bg-amber-900/20 border-amber-300 dark:border-amber-800 hover:bg-amber-100 dark:hover:bg-amber-900/40"
+                            >
+                              On Scene
+                            </Button>
+                            <Button
+                              size="sm"
+                              onClick={() =>
+                                onStatusUpdate(incident, "Completed")
+                              }
+                              className="text-xs bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800"
+                            >
+                              Complete
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </CardContent>
                   </Card>
                 ))}
 
@@ -498,6 +632,71 @@ export default function ResponderDashboardView({
                   </CardContent>
                 </Card>
               </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="notifications" className="mt-0">
+            <div className="grid gap-4">
+              <Card className="border-border/80 bg-card/85 backdrop-blur-sm">
+                <CardHeader>
+                  <CardTitle className="text-lg text-foreground">
+                    Notifications {unreadCount > 0 && <Badge variant="destructive" className="ml-2">{unreadCount}</Badge>}
+                  </CardTitle>
+                  <CardDescription>
+                    {notificationsArray.length === 0
+                      ? "No notifications yet"
+                      : `You have ${unreadCount} unread notification${unreadCount !== 1 ? "s" : ""}`}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {notificationsArray.length > 0 ? (
+                    <div className="space-y-2">
+                      {notificationsArray.map((notification: any) => (
+                        <div
+                          key={notification.id}
+                          className={`rounded-lg p-4 space-y-2 flex items-start gap-3 transition-all border ${getNotificationBg(
+                            notification.type,
+                          )}`}
+                        >
+                          <div className="flex-shrink-0 mt-0.5">
+                            {getNotificationIcon(notification.type)}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-foreground line-clamp-2">
+                              {notification.message}
+                            </p>
+                            {notification.description && (
+                              <p className="text-xs text-muted-foreground line-clamp-1 mt-1">
+                                {notification.description}
+                              </p>
+                            )}
+                            <p className="text-xs text-muted-foreground mt-2">
+                              {new Date(notification.createdAt).toLocaleString()}
+                            </p>
+                          </div>
+                          <button
+                            onClick={() => handleMarkAsRead(notification.id)}
+                            className="flex-shrink-0 text-muted-foreground hover:text-foreground transition-colors p-1"
+                            title="Mark as read"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="py-8 text-center">
+                      <Bell className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
+                      <p className="text-base font-semibold text-foreground">
+                        No notifications
+                      </p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        You'll receive notifications about assignments, status updates, and dispatch instructions here
+                      </p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
             </div>
           </TabsContent>
         </Tabs>

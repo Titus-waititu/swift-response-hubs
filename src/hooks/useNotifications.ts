@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "../api/client";
+import { useAuthStore } from "@/stores/authStore";
 
 // Query Keys
 export const notificationsKeys = {
@@ -54,17 +55,20 @@ export const useCreateNotification = () => {
 
 export const useSendNotification = () => {
   const queryClient = useQueryClient();
+  const { user } = useAuthStore();
+  
   return useMutation({
     mutationFn: (data: {
       message: string;
-      type?: "alert" | "info" | "warning" | "success";
-      recipients?: "all" | "dispatcher" | "responder" | "officer" | string[];
+      title?: string;
+      type?: "alert" | "info" | "warning" | "success" | "status_update" | "dispatch_instruction";
       priority?: "low" | "medium" | "high" | "critical";
     }) =>
       apiClient.post("/notifications", {
+        userId: user?.id,
         message: data.message,
+        title: data.title || data.message,
         type: data.type || "info",
-        recipients: data.recipients || "all",
         priority: data.priority || "medium",
       }),
     onSuccess: () => {

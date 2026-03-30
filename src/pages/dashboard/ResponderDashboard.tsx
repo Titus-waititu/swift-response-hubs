@@ -6,7 +6,7 @@ import ResponderTopNav from "@/components/responder/ResponderTopNav";
 import ResponderDashboardPage from "@/components/responder/pages/ResponderDashboardPage";
 import ResponderAssignmentsPage from "@/components/responder/pages/ResponderAssignmentsPage";
 import ResponderProfilePage from "@/components/responder/pages/ResponderProfilePage";
-import { useGetAccidents } from "@/hooks/useAccidents";
+import { useGetMyAssignedIncidents } from "@/hooks/useAccidents";
 import { useRealtimeUpdates } from "@/hooks/useRealtimeUpdates";
 import { mapBackendAccidentToIncident } from "@/lib/backend-api";
 import type { IncidentReport } from "@/types/incident";
@@ -34,7 +34,8 @@ const ResponderDashboard = () => {
     localStorage.setItem("responder-theme", isDarkMode ? "dark" : "light");
   }, [isDarkMode]);
 
-  const { data: accidents, refetch: refetchAccidents } = useGetAccidents();
+  const { data: accidents, refetch: refetchAccidents } =
+    useGetMyAssignedIncidents();
   const accidentsArray = Array.isArray(accidents)
     ? accidents
     : accidents?.data || [];
@@ -44,7 +45,7 @@ const ResponderDashboard = () => {
 
   // Enable real-time polling for incidents
   useRealtimeUpdates({
-    queryKeys: [["accidents"]],
+    queryKeys: [["accidents", "my-assigned"]],
     interval: 5000,
     enabled: !!user,
   });
@@ -66,7 +67,12 @@ const ResponderDashboard = () => {
           <ResponderDashboardPage incidents={incidents} userName={user.name} />
         );
       case "assignments":
-        return <ResponderAssignmentsPage incidents={incidents} />;
+        return (
+          <ResponderAssignmentsPage
+            incidents={incidents}
+            onRefreshAssignments={refetchAccidents}
+          />
+        );
       case "profile":
         return <ResponderProfilePage user={user} />;
       default:

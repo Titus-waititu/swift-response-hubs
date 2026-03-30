@@ -6,6 +6,9 @@ import {
   Clock,
   MessageSquare,
   ChevronDown,
+  Zap,
+  CheckCircle2,
+  RefreshCw,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -32,17 +35,25 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import ResponderIncidentResponse from "@/components/responder/ResponderIncidentResponse";
+import QuickStatusUpdatePanel from "@/components/responder/QuickStatusUpdatePanel";
 import IncidentDetailsPanel from "@/components/responder/IncidentDetailsPanel";
 import StatusHistoryDisplay from "@/components/responder/StatusHistoryDisplay";
 import type { IncidentReport } from "@/types/incident";
+import {
+  useUpdateResponderResponse,
+  useNotifyDispatcherOfResponse,
+} from "@/hooks/useAccidents";
+import { getStatusLabel } from "@/lib/status-utils";
+import { toast } from "sonner";
 
 interface ResponderAssignmentsPageProps {
   incidents: IncidentReport[];
+  onRefreshAssignments?: () => void;
 }
 
 export default function ResponderAssignmentsPage({
   incidents,
+  onRefreshAssignments,
 }: ResponderAssignmentsPageProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -53,6 +64,26 @@ export default function ResponderAssignmentsPage({
   const [expandedIncidents, setExpandedIncidents] = useState<Set<string>>(
     new Set(),
   );
+  const [quickActionLoading, setQuickActionLoading] = useState<string | null>(
+    null,
+  );
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Mutations for quick status updates
+  const updateResponderMutation = useUpdateResponderResponse();
+  const notifyDispatcherMutation = useNotifyDispatcherOfResponse();
+
+  const handleManualRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await onRefreshAssignments?.();
+      toast.success("Assignments refreshed");
+    } catch (error) {
+      toast.error("Failed to refresh assignments");
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   const filteredIncidents = useMemo(() => {
     return incidents.filter((incident) => {
@@ -90,16 +121,71 @@ export default function ResponderAssignmentsPage({
     setExpandedIncidents(newExpanded);
   };
 
+  const handleQuickStatusUpdate = async (
+    incident: IncidentReport,
+    newStatus: string,
+  ) => {
+    if (!incident.report_id) {
+      toast.error("Incident ID not found");
+      return;
+    }
+
+    try {
+      setQuickActionLoading(incident.report_id);
+      const statusLabel = getStatusLabel(newStatus);
+      const description = `Status: ${statusLabel}`;
+
+      // Update incident status via backend
+      await updateResponderMutation.mutateAsync({
+        accidentId: incident.backend_accident_id || incident.report_id,
+        status: newStatus, // Send the new status
+        description,
+      });
+
+      // Notify dispatcher
+      const priority = newStatus === "in_progress" ? "urgent" : "high";
+      await notifyDispatcherMutation.mutateAsync({
+        title: `${incident.incident_type} - Status Update`,
+        message: `Responder updated status to ${statusLabel} at ${incident.location_address}`,
+        priority,
+        accidentId: incident.backend_accident_id || incident.report_id,
+      });
+
+      toast.success(`Status updated to ${statusLabel}`);
+      // Refresh parent component data
+      onRefreshAssignments?.();
+    } catch (error: any) {
+      toast.error(error?.message || "Failed to update status");
+    } finally {
+      setQuickActionLoading(null);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-50">
-          Assignments
-        </h1>
-        <p className="text-slate-600 dark:text-slate-400 mt-2">
-          View and manage your incident assignments
-        </p>
+      <div className="flex items-start justify-between">
+        <div className="flex-1">
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-50">
+            Assignments
+          </h1>
+          <p className="text-slate-600 dark:text-slate-400 mt-2">
+            View and manage your incident assignments
+          </p>
+        </div>
+        <Button
+          onClick={handleManualRefresh}
+          disabled={isRefreshing}
+          variant="outline"
+          size="sm"
+          className="mt-1"
+          title="Manually refresh assignments"
+        >
+          <RefreshCw
+            className={`h-4 w-4 mr-2 ${isRefreshing ? "animate-spin" : ""}`}
+          />
+          {isRefreshing ? "Refreshing..." : "Refresh"}
+        </Button>
       </div>
 
       {/* Filters */}
@@ -217,8 +303,17 @@ export default function ResponderAssignmentsPage({
                               e.stopPropagation();
                               setSelectedIncident(incident);
                             }}
-                            className="bg-teal-600 hover:bg-teal-700 dark:bg-teal-600 dark:hover:bg-teal-700 text-white"
-                            title="Update response status"
+                            disabled={
+                              incident.status === "resolved" ||
+                              incident.status === "closed"
+                            }
+                            className="bg-teal-600 hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-teal-600 dark:hover:bg-teal-700 text-white"
+                            title={
+                              incident.status === "resolved" ||
+                              incident.status === "closed"
+                                ? "Cannot respond to resolved or closed incidents"
+                                : "Update response status"
+                            }
                           >
                             <MapPin className="h-4 w-4 mr-1" />
                             Respond
@@ -238,7 +333,7 @@ export default function ResponderAssignmentsPage({
                         </div>
                       </TableCell>
                     </TableRow>,
-                    // Expandable Status History Row
+                    // Expandable Status History Row with Quick Actions
                     ...(expandedIncidents.has(incident.report_id!)
                       ? [
                           <TableRow
@@ -246,23 +341,108 @@ export default function ResponderAssignmentsPage({
                             className="bg-slate-50 dark:bg-slate-900/30 border-slate-200 dark:border-slate-700"
                           >
                             <TableCell colSpan={7} className="p-4">
-                              <StatusHistoryDisplay
-                                createdAt={incident.created_at || ""}
-                                currentStatus={
-                                  incident.short_description?.includes(
-                                    "Status:",
-                                  )
-                                    ? incident.short_description
-                                    : undefined
-                                }
-                                statusSelectedAt={
-                                  incident.updated_at
-                                    ? new Date(incident.updated_at)
-                                    : undefined
-                                }
-                                statusColor="bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-200"
-                                compact={false}
-                              />
+                              <div className="space-y-4">
+                                <StatusHistoryDisplay
+                                  createdAt={incident.created_at || ""}
+                                  currentStatus={
+                                    incident.short_description?.includes(
+                                      "Status:",
+                                    )
+                                      ? incident.short_description
+                                      : undefined
+                                  }
+                                  statusSelectedAt={
+                                    incident.updated_at
+                                      ? new Date(incident.updated_at)
+                                      : undefined
+                                  }
+                                  statusColor="bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-200"
+                                  compact={false}
+                                />
+                                {/* Quick Action Buttons */}
+                                {incident.status !==
+                                  "resolved" &&
+                                incident.status !== "closed" ? (
+                                  <div className="pt-4 border-t border-slate-200 dark:border-slate-700">
+                                    <p className="text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400 font-semibold mb-3">
+                                      Quick Actions
+                                    </p>
+                                    <div className="grid grid-cols-3 gap-2">
+                                      {incident.status !==
+                                        "in_progress" && (
+                                        <Button
+                                          size="sm"
+                                          variant="outline"
+                                          onClick={() =>
+                                            handleQuickStatusUpdate(
+                                              incident,
+                                              "in_progress",
+                                            )
+                                          }
+                                          disabled={
+                                            quickActionLoading ===
+                                            incident.report_id
+                                          }
+                                          className="text-xs border-teal-300 dark:border-teal-800 text-teal-600 dark:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-900/20"
+                                        >
+                                          <Zap className="h-3 w-3 mr-1" />
+                                          {quickActionLoading ===
+                                          incident.report_id
+                                            ? "..."
+                                            : "Go to Scene"}
+                                        </Button>
+                                      )}
+                                      {incident.status !==
+                                        "resolved" && (
+                                        <Button
+                                          size="sm"
+                                          variant="outline"
+                                          onClick={() =>
+                                            handleQuickStatusUpdate(
+                                              incident,
+                                              "resolved",
+                                            )
+                                          }
+                                          disabled={
+                                            quickActionLoading ===
+                                            incident.report_id
+                                          }
+                                          className="text-xs border-green-300 dark:border-green-800 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20"
+                                        >
+                                          <CheckCircle2 className="h-3 w-3 mr-1" />
+                                          {quickActionLoading ===
+                                          incident.report_id
+                                            ? "..."
+                                            : "Resolved"}
+                                        </Button>
+                                      )}
+                                      {incident.status !==
+                                        "closed" && (
+                                        <Button
+                                          size="sm"
+                                          variant="outline"
+                                          onClick={() =>
+                                            handleQuickStatusUpdate(
+                                              incident,
+                                              "closed",
+                                            )
+                                          }
+                                          disabled={
+                                            quickActionLoading ===
+                                            incident.report_id
+                                          }
+                                          className="text-xs border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                                        >
+                                          {quickActionLoading ===
+                                          incident.report_id
+                                            ? "..."
+                                            : "Closed"}
+                                        </Button>
+                                      )}
+                                    </div>
+                                  </div>
+                                ) : null}
+                              </div>
                             </TableCell>
                           </TableRow>,
                         ]
@@ -289,16 +469,17 @@ export default function ResponderAssignmentsPage({
         open={!!selectedIncident}
         onOpenChange={(open) => !open && setSelectedIncident(null)}
       >
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+        <DialogContent className="max-w-sm bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
           <DialogHeader>
             <DialogTitle className="text-slate-900 dark:text-slate-50">
-              Update Response Status
+              Quick Status Update
             </DialogTitle>
           </DialogHeader>
           {selectedIncident && (
-            <ResponderIncidentResponse
+            <QuickStatusUpdatePanel
               incident={selectedIncident}
               onClose={() => setSelectedIncident(null)}
+              onRefresh={onRefreshAssignments}
             />
           )}
         </DialogContent>

@@ -110,27 +110,20 @@ export default function ResponderDashboardLayout({
     async (incident: any, newStatus: string) => {
       setUpdatingIncidentId(incident.report_id);
       try {
-        const statusMap: Record<string, string> = {
-          Accepted: "Accepted",
-          "En Route": "In Progress",
-          "On Scene": "In Progress",
-          Completed: "Resolved",
-        };
-
         const accidentId = incident.backend_accident_id || incident.report_id;
-        const backendStatus = statusMap[newStatus] || newStatus;
 
         // Update responder response
         await updateResponderMutation.mutateAsync({
           accidentId,
+          status: newStatus,
           description: `Responder status: ${newStatus}`,
         });
 
         // Notify dispatcher
         await notifyDispatcherMutation.mutateAsync({
           title: `Responder Update - ${incident.incident_type}`,
-          message: `Responder status updated to ${newStatus} at ${incident.location_address}`,
-          priority: newStatus === "On Scene" ? "urgent" : "high",
+          message: `Responder updated status to ${newStatus} at ${incident.location_address}`,
+          priority: newStatus === "in_progress" ? "urgent" : "high",
           accidentId,
         });
 

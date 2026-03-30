@@ -79,12 +79,16 @@ export default function UserDashboardPage({
           <MetricCard
             label="Resolved"
             value={resolvedReports}
-            icon={AlertCircle}
+            icon={CheckCircle2}
             trend={{
               direction: "up",
               value: `${resolvedReports} closed`,
               color: "positive",
             }}
+            backgroundColor="bg-green-50 dark:bg-green-900/20"
+            iconBackgroundColor="bg-green-100 dark:bg-green-900/40"
+            iconColor="text-green-600 dark:text-green-400"
+            valueTextColor="text-green-700 dark:text-green-300"
           />
         </StatsGrid>
       </DashboardSection>
@@ -174,11 +178,11 @@ export default function UserDashboardPage({
 
                               <div
                                 className={`relative z-10 flex h-8 w-8 items-center justify-center rounded-full transition-all ${
-                                  isCompleted
-                                    ? isCurrent
-                                      ? "bg-blue-500 text-white ring-4 ring-blue-100 dark:ring-blue-900/30 scale-110 shadow-sm"
-                                      : "bg-green-500 text-white shadow-sm"
-                                    : "bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border border-slate-200 dark:border-slate-700"
+                                  isCurrent
+                                    ? "bg-orange-500 text-white ring-4 ring-orange-100 dark:ring-orange-900/30 scale-125 shadow-lg"
+                                    : isCompleted
+                                      ? "bg-green-500 text-white shadow-sm"
+                                      : "bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border border-slate-200 dark:border-slate-700"
                                 }`}
                               >
                                 <StepIcon className="h-4 w-4" />
@@ -186,12 +190,18 @@ export default function UserDashboardPage({
                               <div className="mt-3 flex flex-col items-center text-center px-1">
                                 <div className="flex items-center justify-center gap-2">
                                   <p
-                                    className={`text-xs font-semibold whitespace-nowrap ${isCurrent ? "text-blue-600 dark:text-blue-400" : isCompleted ? "text-slate-900 dark:text-white" : "text-slate-500 dark:text-slate-400"}`}
+                                    className={`text-xs font-semibold whitespace-nowrap ${
+                                      isCurrent
+                                        ? "text-orange-600 dark:text-orange-400 text-sm font-bold"
+                                        : isCompleted
+                                          ? "text-slate-900 dark:text-white"
+                                          : "text-slate-500 dark:text-slate-400"
+                                    }`}
                                   >
                                     {step.label}
                                   </p>
                                   {isCurrent && (
-                                    <span className="inline-flex items-center rounded-full bg-blue-100 dark:bg-blue-900/30 px-2 py-0.5 text-[10px] font-semibold text-blue-700 dark:text-blue-300 whitespace-nowrap">
+                                    <span className="inline-flex items-center rounded-full bg-orange-100 dark:bg-orange-900/30 px-2 py-0.5 text-[10px] font-semibold text-orange-700 dark:text-orange-300 whitespace-nowrap">
                                       Current
                                     </span>
                                   )}

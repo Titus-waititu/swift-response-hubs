@@ -430,7 +430,7 @@ export default function EmergencyServicesPage() {
                   >
                     <TableCell className="text-slate-900 dark:text-slate-50 font-medium">
                       <span className="mr-2">{getTypeIcon(service.type)}</span>
-                      {service.responder.fullName || "Unnamed"}
+                      {service.responder?.fullName || "Unnamed"}
                     </TableCell>
                     <TableCell>
                       <span
@@ -461,7 +461,7 @@ export default function EmergencyServicesPage() {
                     </TableCell>
                     <TableCell className="text-slate-700 dark:text-slate-300 flex items-center gap-1">
                       <Phone className="h-4 w-4 text-slate-400 dark:text-slate-500" />
-                      {service.responder.phoneNumber || "N/A"}
+                      {service.responder?.phoneNumber || "N/A"}
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-2">

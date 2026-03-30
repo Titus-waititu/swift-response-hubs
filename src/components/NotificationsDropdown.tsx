@@ -10,7 +10,7 @@ import {
   useMarkNotificationAsRead,
 } from "@/hooks/useNotifications";
 import { useAuthStore } from "@/stores/authStore";
-import { useCallback, useMemo } from "react";
+import { useCallback } from "react";
 import { toast } from "sonner";
 
 export default function NotificationsDropdown() {
@@ -25,35 +25,8 @@ export default function NotificationsDropdown() {
       ? unreadNotifications.data
       : [];
 
-  // Filter notifications based on user role
-  const filteredNotifications = useMemo(() => {
-    if (!user) return notificationsArray;
-
-    return notificationsArray.filter((notification: any) => {
-      const message = notification.message || "";
-      const notificationType = notification.type || "";
-
-      // Dispatcher should not see responder-specific notifications
-      if (user.role === "DISPATCHER") {
-        // Hide "You have been assigned to an incident" - responder only
-        if (
-          message.includes("You have been assigned to an incident") ||
-          message.includes("assigned to an incident at Location coordinates")
-        ) {
-          return false;
-        }
-      }
-
-      // Responder should not see certain dispatcher-only notifications
-      if (user.role === "RESPONDER") {
-        // Responders can see assignment and dispatch notifications
-        // Add responder-specific filters here if needed
-      }
-
-      // Show all other notifications to all roles
-      return true;
-    });
-  }, [notificationsArray, user]);
+  // Notifications are already filtered by role in the hook
+  const filteredNotifications = notificationsArray;
 
   const unreadCount = filteredNotifications.length;
 

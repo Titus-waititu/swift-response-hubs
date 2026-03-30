@@ -21,19 +21,13 @@ import { useGetAccidents } from "@/hooks/useAccidents";
 import { useRealtimeUpdates } from "@/hooks/useRealtimeUpdates";
 import { mapBackendAccidentToIncident } from "@/lib/backend-api";
 import { formatTimeAgo } from "@/lib/incident-utils";
+import { getNextStatuses, getStatusLabel } from "@/lib/status-utils";
+import type { IncidentStatus } from "@/types/incident";
 import { toast } from "sonner";
 
 interface ResponderActiveDispatchesProps {
-  onStatusUpdate?: (incident: any, newStatus: string) => void;
+  onStatusUpdate?: (incident: any, newStatus: IncidentStatus) => void;
 }
-
-const RESPONDER_STATUS_FLOW = [
-  "Dispatched",
-  "Accepted",
-  "En Route",
-  "On Scene",
-  "Completed",
-];
 
 export default function ResponderActiveDispatches({
   onStatusUpdate,
@@ -66,11 +60,12 @@ export default function ResponderActiveDispatches({
       );
   }, [accidentsResponse]);
 
-  const handleStatusUpdate = async (incident: any, newStatus: string) => {
+  const handleStatusUpdate = async (incident: any, newStatus: IncidentStatus) => {
     setUpdatingId(incident.report_id);
     try {
       onStatusUpdate?.(incident, newStatus);
-      toast.success(`Status updated to ${newStatus}`);
+      const statusLabel = getStatusLabel(newStatus);
+      toast.success(`Status updated to ${statusLabel}`);
     } catch (error) {
       toast.error("Failed to update status");
     } finally {
@@ -243,7 +238,7 @@ export default function ResponderActiveDispatches({
                 Update Status
               </p>
               <div className="grid grid-cols-2 gap-2">
-                {RESPONDER_STATUS_FLOW.slice(1).map((status) => (
+                {getNextStatuses(dispatch.status).map((status) => (
                   <Button
                     key={status}
                     size="sm"
@@ -260,7 +255,7 @@ export default function ResponderActiveDispatches({
                         Updating...
                       </>
                     ) : (
-                      status
+                      getStatusLabel(status)
                     )}
                   </Button>
                 ))}

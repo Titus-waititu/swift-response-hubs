@@ -222,6 +222,10 @@ export const useDispatchResponder = () => {
       console.log("Dispatch successful:", data);
       queryClient.invalidateQueries({ queryKey: respondersKeys.lists() });
       queryClient.invalidateQueries({ queryKey: respondersKeys.statistics() });
+      // Also invalidate responder's assigned incidents query
+      queryClient.invalidateQueries({ queryKey: ["accidents", "my-assigned"] });
+      // Invalidate all accident queries to ensure fresh data
+      queryClient.invalidateQueries({ queryKey: ["accidents"] });
     },
     onError: (error: any) => {
       console.error(
@@ -284,11 +288,34 @@ export const useGetMyPendingDispatches = () => {
   return useQuery({
     queryKey: [...respondersKeys.all, "my-pending"],
     queryFn: async () => {
-      const response = await apiClient.get("/dispatch/my-pending");
-      const data = Array.isArray(response) ? response : response?.data || [];
-      console.log("My pending dispatches:", data);
-      return data;
+      try {
+        // Try the responder-specific assignments endpoint first
+        const response = await apiClient.get("/dispatch/my-assignments");
+        const data = Array.isArray(response) ? response : response?.data || [];
+        console.log("My pending dispatches from /dispatch/my-assignments:", data);
+        return data;
+      } catch (error: any) {
+        console.error(
+          "Failed to fetch from /dispatch/my-assignments:",
+          error?.response?.status,
+        );
+        // Try alternative endpoint
+        try {
+          const response = await apiClient.get("/dispatch/pending");
+          const data = Array.isArray(response) ? response : response?.data || [];
+          console.log("My pending dispatches from /dispatch/pending:", data);
+          return data;
+        } catch (err: any) {
+          console.error(
+            "Failed to fetch from /dispatch/pending:",
+            err?.response?.status,
+          );
+          return [];
+        }
+      }
     },
+    staleTime: 3000,
+    refetchInterval: 3000,
   });
 };
 

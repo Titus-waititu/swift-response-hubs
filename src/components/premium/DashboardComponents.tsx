@@ -16,6 +16,8 @@ interface MetricCardProps {
   };
   backgroundColor?: string;
   iconBackgroundColor?: string;
+  iconColor?: string;
+  valueTextColor?: string;
 }
 
 export function MetricCard({
@@ -25,6 +27,8 @@ export function MetricCard({
   trend,
   backgroundColor = "bg-slate-50 dark:bg-slate-800",
   iconBackgroundColor = "bg-cyan-100 dark:bg-cyan-900/30",
+  iconColor = "text-cyan-600 dark:text-cyan-400",
+  valueTextColor = "text-slate-900 dark:text-white",
 }: MetricCardProps) {
   return (
     <div
@@ -37,7 +41,7 @@ export function MetricCard({
           <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
             {label}
           </p>
-          <p className="text-3xl font-bold text-slate-900 dark:text-white mt-2">
+          <p className={`text-3xl font-bold ${valueTextColor} mt-2`}>
             {value}
           </p>
         </div>
@@ -45,7 +49,7 @@ export function MetricCard({
           <div
             className={`h-12 w-12 rounded-lg ${iconBackgroundColor} flex items-center justify-center flex-shrink-0`}
           >
-            <Icon className="h-5 w-5 text-cyan-600 dark:text-cyan-400" />
+            <Icon className={`h-5 w-5 ${iconColor}`} />
           </div>
         )}
       </div>

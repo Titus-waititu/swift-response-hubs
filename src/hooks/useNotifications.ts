@@ -1,6 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "../api/client";
 import { useAuthStore } from "@/stores/authStore";
+import {
+  filterNotificationsByRole,
+  getUnreadNotifications as getUnreadNotificationsFiltered,
+} from "@/lib/notification-filters";
+import { useGetAccidents } from "./useAccidents";
 
 // Query Keys
 export const notificationsKeys = {
@@ -11,28 +16,48 @@ export const notificationsKeys = {
 };
 
 // Queries
-export const useGetNotifications = () =>
-  useQuery({
+export const useGetNotifications = () => {
+  const { user } = useAuthStore();
+  const { data: incidents = [] } = useGetAccidents();
+
+  return useQuery({
     queryKey: notificationsKeys.lists(),
     queryFn: async () => {
       const response = await apiClient.get("/notifications/");
       const data = Array.isArray(response) ? response : response?.data || [];
-      return data;
+      // Apply role-based filtering
+      return filterNotificationsByRole(
+        data,
+        user?.role,
+        user?.id,
+        incidents,
+      );
     },
   });
+};
 
-export const useGetUnreadNotifications = () =>
-  useQuery({
+export const useGetUnreadNotifications = () => {
+  const { user } = useAuthStore();
+  const { data: incidents = [] } = useGetAccidents();
+
+  return useQuery({
     queryKey: notificationsKeys.unread(),
     queryFn: async () => {
       const response = await apiClient.get("/notifications/unread");
       const data = Array.isArray(response) ? response : response?.data || [];
-      return data;
+      // Apply role-based filtering
+      return getUnreadNotificationsFiltered(
+        data,
+        user?.role,
+        user?.id,
+        incidents,
+      );
     },
     refetchInterval: 5000, // Poll every 5 seconds for real-time updates
     refetchOnWindowFocus: true,
     refetchOnMount: true,
   });
+};
 
 export const useGetNotificationById = (id: string | undefined) =>
   useQuery({

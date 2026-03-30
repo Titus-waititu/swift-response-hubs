@@ -31,87 +31,42 @@ import {
   useUpdateResponderResponse,
   useNotifyDispatcherOfResponse,
 } from "@/hooks/useAccidents";
-import type { IncidentReport } from "@/types/incident";
+import type { IncidentReport, IncidentStatus } from "@/types/incident";
+import {
+  getNextStatuses,
+  getStatusLabel,
+  getStatusColor,
+} from "@/lib/status-utils";
 
 interface ResponderIncidentResponseProps {
   incident: IncidentReport;
   onClose?: () => void;
+  onRefresh?: () => void;
 }
-
-type ResponseStatus =
-  | "responding"
-  | "en-route"
-  | "on-scene"
-  | "treating"
-  | "transported"
-  | "completed";
-
-const statusFlow: {
-  value: ResponseStatus;
-  label: string;
-  icon: any;
-  color: string;
-}[] = [
-  {
-    value: "responding",
-    label: "Responding",
-    icon: AlertCircle,
-    color:
-      "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-200",
-  },
-  {
-    value: "en-route",
-    label: "En Route",
-    icon: MapPin,
-    color: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200",
-  },
-  {
-    value: "on-scene",
-    label: "On Scene",
-    icon: MapPin,
-    color:
-      "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-200",
-  },
-  {
-    value: "treating",
-    label: "Treating",
-    icon: AlertCircle,
-    color: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-200",
-  },
-  {
-    value: "transported",
-    label: "Patient Transported",
-    icon: MapPin,
-    color:
-      "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-200",
-  },
-  {
-    value: "completed",
-    label: "Completed",
-    icon: CheckCircle,
-    color:
-      "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200",
-  },
-];
 
 export default function ResponderIncidentResponse({
   incident,
   onClose,
+  onRefresh,
 }: ResponderIncidentResponseProps) {
+  // Check if incident can still be responded to
+  const isIncidentComplete = incident.status === "resolved" || incident.status === "closed";
+  
+  // Get next valid statuses responder can transition to
+  const nextStatuses = getNextStatuses(incident.status);
+  const initialStatus: IncidentStatus =
+    nextStatuses.length > 0 ? nextStatuses[0] : "in_progress";
+
   const [selectedStatus, setSelectedStatus] =
-    useState<ResponseStatus>("responding");
-  const [statusSelectedAt, setStatusSelectedAt] = useState<Date>(new Date());
+    useState<IncidentStatus>(initialStatus);
   const [updateNotes, setUpdateNotes] = useState("");
   const [notifyDispatch, setNotifyDispatch] = useState(true);
 
   const updateResponderMutation = useUpdateResponderResponse();
   const notifyDispatcherMutation = useNotifyDispatcherOfResponse();
 
-  const currentStatus = statusFlow.find((s) => s.value === selectedStatus);
-
-  const handleStatusChange = (status: ResponseStatus) => {
+  const handleStatusChange = (status: IncidentStatus) => {
     setSelectedStatus(status);
-    setStatusSelectedAt(new Date());
   };
 
   const handleUpdateStatus = async () => {
@@ -121,35 +76,35 @@ export default function ResponderIncidentResponse({
     }
 
     try {
-      const statusLabel =
-        statusFlow.find((s) => s.value === selectedStatus)?.label ||
-        selectedStatus;
+      const statusLabel = getStatusLabel(selectedStatus);
       const description = updateNotes
         ? `Status: ${statusLabel} - ${updateNotes}`
         : `Status: ${statusLabel}`;
 
-      // Update responder response status
+      // Update incident status via backend
       await updateResponderMutation.mutateAsync({
         accidentId: incident.backend_accident_id || incident.report_id,
+        status: selectedStatus, // Send the actual status
         description,
       });
 
       // Notify dispatcher if enabled
       if (notifyDispatch) {
-        const priority =
-          selectedStatus === "on-scene" || selectedStatus === "treating"
-            ? "urgent"
-            : "high";
+        const priority = selectedStatus === "in_progress" ? "urgent" : "high";
         await notifyDispatcherMutation.mutateAsync({
           title: `${incident.incident_type} - Status Update`,
-          message: `Responder status updated to ${statusLabel} at ${incident.location_address}${updateNotes ? ` - ${updateNotes}` : ""}`,
+          message: `Responder updated status to ${statusLabel} at ${incident.location_address}${updateNotes ? ` - ${updateNotes}` : ""}`,
           priority,
           accidentId: incident.backend_accident_id || incident.report_id,
         });
       }
 
-      toast.success(`Status updated to ${statusLabel} and dispatcher notified`);
+      toast.success(
+        `Status updated to ${statusLabel} and dispatcher notified`,
+      );
       setUpdateNotes("");
+      // Refresh parent component data
+      onRefresh?.();
     } catch (error: any) {
       toast.error(error?.message || "Failed to update status");
     }
@@ -157,6 +112,35 @@ export default function ResponderIncidentResponse({
 
   const isLoading =
     updateResponderMutation.isPending || notifyDispatcherMutation.isPending;
+
+  // If incident is already resolved/closed, show error state
+  if (isIncidentComplete) {
+    return (
+      <div className="space-y-4">
+        <Card className="border-orange-200 dark:border-orange-800 bg-orange-50 dark:bg-orange-900/20">
+          <CardHeader>
+            <CardTitle className="text-orange-900 dark:text-orange-100 flex items-center gap-2">
+              <AlertCircle className="h-5 w-5" />
+              Cannot Respond
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-orange-800 dark:text-orange-200">
+              This incident is already <strong>{getStatusLabel(incident.status)}</strong> and 
+              cannot be updated. Only active incidents can be responded to.
+            </p>
+            <Button
+              onClick={onClose}
+              variant="outline"
+              className="mt-4"
+            >
+              Close
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -208,32 +192,33 @@ export default function ResponderIncidentResponse({
               Response Status
             </Label>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-              {statusFlow.map((status) => (
+              {nextStatuses.map((status) => (
                 <button
-                  key={status.value}
-                  onClick={() => handleStatusChange(status.value)}
+                  key={status}
+                  onClick={() => handleStatusChange(status)}
                   className={`p-3 rounded-lg border-2 transition-all text-center text-sm font-medium ${
-                    selectedStatus === status.value
-                      ? `border-teal-500 ${status.color} ring-2 ring-teal-500`
-                      : `border-slate-200 dark:border-slate-700 ${status.color}`
+                    selectedStatus === status
+                      ? `border-teal-500 ring-2 ring-teal-500 ${getStatusColor(status)} bg-opacity-80`
+                      : `border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600`
                   }`}
                 >
-                  <status.icon className="h-4 w-4 mx-auto mb-1" />
-                  {status.label}
+                  <AlertCircle className="h-4 w-4 mx-auto mb-1" />
+                  {getStatusLabel(status)}
                 </button>
               ))}
             </div>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Current Status: {getStatusLabel(incident.status)}
+            </p>
           </div>
 
           {/* Status Description */}
-          {currentStatus && (
-            <div className={`p-3 rounded-lg ${currentStatus.color}`}>
-              <p className="text-sm font-medium">
-                You are marking this incident as{" "}
-                <strong>{currentStatus.label}</strong>
-              </p>
-            </div>
-          )}
+          <div className="p-3 rounded-lg bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600">
+            <p className="text-sm font-medium text-slate-900 dark:text-slate-50">
+              You are marking this incident as{" "}
+              <strong>{getStatusLabel(selectedStatus)}</strong>
+            </p>
+          </div>
 
           {/* Update Notes */}
           <div className="space-y-1">
@@ -333,31 +318,6 @@ export default function ResponderIncidentResponse({
                   </div>
                 </div>
               </div>
-
-              {/* Current Response Status Timeline Entry */}
-              {currentStatus && (
-                <div className="relative flex gap-3 pl-10">
-                  <div className="absolute left-0 top-1.5 w-9 h-9 bg-teal-500 rounded-full flex items-center justify-center border-2 border-teal-400 shadow-lg shadow-teal-500/50 ring-2 ring-teal-100 dark:ring-teal-900/30">
-                    <Zap className="h-5 w-5 text-white" />
-                  </div>
-                  <div className="flex-1 pt-1">
-                    <p className="text-xs font-semibold text-teal-600 dark:text-teal-400 uppercase tracking-wide">
-                      Current Status
-                    </p>
-                    <div className="mt-2 flex items-center gap-2">
-                      <Badge
-                        className={`${currentStatus.color} border-0 px-3 py-1 text-sm font-semibold shadow-sm`}
-                      >
-                        <currentStatus.icon className="h-3 w-3 mr-1 inline" />
-                        {currentStatus.label}
-                      </Badge>
-                      <span className="text-xs font-medium text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-800 px-2 py-1 rounded">
-                        {statusSelectedAt.toLocaleTimeString()}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         </CardContent>

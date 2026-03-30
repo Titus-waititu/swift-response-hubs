@@ -162,6 +162,7 @@ export default function ResponderPage() {
 
       await updateResponderMutation.mutateAsync({
         accidentId,
+        status: backendStatus,
         description: `Responder status: ${newStatus}`,
       });
 

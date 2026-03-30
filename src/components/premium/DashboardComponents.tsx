@@ -41,9 +41,7 @@ export function MetricCard({
           <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
             {label}
           </p>
-          <p className={`text-3xl font-bold ${valueTextColor} mt-2`}>
-            {value}
-          </p>
+          <p className={`text-3xl font-bold ${valueTextColor} mt-2`}>{value}</p>
         </div>
         {Icon && (
           <div

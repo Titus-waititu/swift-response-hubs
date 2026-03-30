@@ -26,12 +26,7 @@ export const useGetNotifications = () => {
       const response = await apiClient.get("/notifications/");
       const data = Array.isArray(response) ? response : response?.data || [];
       // Apply role-based filtering
-      return filterNotificationsByRole(
-        data,
-        user?.role,
-        user?.id,
-        incidents,
-      );
+      return filterNotificationsByRole(data, user?.role, user?.id, incidents);
     },
   });
 };

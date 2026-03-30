@@ -292,7 +292,10 @@ export const useGetMyPendingDispatches = () => {
         // Try the responder-specific assignments endpoint first
         const response = await apiClient.get("/dispatch/my-assignments");
         const data = Array.isArray(response) ? response : response?.data || [];
-        console.log("My pending dispatches from /dispatch/my-assignments:", data);
+        console.log(
+          "My pending dispatches from /dispatch/my-assignments:",
+          data,
+        );
         return data;
       } catch (error: any) {
         console.error(
@@ -302,7 +305,9 @@ export const useGetMyPendingDispatches = () => {
         // Try alternative endpoint
         try {
           const response = await apiClient.get("/dispatch/pending");
-          const data = Array.isArray(response) ? response : response?.data || [];
+          const data = Array.isArray(response)
+            ? response
+            : response?.data || [];
           console.log("My pending dispatches from /dispatch/pending:", data);
           return data;
         } catch (err: any) {

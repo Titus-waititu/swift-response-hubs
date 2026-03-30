@@ -221,7 +221,8 @@ export default function UserDashboardPage({
                         Status: {getStatusLabel(incident.status)}
                       </span>
                       <span className="text-slate-500 dark:text-slate-400">
-                        Updated: {new Date(incident.updated_at).toLocaleTimeString()}
+                        Updated:{" "}
+                        {new Date(incident.updated_at).toLocaleTimeString()}
                       </span>
                     </p>
                   </div>

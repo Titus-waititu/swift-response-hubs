@@ -5,76 +5,82 @@ import { useAuthStore } from "@/stores/authStore";
 // Status normalization helper
 const normalizeStatus = (rawStatus: any): string => {
   if (!rawStatus) return "reported"; // Default to reported if missing
-  
+
   // Convert to lowercase for case-insensitive matching
   const lowercaseStatus = String(rawStatus).toLowerCase().trim();
-  
+
   const statusMap: Record<string, string> = {
     // Reported variations
-    "submitted": "reported",
-    "report_submitted": "reported",
-    "pending": "reported",
-    "reported": "reported",
+    submitted: "reported",
+    report_submitted: "reported",
+    pending: "reported",
+    reported: "reported",
     "report submitted": "reported",
     "not started": "reported",
-    
+
     // Under Investigation variations
-    "under_investigation": "under_investigation",
+    under_investigation: "under_investigation",
     "under investigation": "under_investigation",
     "under review": "under_investigation",
-    "investigating": "under_investigation",
-    "review": "under_investigation",
-    "dispatched": "under_investigation",
-    "en_route": "under_investigation",
+    investigating: "under_investigation",
+    review: "under_investigation",
+    dispatched: "under_investigation",
+    en_route: "under_investigation",
     "en-route": "under_investigation",
     "en route": "under_investigation",
-    
+
     // In Progress variations
-    "in_progress": "in_progress",
+    in_progress: "in_progress",
     "in progress": "in_progress",
     "in-progress": "in_progress",
-    "ongoing": "in_progress",
-    "active": "in_progress",
-    "on_scene": "in_progress",
+    ongoing: "in_progress",
+    active: "in_progress",
+    on_scene: "in_progress",
     "on-scene": "in_progress",
     "on scene": "in_progress",
-    "arrived": "in_progress",
-    "handling": "in_progress",
-    
+    arrived: "in_progress",
+    handling: "in_progress",
+
     // Resolved variations
-    "resolved": "resolved",
-    "complete": "resolved",
-    "completed": "resolved",
-    "done": "resolved",
-    "finished": "resolved",
-    
+    resolved: "resolved",
+    complete: "resolved",
+    completed: "resolved",
+    done: "resolved",
+    finished: "resolved",
+
     // Closed variations
-    "closed": "closed",
-    "cancelled": "closed",
-    "canceled": "closed",
+    closed: "closed",
+    cancelled: "closed",
+    canceled: "closed",
   };
 
   const normalized = statusMap[lowercaseStatus] || lowercaseStatus;
-  
+
   // Validate it's a valid backend status
-  const validStatuses = ["reported", "under_investigation", "in_progress", "resolved", "closed"];
+  const validStatuses = [
+    "reported",
+    "under_investigation",
+    "in_progress",
+    "resolved",
+    "closed",
+  ];
   return validStatuses.includes(normalized) ? normalized : "reported";
 };
 
 // Normalize all incidents in array
 const normalizeIncidents = (incidents: any[]): any[] => {
   if (!Array.isArray(incidents)) return [];
-  return incidents.map(incident => {
+  return incidents.map((incident) => {
     // Try multiple field names for status
-    let rawStatus = 
-      incident.status || 
-      incident.incident_status || 
+    let rawStatus =
+      incident.status ||
+      incident.incident_status ||
       incident.report_status ||
       incident.backend_status ||
       incident.statusCode ||
       incident.state ||
       incident.type_status;
-    
+
     console.log("🔍 Normalizing incident:", {
       report_id: incident.report_id,
       backend_accident_id: incident.backend_accident_id,
@@ -84,7 +90,7 @@ const normalizeIncidents = (incidents: any[]): any[] => {
       report_status: incident.report_status,
       normalized: normalizeStatus(rawStatus),
     });
-    
+
     return {
       ...incident,
       status: normalizeStatus(rawStatus),
@@ -112,7 +118,9 @@ export const useGetAccidents = () => {
       try {
         // Try the main endpoint first (works for Dispatcher, Officer, Admin)
         const response = await apiClient.get("/accidents/");
-        const incidents = Array.isArray(response) ? response : response?.data || [];
+        const incidents = Array.isArray(response)
+          ? response
+          : response?.data || [];
         return normalizeIncidents(incidents);
       } catch (error: any) {
         // If 403 Forbidden (likely a USER role), try user-specific endpoint
@@ -120,13 +128,19 @@ export const useGetAccidents = () => {
           try {
             // Try alternative endpoint for user's own reports
             const response = await apiClient.get("/user/incidents");
-            const incidents = Array.isArray(response) ? response : response?.data || [];
+            const incidents = Array.isArray(response)
+              ? response
+              : response?.data || [];
             return normalizeIncidents(incidents);
           } catch (userError: any) {
             if (userError?.response?.status === 404) {
               // If user endpoints don't exist, try with query parameter
-              const response = await apiClient.get(`/accidents/?userId=${user?.id}`);
-              const incidents = Array.isArray(response) ? response : response?.data || [];
+              const response = await apiClient.get(
+                `/accidents/?userId=${user?.id}`,
+              );
+              const incidents = Array.isArray(response)
+                ? response
+                : response?.data || [];
               return normalizeIncidents(incidents);
             }
             throw userError;
@@ -176,7 +190,9 @@ export const useGetMyAssignedIncidents = () => {
           );
 
           if (assignments.length > 0) {
-            console.log(`✓ Successfully retrieved assignments from ${endpoint}`);
+            console.log(
+              `✓ Successfully retrieved assignments from ${endpoint}`,
+            );
             break; // Exit loop after first successful response
           }
         } catch (err: any) {
@@ -268,11 +284,7 @@ export const useGetMyAssignedIncidents = () => {
         }
       });
 
-      console.log(
-        "✓ RESULT: Found",
-        myIncidents.length,
-        "matching incidents",
-      );
+      console.log("✓ RESULT: Found", myIncidents.length, "matching incidents");
       console.log("Matched incidents:", myIncidents);
 
       return myIncidents;
@@ -291,7 +303,9 @@ export const useGetAccidentById = (id: string | number | undefined) =>
     queryKey: accidentKeys.detail(id!),
     queryFn: async () => {
       const response = await apiClient.get(`/accidents/${id}`);
-      const incident = Array.isArray(response) ? response[0] : response?.data || response;
+      const incident = Array.isArray(response)
+        ? response[0]
+        : response?.data || response;
       return { ...incident, status: normalizeStatus(incident?.status) };
     },
     enabled: !!id,
@@ -304,7 +318,9 @@ export const useGetAccidentByReportNumber = (
     queryKey: [...accidentKeys.all, "report", reportNumber],
     queryFn: async () => {
       const response = await apiClient.get(`/accidents/report/${reportNumber}`);
-      const incidents = Array.isArray(response) ? response : response?.data || [];
+      const incidents = Array.isArray(response)
+        ? response
+        : response?.data || [];
       return normalizeIncidents(incidents);
     },
     enabled: !!reportNumber,
@@ -315,7 +331,9 @@ export const useGetAccidentsByStatus = (status: string | undefined) =>
     queryKey: [...accidentKeys.all, "status", status],
     queryFn: async () => {
       const response = await apiClient.get(`/accidents/status/${status}`);
-      const incidents = Array.isArray(response) ? response : response?.data || [];
+      const incidents = Array.isArray(response)
+        ? response
+        : response?.data || [];
       return normalizeIncidents(incidents);
     },
     enabled: !!status,
@@ -326,7 +344,9 @@ export const useGetAccidentsByOfficer = (officerId: string | undefined) =>
     queryKey: [...accidentKeys.all, "officer", officerId],
     queryFn: async () => {
       const response = await apiClient.get(`/accidents/officer/${officerId}`);
-      const incidents = Array.isArray(response) ? response : response?.data || [];
+      const incidents = Array.isArray(response)
+        ? response
+        : response?.data || [];
       return normalizeIncidents(incidents);
     },
     enabled: !!officerId,

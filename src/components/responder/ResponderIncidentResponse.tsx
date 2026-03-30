@@ -50,8 +50,9 @@ export default function ResponderIncidentResponse({
   onRefresh,
 }: ResponderIncidentResponseProps) {
   // Check if incident can still be responded to
-  const isIncidentComplete = incident.status === "resolved" || incident.status === "closed";
-  
+  const isIncidentComplete =
+    incident.status === "resolved" || incident.status === "closed";
+
   // Get next valid statuses responder can transition to
   const nextStatuses = getNextStatuses(incident.status);
   const initialStatus: IncidentStatus =
@@ -99,9 +100,7 @@ export default function ResponderIncidentResponse({
         });
       }
 
-      toast.success(
-        `Status updated to ${statusLabel} and dispatcher notified`,
-      );
+      toast.success(`Status updated to ${statusLabel} and dispatcher notified`);
       setUpdateNotes("");
       // Refresh parent component data
       onRefresh?.();
@@ -126,14 +125,11 @@ export default function ResponderIncidentResponse({
           </CardHeader>
           <CardContent>
             <p className="text-sm text-orange-800 dark:text-orange-200">
-              This incident is already <strong>{getStatusLabel(incident.status)}</strong> and 
-              cannot be updated. Only active incidents can be responded to.
+              This incident is already{" "}
+              <strong>{getStatusLabel(incident.status)}</strong> and cannot be
+              updated. Only active incidents can be responded to.
             </p>
-            <Button
-              onClick={onClose}
-              variant="outline"
-              className="mt-4"
-            >
+            <Button onClick={onClose} variant="outline" className="mt-4">
               Close
             </Button>
           </CardContent>

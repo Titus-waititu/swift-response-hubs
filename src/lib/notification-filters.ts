@@ -61,7 +61,8 @@ export const filterNotificationsByRole = (
             incident.report_id === notification.reportId ||
             incident.report_id === notification.incidentId ||
             incident.backend_accident_id === notification.incidentId,
-        ) ?? false);
+        ) ??
+          false);
 
       // Exclude internal dispatcher/responder notifications
       const isInternalMessage =

@@ -360,16 +360,14 @@ export default function ResponderAssignmentsPage({
                                   compact={false}
                                 />
                                 {/* Quick Action Buttons */}
-                                {incident.status !==
-                                  "resolved" &&
+                                {incident.status !== "resolved" &&
                                 incident.status !== "closed" ? (
                                   <div className="pt-4 border-t border-slate-200 dark:border-slate-700">
                                     <p className="text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400 font-semibold mb-3">
                                       Quick Actions
                                     </p>
                                     <div className="grid grid-cols-3 gap-2">
-                                      {incident.status !==
-                                        "in_progress" && (
+                                      {incident.status !== "in_progress" && (
                                         <Button
                                           size="sm"
                                           variant="outline"
@@ -392,8 +390,7 @@ export default function ResponderAssignmentsPage({
                                             : "Go to Scene"}
                                         </Button>
                                       )}
-                                      {incident.status !==
-                                        "resolved" && (
+                                      {incident.status !== "resolved" && (
                                         <Button
                                           size="sm"
                                           variant="outline"
@@ -416,8 +413,7 @@ export default function ResponderAssignmentsPage({
                                             : "Resolved"}
                                         </Button>
                                       )}
-                                      {incident.status !==
-                                        "closed" && (
+                                      {incident.status !== "closed" && (
                                         <Button
                                           size="sm"
                                           variant="outline"

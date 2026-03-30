@@ -60,7 +60,10 @@ export default function ResponderActiveDispatches({
       );
   }, [accidentsResponse]);
 
-  const handleStatusUpdate = async (incident: any, newStatus: IncidentStatus) => {
+  const handleStatusUpdate = async (
+    incident: any,
+    newStatus: IncidentStatus,
+  ) => {
     setUpdatingId(incident.report_id);
     try {
       onStatusUpdate?.(incident, newStatus);

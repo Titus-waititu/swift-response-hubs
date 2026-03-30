@@ -39,14 +39,14 @@ export default function ResponderDashboardPage({
     }
     setExpandedIncidents(newExpanded);
   };
-  const assignedCount = incidents.filter((i) => i.status !== "Closed").length;
+  const assignedCount = incidents.filter((i) => i.status !== "closed").length;
   const completedToday = incidents.filter(
     (i) =>
       i.resolved_time &&
       new Date(i.resolved_time).toDateString() === new Date().toDateString(),
   ).length;
   const pendingCount = incidents.filter(
-    (i) => i.status === "Submitted" || i.status === "Under Review",
+    (i) => i.status === "reported" || i.status === "under_investigation",
   ).length;
   const criticalCount = incidents.filter(
     (i) => i.severity_level === "Critical" && i.status !== "Closed",

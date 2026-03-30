@@ -67,9 +67,7 @@ export default function ResponderDashboardLayout({
   const activeIncidents = useMemo(() => {
     return accidentsData
       .filter((i) =>
-        ["Submitted", "Under Review", "Dispatched", "In Progress"].includes(
-          i.status,
-        ),
+        ["reported", "under_investigation", "in_progress"].includes(i.status),
       )
       .sort((a, b) => {
         // Prioritize Critical > High > Medium > Low

@@ -22,10 +22,10 @@ export default function ResponderStatusStats({
   const stats = useMemo(() => {
     const total = incidents.length;
     const responding = incidents.filter(
-      (i) => i.status === "Submitted" || i.status === "Under Review",
+      (i) => i.status === "reported" || i.status === "under_investigation",
     ).length;
-    const onScene = incidents.filter((i) => i.status === "Resolved").length;
-    const completed = incidents.filter((i) => i.status === "Closed").length;
+    const onScene = incidents.filter((i) => i.status === "in_progress").length;
+    const completed = incidents.filter((i) => i.status === "closed").length;
     const critical = incidents.filter(
       (i) => i.severity_level === "Critical",
     ).length;

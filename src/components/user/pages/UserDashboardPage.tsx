@@ -16,62 +16,26 @@ import {
 } from "@/components/premium/DashboardComponents";
 import { AIAssessmentCard } from "@/components/AIAssessmentCard";
 import type { IncidentReport } from "@/types/incident";
+import {
+  STATUS_STEPS,
+  getStatusIndex,
+  getStatusLabel,
+} from "@/lib/status-utils";
 
 interface UserDashboardPageProps {
   incidents: IncidentReport[];
   userName: string;
 }
 
-const STATUS_STEPS = [
-  {
-    id: "Submitted",
-    label: "Reported",
-    icon: FileText,
-    description: "Report received",
-  },
-  {
-    id: "Under Review",
-    label: "Reviewing",
-    icon: AlertCircle,
-    description: "Being assessed",
-  },
-  {
-    id: "Dispatched",
-    label: "Dispatching",
-    icon: MapPin,
-    description: "Units assigned",
-  },
-  {
-    id: "In Progress",
-    label: "Responding",
-    icon: Truck,
-    description: "En route",
-  },
-  {
-    id: "Resolved",
-    label: "Resolved",
-    icon: CheckCircle2,
-    description: "Handled",
-  },
-  {
-    id: "Closed",
-    label: "Closed",
-    icon: CheckCircle2,
-    description: "Complete",
-  },
-];
-
-const getStatusIndex = (status: string) => {
-  return STATUS_STEPS.findIndex((step) => step.id === status);
-};
-
 export default function UserDashboardPage({
   incidents,
   userName,
 }: UserDashboardPageProps) {
   const totalReports = incidents.length;
-  const pendingReports = incidents.filter((i) => i.status !== "Closed").length;
-  const resolvedReports = incidents.filter((i) => i.status === "Closed").length;
+  const pendingReports = incidents.filter(
+    (i) => i.status !== "closed" && i.status !== "resolved",
+  ).length;
+  const resolvedReports = incidents.filter((i) => i.status === "closed").length;
   const recentReports = incidents.slice(0, 5);
 
   return (
@@ -220,11 +184,18 @@ export default function UserDashboardPage({
                                 <StepIcon className="h-4 w-4" />
                               </div>
                               <div className="mt-3 flex flex-col items-center text-center px-1">
-                                <p
-                                  className={`text-xs font-semibold whitespace-nowrap ${isCurrent ? "text-blue-600 dark:text-blue-400" : isCompleted ? "text-slate-900 dark:text-white" : "text-slate-500 dark:text-slate-400"}`}
-                                >
-                                  {step.label}
-                                </p>
+                                <div className="flex items-center justify-center gap-2">
+                                  <p
+                                    className={`text-xs font-semibold whitespace-nowrap ${isCurrent ? "text-blue-600 dark:text-blue-400" : isCompleted ? "text-slate-900 dark:text-white" : "text-slate-500 dark:text-slate-400"}`}
+                                  >
+                                    {step.label}
+                                  </p>
+                                  {isCurrent && (
+                                    <span className="inline-flex items-center rounded-full bg-blue-100 dark:bg-blue-900/30 px-2 py-0.5 text-[10px] font-semibold text-blue-700 dark:text-blue-300 whitespace-nowrap">
+                                      Current
+                                    </span>
+                                  )}
+                                </div>
                                 <p className="mt-1 text-[10px] text-slate-500 dark:text-slate-400 hidden sm:block text-center balance">
                                   {step.description}
                                 </p>
@@ -234,12 +205,14 @@ export default function UserDashboardPage({
                         })}
                       </div>
                     </div>
-                    <p className="mt-3 text-xs text-slate-600 dark:text-slate-400">
-                      <span className="font-semibold text-slate-900 dark:text-white">
-                        {incident.status}
-                      </span>{" "}
-                      — Last update:{" "}
-                      {new Date(incident.updated_at).toLocaleTimeString()}
+                    <p className="mt-3 text-xs text-slate-600 dark:text-slate-400 flex items-center gap-2 flex-wrap">
+                      <span className="font-semibold text-slate-900 dark:text-white inline-flex items-center gap-1.5 rounded-full bg-slate-100 dark:bg-slate-700 px-3 py-1">
+                        <span className="inline-flex h-2 w-2 rounded-full bg-blue-500" />
+                        Status: {getStatusLabel(incident.status)}
+                      </span>
+                      <span className="text-slate-500 dark:text-slate-400">
+                        Updated: {new Date(incident.updated_at).toLocaleTimeString()}
+                      </span>
                     </p>
                   </div>
 
@@ -265,7 +238,7 @@ export default function UserDashboardPage({
                   )}
 
                   {/* AI Assessment Card */}
-                  {incident.status !== "Submitted" && (
+                  {incident.status !== "reported" && (
                     <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
                       <AIAssessmentCard
                         severity={incident.severity_level}

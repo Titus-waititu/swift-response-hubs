@@ -26,6 +26,7 @@ import {
 import { AIAssessmentCard } from "@/components/AIAssessmentCard";
 import { SeverityBadge, StatusBadge } from "@/components/StatusBadge";
 import type { IncidentReport } from "@/types/incident";
+import { getStatusLabel, STATUS_STEPS } from "@/lib/status-utils";
 
 interface UserReportsPageProps {
   incidents: IncidentReport[];
@@ -89,12 +90,13 @@ export default function UserReportsPage({ incidents }: UserReportsPageProps) {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="Submitted">Submitted</SelectItem>
-                  <SelectItem value="Under Review">Under Review</SelectItem>
-                  <SelectItem value="Dispatched">Dispatched</SelectItem>
-                  <SelectItem value="In Progress">In Progress</SelectItem>
-                  <SelectItem value="Resolved">Resolved</SelectItem>
-                  <SelectItem value="Closed">Closed</SelectItem>
+                  <SelectItem value="reported">Reported</SelectItem>
+                  <SelectItem value="under_investigation">
+                    Under Investigation
+                  </SelectItem>
+                  <SelectItem value="in_progress">In Progress</SelectItem>
+                  <SelectItem value="resolved">Resolved</SelectItem>
+                  <SelectItem value="closed">Closed</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -183,7 +185,7 @@ export default function UserReportsPage({ incidents }: UserReportsPageProps) {
                   )}
 
                 {/* AI Assessment - Show for analyzed incidents */}
-                {incident.status !== "Submitted" && (
+                {incident.status !== "reported" && (
                   <div className="border-t border-border/50 pt-4">
                     <p className="mb-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                       AI Assessment

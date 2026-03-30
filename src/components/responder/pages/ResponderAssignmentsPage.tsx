@@ -123,10 +123,13 @@ export default function ResponderAssignmentsPage({
               </SelectTrigger>
               <SelectContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700">
                 <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="Submitted">Submitted</SelectItem>
-                <SelectItem value="Under Review">Under Review</SelectItem>
-                <SelectItem value="Resolved">Resolved</SelectItem>
-                <SelectItem value="Closed">Closed</SelectItem>
+                <SelectItem value="reported">Reported</SelectItem>
+                <SelectItem value="under_investigation">
+                  Under Investigation
+                </SelectItem>
+                <SelectItem value="in_progress">In Progress</SelectItem>
+                <SelectItem value="resolved">Resolved</SelectItem>
+                <SelectItem value="closed">Closed</SelectItem>
               </SelectContent>
             </Select>
           </div>

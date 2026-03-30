@@ -18,15 +18,19 @@ import { MapPin, Phone, AlertTriangle, Clock, ChevronLeft } from "lucide-react";
 import { toast } from "sonner";
 
 const STATUS_FLOW = [
-  { status: "Submitted", label: "Report Submitted", color: "bg-blue-500" },
-  { status: "Under Review", label: "Being Reviewed", color: "bg-yellow-500" },
+  { status: "reported", label: "Report Submitted", color: "bg-blue-500" },
   {
-    status: "Dispatched",
-    label: "Responders Assigned",
-    color: "bg-purple-500",
+    status: "under_investigation",
+    label: "Being Investigated",
+    color: "bg-yellow-500",
   },
-  { status: "In Progress", label: "At Scene", color: "bg-orange-500" },
-  { status: "Resolved", label: "Incident Resolved", color: "bg-green-500" },
+  {
+    status: "in_progress",
+    label: "Responders En Route",
+    color: "bg-orange-500",
+  },
+  { status: "resolved", label: "Incident Resolved", color: "bg-green-500" },
+  { status: "closed", label: "Closed", color: "bg-slate-500" },
 ];
 
 export default function IncidentStatusPage() {
@@ -196,11 +200,11 @@ export default function IncidentStatusPage() {
                   </p>
                 </div>
                 <Badge variant="outline" className="text-lg">
-                  {incident.status === "Submitted" && "🔔"}
-                  {incident.status === "Under Review" && "👀"}
-                  {incident.status === "Dispatched" && "📍"}
-                  {incident.status === "In Progress" && "🚗"}
-                  {incident.status === "Resolved" && "✅"}
+                  {incident.status === "reported" && "🔔"}
+                  {incident.status === "under_investigation" && "👀"}
+                  {incident.status === "in_progress" && "🚗"}
+                  {incident.status === "resolved" && "✅"}
+                  {incident.status === "closed" && "🔒"}
                 </Badge>
               </div>
 

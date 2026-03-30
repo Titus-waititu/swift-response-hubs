@@ -1,11 +1,12 @@
 import type { IncidentReport, IncidentStatus } from "@/types/incident";
 
 const ACTIVE_INCIDENT_STATUSES: IncidentStatus[] = [
-  "Submitted",
-  "Under Review",
+  "reported",
+  "under_investigation",
+  "in_progress",
 ];
 
-const RESOLVED_STATUSES: IncidentStatus[] = ["Resolved", "Closed"];
+const RESOLVED_STATUSES: IncidentStatus[] = ["resolved", "closed"];
 
 function getMinutesBetween(start?: string, end?: string) {
   if (!start || !end) {
@@ -64,9 +65,13 @@ export function formatAverageMinutes(minutes: number | null) {
 }
 
 export function getLandingStats(incidents: IncidentReport[], now = new Date()) {
-  const activeIncidents = incidents.filter((incident) => isActiveIncident(incident.status));
+  const activeIncidents = incidents.filter((incident) =>
+    isActiveIncident(incident.status),
+  );
   const averageResponse = average(
-    incidents.map((incident) => getMinutesBetween(incident.time_report_submitted, incident.resolved_time)),
+    incidents.map((incident) =>
+      getMinutesBetween(incident.time_report_submitted, incident.resolved_time),
+    ),
   );
   const todayKey = now.toDateString();
   const resolvedToday = incidents.filter((incident) => {
@@ -87,18 +92,28 @@ export function getLandingStats(incidents: IncidentReport[], now = new Date()) {
 
 export function getDispatcherQueueStats(incidents: IncidentReport[]) {
   return {
-    newCount: incidents.filter((incident) => incident.status === "Submitted").length,
-    inProgressCount: incidents.filter((incident) => incident.status === "Under Review").length,
-    dispatchedCount: incidents.filter((incident) => incident.status === "Resolved").length,
-    resolvedCount: incidents.filter((incident) => incident.status === "Closed").length,
+    newCount: incidents.filter((incident) => incident.status === "Submitted")
+      .length,
+    inProgressCount: incidents.filter(
+      (incident) => incident.status === "Under Review",
+    ).length,
+    dispatchedCount: incidents.filter(
+      (incident) => incident.status === "Resolved",
+    ).length,
+    resolvedCount: incidents.filter((incident) => incident.status === "Closed")
+      .length,
   };
 }
 
 export function getIncidentTypeBreakdown(incidents: IncidentReport[]) {
-  const counts = incidents.reduce<Record<string, number>>((accumulator, incident) => {
-    accumulator[incident.incident_type] = (accumulator[incident.incident_type] ?? 0) + 1;
-    return accumulator;
-  }, {});
+  const counts = incidents.reduce<Record<string, number>>(
+    (accumulator, incident) => {
+      accumulator[incident.incident_type] =
+        (accumulator[incident.incident_type] ?? 0) + 1;
+      return accumulator;
+    },
+    {},
+  );
 
   const total = incidents.length || 1;
 
@@ -114,14 +129,26 @@ export function getIncidentTypeBreakdown(incidents: IncidentReport[]) {
 export function getResponseTimeMetrics(incidents: IncidentReport[]) {
   return {
     dispatchMinutes: average(
-      incidents.map((incident) => getMinutesBetween(incident.time_report_submitted, incident.updated_at)),
+      incidents.map((incident) =>
+        getMinutesBetween(incident.time_report_submitted, incident.updated_at),
+      ),
     ),
     acceptanceMinutes: null,
     arrivalMinutes: average(
-      incidents.map((incident) => getMinutesBetween(incident.time_of_incident, incident.time_report_submitted)),
+      incidents.map((incident) =>
+        getMinutesBetween(
+          incident.time_of_incident,
+          incident.time_report_submitted,
+        ),
+      ),
     ),
     resolutionMinutes: average(
-      incidents.map((incident) => getMinutesBetween(incident.time_report_submitted, incident.resolved_time)),
+      incidents.map((incident) =>
+        getMinutesBetween(
+          incident.time_report_submitted,
+          incident.resolved_time,
+        ),
+      ),
     ),
   };
 }

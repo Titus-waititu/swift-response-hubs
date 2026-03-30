@@ -116,10 +116,10 @@ export default function DispatcherDashboardView({
     isActiveIncident(incident.status),
   ).length;
   const underReviewCount = incidents.filter(
-    (incident) => incident.status === "Under Review",
+    (incident) => incident.status === "under_investigation",
   ).length;
   const closedCount = incidents.filter(
-    (incident) => incident.status === "Closed",
+    (incident) => incident.status === "closed",
   ).length;
   const latestIncident = incidents[0];
   const timingItems: DispatcherTimingItem[] = [

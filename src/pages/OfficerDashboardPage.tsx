@@ -60,7 +60,7 @@ export default function OfficerDashboardPage() {
 
   const stats = {
     total: incidents.length,
-    submitted: incidents.filter((i) => i.status === "Submitted").length,
+    submitted: incidents.filter((i) => i.status === "reported").length,
     underReview: incidents.filter((i) => i.status === "Under Review").length,
     resolved: incidents.filter((i) => i.status === "Resolved").length,
     critical: incidents.filter((i) => i.severity_level === "Critical").length,

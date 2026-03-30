@@ -94,10 +94,11 @@ export default function DispatcherPage() {
   const incidentTypeBreakdown = getIncidentTypeBreakdown(incidents);
   const responseMetrics = getResponseTimeMetrics(incidents);
   const statusOptions: IncidentStatus[] = [
-    "Submitted",
-    "Under Review",
-    "Resolved",
-    "Closed",
+    "reported",
+    "under_investigation",
+    "in_progress",
+    "resolved",
+    "closed",
   ];
   const dispatcherNavItems = [
     {

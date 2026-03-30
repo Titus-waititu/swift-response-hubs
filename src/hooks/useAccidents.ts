@@ -41,6 +41,9 @@ export const useGetAccidents = () => {
       }
     },
     enabled: !!user,
+    staleTime: 5000, // Data is considered fresh for 5 seconds
+    refetchInterval: 10000, // Refetch every 10 seconds for real-time updates
+    refetchOnWindowFocus: true, // Refetch when window regains focus
   });
 };
 

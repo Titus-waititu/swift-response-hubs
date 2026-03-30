@@ -1,14 +1,9 @@
 export type IncidentStatus =
-  | "Submitted"
-  | "Under Review"
-  | "Dispatched"
-  | "In Progress"
-  | "Accepted"
-  | "En Route"
-  | "On Scene"
-  | "Resolved"
-  | "Completed"
-  | "Closed";
+  | "reported"
+  | "under_investigation"
+  | "in_progress"
+  | "resolved"
+  | "closed";
 
 export type IncidentType =
   | "Road Traffic Accident"
@@ -79,8 +74,9 @@ export const SEVERITY_LEVELS: SeverityLevel[] = [
 ];
 
 export const STATUS_FLOW: IncidentStatus[] = [
-  "Submitted",
-  "Under Review",
-  "Resolved",
-  "Closed",
+  "reported",
+  "under_investigation",
+  "in_progress",
+  "resolved",
+  "closed",
 ];

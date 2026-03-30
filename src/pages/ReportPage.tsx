@@ -147,7 +147,7 @@ export default function ReportPage() {
           const id = generateReportId();
           const incident = {
             report_id: id,
-            status: "Submitted",
+            status: "reported",
             reporter_name: parsed.data.reporter_name,
             phone_number: parsed.data.phone_number,
             email: parsed.data.email || `reporter-${Date.now()}@swift.local`,
@@ -211,7 +211,7 @@ export default function ReportPage() {
     }
   }, [step, locationAttempted]);
 
-    const handleNext = () => {
+  const handleNext = () => {
     const values = form.state.values;
     let errors: string[] = [];
     if (step === 0) {
@@ -221,11 +221,12 @@ export default function ReportPage() {
     } else if (step === 1) {
       if (!values.incident_type) errors.push("Incident Type is required");
       if (!values.severity_level) errors.push("Severity Level is required");
-      if (!values.short_description || values.short_description.length < 10) errors.push("Description requires at least 10 characters");
+      if (!values.short_description || values.short_description.length < 10)
+        errors.push("Description requires at least 10 characters");
     } else if (step === 2) {
       if (!values.location_address) errors.push("Location Address is required");
     }
-    
+
     if (errors.length > 0) {
       toast.error(errors.join("\n"));
       return;

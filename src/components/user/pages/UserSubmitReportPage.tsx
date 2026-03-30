@@ -3,6 +3,7 @@ import { useForm } from "@tanstack/react-form";
 import { Upload, AlertCircle, Loader2, ImagePlus, X } from "lucide-react";
 import { toast } from "sonner";
 import { useCreateAccidentReport } from "@/hooks/useAccidents";
+import { useAuthStore } from "@/stores/authStore";
 import {
   Card,
   CardContent,
@@ -32,6 +33,7 @@ export default function SubmitAccidentReportPage({
   const [mediaPreviews, setMediaPreviews] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const createReport = useCreateAccidentReport();
+  const { user } = useAuthStore();
 
   const requestLocation = () => {
     setIsLocating(true);
@@ -98,16 +100,26 @@ export default function SubmitAccidentReportPage({
         return { success: false, errors };
       }
 
-      try {
-        await createReport.mutateAsync(parsed.data as any);
-        if (onSubmit) {
-          onSubmit(parsed.data);
+      const payload = {
+          description: parsed.data.description,
+          locationAddress: parsed.data.location,
+          latitude: parseFloat(parsed.data.latitude || "0"),
+          longitude: parseFloat(parsed.data.longitude || "0"),
+          severity: parsed.data.injuriesReported ? "severe" : "moderate",
+          accidentDate: new Date().toISOString(),
+          reportedById: user?.id || "unknown"
+        };
+        try {
+          await createReport.mutateAsync(payload as any);
+          if (onSubmit) {
+            onSubmit(parsed.data);
+          }
+          toast.success("Report submitted successfully!");
+          form.reset();
+        } catch (error) {
+          console.error(error);
+          toast.error("Failed to submit report.");
         }
-        toast.success("Report submitted successfully!");
-        form.reset();
-      } catch (error) {
-        toast.error("Failed to submit report.");
-      }
     },
   });
 
@@ -184,11 +196,7 @@ export default function SubmitAccidentReportPage({
                 <form.Field
                   name="description"
                   validators={{
-                    onChange: ({ value }) =>
-                      userSubmitReportSchema.shape.description.safeParse(value)
-                        .success
-                        ? undefined
-                        : "Description must be at least 10 characters",
+                    onChange: ({ value }) => !value || value.length < 10 ? "Description must be at least 10 characters" : undefined,
                   }}
                 >
                   {(field) => (
@@ -222,11 +230,7 @@ export default function SubmitAccidentReportPage({
                   <form.Field
                     name="location"
                     validators={{
-                      onChange: ({ value }) =>
-                        userSubmitReportSchema.shape.location.safeParse(value)
-                          .success
-                          ? undefined
-                          : "Location address is required",
+                      onChange: ({ value }) => !value || value.length < 5 ? "Location address is required" : undefined,
                     }}
                   >
                     {(field) => (
@@ -647,3 +651,4 @@ export default function SubmitAccidentReportPage({
     </form.Subscribe>
   );
 }
+

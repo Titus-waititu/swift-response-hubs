@@ -59,11 +59,11 @@ export default function DispatcherDashboardPage({
 
   // Calculate queue stats from incidents
   const computedQueueStats = {
-    newCount: incidents.filter((i) => i.status === "Submitted").length,
-    inProgressCount: incidents.filter((i) => i.status === "Under Review")
+    newCount: incidents.filter((i) => i.status === "reported").length,
+    inProgressCount: incidents.filter((i) => i.status === "under_investigation")
       .length,
-    dispatchedCount: incidents.filter((i) => i.status === "In Progress").length,
-    resolvedCount: incidents.filter((i) => i.status === "Resolved").length,
+    dispatchedCount: incidents.filter((i) => i.status === "in_progress").length,
+    resolvedCount: incidents.filter((i) => i.status === "resolved").length,
   };
 
   const queueStats = initialQueueStats || computedQueueStats;

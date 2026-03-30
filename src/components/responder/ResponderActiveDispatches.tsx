@@ -58,9 +58,7 @@ export default function ResponderActiveDispatches({
     return accidentsData
       .map(mapBackendAccidentToIncident)
       .filter((i) =>
-        ["Submitted", "Under Review", "Dispatched", "In Progress"].includes(
-          i.status,
-        ),
+        ["reported", "under_investigation", "in_progress"].includes(i.status),
       )
       .sort(
         (a, b) =>
@@ -95,12 +93,12 @@ export default function ResponderActiveDispatches({
 
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
-      case "Submitted":
-      case "Under Review":
+      case "reported":
+      case "under_investigation":
         return "outline";
-      case "Dispatched":
+      case "in_progress":
         return "secondary";
-      case "In Progress":
+      case "resolved":
         return "default";
       default:
         return "outline";

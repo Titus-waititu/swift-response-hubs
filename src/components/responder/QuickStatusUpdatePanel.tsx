@@ -116,47 +116,47 @@ export default function QuickStatusUpdatePanel({
   };
 
   return (
-    <div className="space-y-5 p-1">
+    <div className="space-y-3 p-0">
       {/* Header Section - Incident Info */}
-      <div className="bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-850 rounded-lg p-4 border border-slate-200 dark:border-slate-700">
-        <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50 mb-3">
+      <div className="bg-slate-50 dark:bg-slate-900/30 rounded-lg p-3 border border-slate-200 dark:border-slate-700">
+        <h2 className="text-sm font-bold text-slate-900 dark:text-slate-50 mb-2">
           {incident.incident_type}
         </h2>
-        <div className="space-y-2">
-          <div className="flex items-center gap-2 text-sm">
-            <MapPinIcon className="h-4 w-4 text-slate-500 dark:text-slate-400" />
-            <span className="text-slate-700 dark:text-slate-300">
+        <div className="space-y-1.5">
+          <div className="flex items-center gap-2 text-xs">
+            <MapPinIcon className="h-3.5 w-3.5 text-slate-500 dark:text-slate-400 flex-shrink-0" />
+            <span className="text-slate-700 dark:text-slate-300 line-clamp-1">
               {incident.location_address}
             </span>
           </div>
-          <div className="flex items-center gap-2 text-sm">
-            <Clock className="h-4 w-4 text-slate-500 dark:text-slate-400" />
-            <span className="text-slate-600 dark:text-slate-400 font-mono">
-              {new Date(incident.time_report_submitted).toLocaleString()}
+          <div className="flex items-center gap-2 text-xs">
+            <Clock className="h-3.5 w-3.5 text-slate-500 dark:text-slate-400 flex-shrink-0" />
+            <span className="text-slate-600 dark:text-slate-400 font-mono text-xs">
+              {new Date(incident.time_report_submitted).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
             </span>
           </div>
         </div>
       </div>
 
       {/* Current Status */}
-      <div className="bg-white dark:bg-slate-800 rounded-lg p-4 border border-slate-200 dark:border-slate-700 shadow-sm">
-        <p className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400 mb-3">
-          Current Status
+      <div className="bg-slate-50 dark:bg-slate-900/30 rounded-lg p-3 border border-slate-200 dark:border-slate-700">
+        <p className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400 mb-2">
+          Status
         </p>
-        <div className="flex items-center justify-between">
-          <Badge className={`${getStatusBadgeStyle(incident.status)} px-3 py-1 text-sm font-semibold`}>
+        <div className="flex items-center justify-between gap-2">
+          <Badge className={`${getStatusBadgeStyle(incident.status)} px-2 py-1 text-xs font-semibold`}>
             {getStatusLabel(incident.status)}
           </Badge>
           <span className="text-xs text-slate-500 dark:text-slate-400 font-mono">
-            {new Date().toLocaleTimeString()}
+            {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
           </span>
         </div>
 
         {isIncidentComplete && (
-          <div className="mt-3 flex items-start gap-3 p-3 bg-orange-50 dark:bg-orange-950/30 rounded-md border border-orange-200 dark:border-orange-800/50">
-            <AlertTriangle className="h-5 w-5 text-orange-600 dark:text-orange-400 flex-shrink-0 mt-0.5" />
-            <p className="text-sm text-orange-800 dark:text-orange-200">
-              This incident is <strong>{getStatusLabel(incident.status)}</strong> and cannot be updated.
+          <div className="mt-2 flex items-start gap-2 p-2 bg-orange-50 dark:bg-orange-950/30 rounded border border-orange-200 dark:border-orange-800/50">
+            <AlertTriangle className="h-4 w-4 text-orange-600 dark:text-orange-400 flex-shrink-0 mt-0.5" />
+            <p className="text-xs text-orange-800 dark:text-orange-200">
+              Cannot update - incident is <strong>{getStatusLabel(incident.status)}</strong>.
             </p>
           </div>
         )}
@@ -164,9 +164,9 @@ export default function QuickStatusUpdatePanel({
 
       {/* Quick Actions */}
       {!isIncidentComplete && (
-        <div className="bg-white dark:bg-slate-800 rounded-lg p-4 border border-slate-200 dark:border-slate-700 shadow-sm">
-          <p className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400 mb-4">
-            Update Status
+        <div className="bg-slate-50 dark:bg-slate-900/30 rounded-lg p-3 border border-slate-200 dark:border-slate-700">
+          <p className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400 mb-2.5">
+            Quick Update
           </p>
           <div className="grid grid-cols-1 gap-2">
             {quickActions.map((action) => {
@@ -176,13 +176,13 @@ export default function QuickStatusUpdatePanel({
                   key={action.status}
                   onClick={() => handleQuickStatusUpdate(action.status)}
                   disabled={isLoading}
-                  className={`${action.color} ${action.textColor} h-12 font-semibold text-sm shadow-md hover:shadow-lg transition-all`}
+                  className={`${action.color} ${action.textColor} h-9 font-medium text-sm shadow-md hover:shadow-lg transition-all`}
                 >
                   {isLoading ? (
-                    <Loader2 className="h-5 w-5 animate-spin" />
+                    <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
                     <>
-                      <IconComponent className="h-5 w-5 mr-2" />
+                      <IconComponent className="h-4 w-4 mr-2" />
                       {action.label}
                     </>
                   )}
@@ -197,12 +197,10 @@ export default function QuickStatusUpdatePanel({
       <Button
         onClick={onClose}
         variant="outline"
-        className="w-full h-10 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700"
+        className="w-full h-9 text-xs font-medium text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700"
       >
         Close
       </Button>
     </div>
-  );
-}
   );
 }

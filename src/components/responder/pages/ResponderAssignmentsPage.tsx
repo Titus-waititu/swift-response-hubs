@@ -296,7 +296,27 @@ export default function ResponderAssignmentsPage({
                         ).toLocaleDateString()}
                       </TableCell>
                       <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
+                        <div className="flex items-center justify-end gap-2">
+                          {/* Status Badge */}
+                          <div className="flex items-center gap-1">
+                            <Badge
+                              className={`text-xs font-semibold ${
+                                incident.status === "reported"
+                                  ? "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200"
+                                  : incident.status === "under_investigation"
+                                    ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-200"
+                                    : incident.status === "in_progress"
+                                      ? "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-200"
+                                      : incident.status === "resolved"
+                                        ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200"
+                                        : "bg-slate-100 text-slate-800 dark:bg-slate-900/30 dark:text-slate-200"
+                              }`}
+                            >
+                              {getStatusLabel(incident.status)}
+                            </Badge>
+                          </div>
+                          
+                          {/* Respond Button */}
                           <Button
                             size="sm"
                             onClick={(e) => {
@@ -318,6 +338,8 @@ export default function ResponderAssignmentsPage({
                             <MapPin className="h-4 w-4 mr-1" />
                             Respond
                           </Button>
+                          
+                          {/* Details Button */}
                           <Button
                             size="sm"
                             variant="ghost"
@@ -465,19 +487,21 @@ export default function ResponderAssignmentsPage({
         open={!!selectedIncident}
         onOpenChange={(open) => !open && setSelectedIncident(null)}
       >
-        <DialogContent className="max-w-sm bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
-          <DialogHeader>
-            <DialogTitle className="text-slate-900 dark:text-slate-50">
-              Quick Status Update
+        <DialogContent className="max-w-xs w-full bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 p-0 gap-0 rounded-lg overflow-hidden max-h-[95vh]">
+          <div className="bg-gradient-to-r from-blue-600 to-blue-700 dark:from-blue-800 dark:to-blue-900 px-5 py-3 flex items-center justify-between">
+            <DialogTitle className="text-white text-base font-bold">
+              Update Status
             </DialogTitle>
-          </DialogHeader>
-          {selectedIncident && (
-            <QuickStatusUpdatePanel
-              incident={selectedIncident}
-              onClose={() => setSelectedIncident(null)}
-              onRefresh={onRefreshAssignments}
-            />
-          )}
+          </div>
+          <div className="px-3 py-4 overflow-y-auto">
+            {selectedIncident && (
+              <QuickStatusUpdatePanel
+                incident={selectedIncident}
+                onClose={() => setSelectedIncident(null)}
+                onRefresh={onRefreshAssignments}
+              />
+            )}
+          </div>
         </DialogContent>
       </Dialog>
 

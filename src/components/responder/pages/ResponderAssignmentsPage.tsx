@@ -315,7 +315,7 @@ export default function ResponderAssignmentsPage({
                               {getStatusLabel(incident.status)}
                             </Badge>
                           </div>
-                          
+
                           {/* Respond Button */}
                           <Button
                             size="sm"
@@ -338,7 +338,7 @@ export default function ResponderAssignmentsPage({
                             <MapPin className="h-4 w-4 mr-1" />
                             Respond
                           </Button>
-                          
+
                           {/* Details Button */}
                           <Button
                             size="sm"

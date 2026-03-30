@@ -39,21 +39,24 @@ export default function QuickStatusUpdatePanel({
       status: "in_progress" as IncidentStatus,
       label: "Go to Scene",
       icon: MapPin,
-      color: "bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800",
+      color:
+        "bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800",
       textColor: "text-blue-50",
     },
     {
       status: "resolved" as IncidentStatus,
       label: "Resolved",
       icon: CheckCircle2,
-      color: "bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800",
+      color:
+        "bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800",
       textColor: "text-green-50",
     },
     {
       status: "closed" as IncidentStatus,
       label: "Closed",
       icon: XCircle,
-      color: "bg-slate-700 hover:bg-slate-800 dark:bg-slate-600 dark:hover:bg-slate-700",
+      color:
+        "bg-slate-700 hover:bg-slate-800 dark:bg-slate-600 dark:hover:bg-slate-700",
       textColor: "text-slate-50",
     },
   ];
@@ -132,7 +135,10 @@ export default function QuickStatusUpdatePanel({
           <div className="flex items-center gap-2 text-xs">
             <Clock className="h-3.5 w-3.5 text-slate-500 dark:text-slate-400 flex-shrink-0" />
             <span className="text-slate-600 dark:text-slate-400 font-mono text-xs">
-              {new Date(incident.time_report_submitted).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              {new Date(incident.time_report_submitted).toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
             </span>
           </div>
         </div>
@@ -144,11 +150,16 @@ export default function QuickStatusUpdatePanel({
           Status
         </p>
         <div className="flex items-center justify-between gap-2">
-          <Badge className={`${getStatusBadgeStyle(incident.status)} px-2 py-1 text-xs font-semibold`}>
+          <Badge
+            className={`${getStatusBadgeStyle(incident.status)} px-2 py-1 text-xs font-semibold`}
+          >
             {getStatusLabel(incident.status)}
           </Badge>
           <span className="text-xs text-slate-500 dark:text-slate-400 font-mono">
-            {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            {new Date().toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
           </span>
         </div>
 
@@ -156,7 +167,8 @@ export default function QuickStatusUpdatePanel({
           <div className="mt-2 flex items-start gap-2 p-2 bg-orange-50 dark:bg-orange-950/30 rounded border border-orange-200 dark:border-orange-800/50">
             <AlertTriangle className="h-4 w-4 text-orange-600 dark:text-orange-400 flex-shrink-0 mt-0.5" />
             <p className="text-xs text-orange-800 dark:text-orange-200">
-              Cannot update - incident is <strong>{getStatusLabel(incident.status)}</strong>.
+              Cannot update - incident is{" "}
+              <strong>{getStatusLabel(incident.status)}</strong>.
             </p>
           </div>
         )}

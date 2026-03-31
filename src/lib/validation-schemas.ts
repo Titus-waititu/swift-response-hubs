@@ -67,7 +67,7 @@ export const reportFormSchema = z.object({
   phone_number: z
     .string()
     .min(1, "Phone number is required")
-    .regex(/^[\d\s\-\+\(\)]{7,}$/, "Please enter a valid phone number"),
+    .regex(/^[\d\s\-+()]{7,}$/, "Please enter a valid phone number"),
   email: z
     .string()
     .min(1, "Email is required")

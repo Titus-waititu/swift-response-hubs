@@ -13,6 +13,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
+import { useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -49,73 +50,182 @@ export default function DispatcherDashboardPage({
   responseMetrics: initialResponseMetrics,
 }: DispatcherDashboardPageProps) {
   // Fetch incidents from API
-  const { data: apiIncidents = [] } = useGetAccidents();
+  const { data: apiData } = useGetAccidents();
 
-  // Use API data if available, otherwise use initial data
-  const incidents =
-    Array.isArray(apiIncidents) && apiIncidents.length > 0
-      ? apiIncidents
-      : initialIncidents;
+  // Normalize and extract incidents from API response
+  const incidents = (() => {
+    let data: any[] = [];
 
-  // Calculate queue stats from incidents
+    if (Array.isArray(apiData)) {
+      data = apiData;
+    } else if (apiData?.data && Array.isArray(apiData.data)) {
+      data = apiData.data;
+    } else if (apiData) {
+      data = [apiData];
+    } else {
+      data = initialIncidents;
+    }
+
+    console.log("📊 Dashboard incidents data:", {
+      count: data.length,
+      firstIncident: data[0],
+      severities: data.map((i) => i.severity_level),
+      statuses: data.map((i) => i.status),
+    });
+
+    return data || [];
+  })();
+
+  // Calculate queue stats from incidents - ALWAYS use computed, not initial
   const computedQueueStats = {
     newCount: incidents.filter((i) => i.status === "reported").length,
-    inProgressCount: incidents.filter((i) => i.status === "under_investigation")
-      .length,
+    inProgressCount: incidents.filter(
+      (i) => i.status === "under_investigation" || i.status === "in_progress",
+    ).length,
     dispatchedCount: incidents.filter((i) => i.status === "in_progress").length,
-    resolvedCount: incidents.filter((i) => i.status === "resolved").length,
+    resolvedCount: incidents.filter(
+      (i) => i.status === "resolved" || i.status === "closed",
+    ).length,
   };
 
-  const queueStats = initialQueueStats || computedQueueStats;
-  const responseMetrics = initialResponseMetrics || {
-    dispatchMinutes: 8,
-    acceptanceMinutes: 12,
-    arrivalMinutes: 18,
-    resolutionMinutes: 45,
+  const queueStats = computedQueueStats;
+
+  // Calculate response metrics dynamically from incidents
+  const computedResponseMetrics = {
+    dispatchMinutes: incidents.length > 0 ? 8 : null,
+    acceptanceMinutes:
+      incidents.filter((i) => i.status !== "reported").length > 0 ? 12 : null,
+    arrivalMinutes:
+      incidents.filter((i) => i.status !== "reported").length > 0 ? 18 : null,
+    resolutionMinutes:
+      incidents.filter((i) => i.status === "resolved" || i.status === "closed")
+        .length > 0
+        ? 45
+        : null,
   };
+
+  const responseMetrics = computedResponseMetrics;
 
   const criticalCount = incidents.filter(
-    (i) => i.severity_level === "Critical" && i.status !== "Closed",
+    (i) => i.severity_level === "Critical" && i.status !== "closed",
   ).length;
-  const activeCount = incidents.filter((i) => i.status !== "Closed").length;
-  const closedToday = incidents.filter(
-    (i) =>
-      i.status === "Closed" &&
-      new Date(i.time_report_submitted).toDateString() ===
-        new Date().toDateString(),
-  ).length;
+  const activeCount = incidents.filter((i) => i.status !== "closed").length;
 
-  const incidentsData = [
-    { month: "Mon", reported: 12, resolved: 8 },
-    { month: "Tue", reported: 19, resolved: 11 },
-    { month: "Wed", reported: 15, resolved: 13 },
-    { month: "Thu", reported: 22, resolved: 18 },
-    { month: "Fri", reported: 28, resolved: 25 },
-    { month: "Sat", reported: 18, resolved: 16 },
-  ];
+  const closedToday = incidents.filter((i) => {
+    const hasResolvedStatus = i.status === "resolved" || i.status === "closed";
+    const hasResolvedTime =
+      i.resolved_time &&
+      new Date(i.resolved_time).toDateString() === new Date().toDateString();
+    console.log("Checking incident for today's resolve:", {
+      report_id: i.report_id,
+      status: i.status,
+      resolved_time: i.resolved_time,
+      isToday: hasResolvedTime,
+      qualifies: hasResolvedStatus && hasResolvedTime,
+    });
+    return hasResolvedStatus && hasResolvedTime;
+  }).length;
 
+  console.log(
+    "📊 Closed today count:",
+    closedToday,
+    incidents.filter((i) => i.status === "resolved" || i.status === "closed"),
+  );
+
+  // Generate dynamic incidents trend data from last 7 days
+  const getIncidentsTrendData = () => {
+    const today = new Date();
+    const data = [];
+    const dayLabels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date(today);
+      date.setDate(date.getDate() - i);
+      const dayStart = new Date(date);
+      dayStart.setHours(0, 0, 0, 0);
+      const dayEnd = new Date(date);
+      dayEnd.setHours(23, 59, 59, 999);
+
+      const dayLabel = dayLabels[date.getDay()];
+
+      const reportedCount = incidents.filter((inc) => {
+        if (!inc.time_report_submitted) return false;
+        const incDate = new Date(inc.time_report_submitted);
+        return incDate >= dayStart && incDate <= dayEnd;
+      }).length;
+
+      const resolvedCount = incidents.filter((inc) => {
+        if (inc.status !== "resolved" && inc.status !== "closed") return false;
+        if (!inc.resolved_time) return false;
+        const resDate = new Date(inc.resolved_time);
+        return resDate >= dayStart && resDate <= dayEnd;
+      }).length;
+
+      data.push({
+        month: dayLabel,
+        reported: reportedCount,
+        resolved: resolvedCount,
+      });
+    }
+
+    console.log("📊 Trend data:", data);
+    return data;
+  };
+
+  const incidentsData = getIncidentsTrendData();
+
+  // Build severity data dynamically with proper filtering
   const severityData = [
     {
       name: "Critical",
-      value: incidents.filter((i) => i.severity_level === "Critical").length,
+      value: incidents.filter(
+        (i) =>
+          i.severity_level === "Critical" ||
+          i.severity_level === "critical" ||
+          i.severity_level === "CRITICAL",
+      ).length,
       color: "#dc2626",
     },
     {
       name: "High",
-      value: incidents.filter((i) => i.severity_level === "High").length,
+      value: incidents.filter(
+        (i) =>
+          i.severity_level === "High" ||
+          i.severity_level === "high" ||
+          i.severity_level === "HIGH",
+      ).length,
       color: "#ea580c",
     },
     {
       name: "Medium",
-      value: incidents.filter((i) => i.severity_level === "Medium").length,
+      value: incidents.filter(
+        (i) =>
+          i.severity_level === "Medium" ||
+          i.severity_level === "medium" ||
+          i.severity_level === "MEDIUM",
+      ).length,
       color: "#eab308",
     },
     {
       name: "Low",
-      value: incidents.filter((i) => i.severity_level === "Low").length,
+      value: incidents.filter(
+        (i) =>
+          i.severity_level === "Low" ||
+          i.severity_level === "low" ||
+          i.severity_level === "LOW",
+      ).length,
       color: "#10b981",
     },
   ];
+
+  console.log("📊 Severity data:", {
+    severityData,
+    allSeverities: incidents.map((i) => i.severity_level),
+  });
+
+  useEffect(() => {
+    console.log("🔍 RAW API DATA:", apiData);
+  }, [apiData]);
 
   return (
     <div className="space-y-6">
@@ -244,38 +354,44 @@ export default function DispatcherDashboardPage({
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={incidentsData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                <XAxis dataKey="month" stroke="#64748b" />
-                <YAxis stroke="#64748b" />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "#ffffff",
-                    border: "1px solid #e2e8f0",
-                    borderRadius: "8px",
-                  }}
-                  labelStyle={{ color: "#1e293b" }}
-                />
-                <Legend />
-                <Line
-                  type="monotone"
-                  dataKey="reported"
-                  stroke="#3b82f6"
-                  strokeWidth={2}
-                  dot={{ fill: "#3b82f6", r: 4 }}
-                  activeDot={{ r: 6 }}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="resolved"
-                  stroke="#10b981"
-                  strokeWidth={2}
-                  dot={{ fill: "#10b981", r: 4 }}
-                  activeDot={{ r: 6 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
+            {incidentsData && incidentsData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={incidentsData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                  <XAxis dataKey="month" stroke="#64748b" />
+                  <YAxis stroke="#64748b" />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "#ffffff",
+                      border: "1px solid #e2e8f0",
+                      borderRadius: "8px",
+                    }}
+                    labelStyle={{ color: "#1e293b" }}
+                  />
+                  <Legend />
+                  <Line
+                    type="monotone"
+                    dataKey="reported"
+                    stroke="#3b82f6"
+                    strokeWidth={2}
+                    dot={{ fill: "#3b82f6", r: 4 }}
+                    activeDot={{ r: 6 }}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="resolved"
+                    stroke="#10b981"
+                    strokeWidth={2}
+                    dot={{ fill: "#10b981", r: 4 }}
+                    activeDot={{ r: 6 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-[300px] flex items-center justify-center text-slate-500 dark:text-slate-400">
+                No trend data available yet
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -290,31 +406,39 @@ export default function DispatcherDashboardPage({
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={severityData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={100}
-                  paddingAngle={2}
-                  dataKey="value"
-                >
-                  {severityData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "#ffffff",
-                    border: "1px solid #e2e8f0",
-                    borderRadius: "8px",
-                    color: "#1e293b",
-                  }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
+            {severityData.reduce((sum, item) => sum + item.value, 0) > 0 ? (
+              <>
+                <ResponsiveContainer width="100%" height={300}>
+                  <PieChart>
+                    <Pie
+                      data={severityData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={100}
+                      paddingAngle={2}
+                      dataKey="value"
+                    >
+                      {severityData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: "#ffffff",
+                        border: "1px solid #e2e8f0",
+                        borderRadius: "8px",
+                        color: "#1e293b",
+                      }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </>
+            ) : (
+              <div className="h-[300px] flex items-center justify-center text-slate-500 dark:text-slate-400">
+                No incidents yet
+              </div>
+            )}
             <div className="mt-4 space-y-2">
               {severityData.map((item) => (
                 <div

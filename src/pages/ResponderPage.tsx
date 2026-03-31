@@ -196,17 +196,24 @@ export default function ResponderPage() {
         Accepted: "Accepted",
         "En Route": "In Progress",
         "On Scene": "In Progress",
-        Completed: "Resolved",
+        Completed: "resolved",
       };
 
       const backendStatus = statusMap[newStatus] || newStatus;
       const accidentId = incident.backend_accident_id || incident.report_id;
 
-      await updateResponderMutation.mutateAsync({
+      const updateData: any = {
         accidentId,
         status: backendStatus,
         description: `Responder status: ${newStatus}`,
-      });
+      };
+
+      // Include resolved_time when marking as complete
+      if (newStatus === "Completed" && !incident.resolved_time) {
+        updateData.resolved_time = new Date().toISOString();
+      }
+
+      await updateResponderMutation.mutateAsync(updateData);
 
       // Notify dispatcher
       await notifyDispatcherMutation.mutateAsync({

@@ -66,7 +66,9 @@ interface RespondersManagementPageProps {
   incidents?: any[];
 }
 
-export default function RespondersManagementPage({}: RespondersManagementPageProps) {
+export default function RespondersManagementPage(
+  _props: RespondersManagementPageProps,
+) {
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");

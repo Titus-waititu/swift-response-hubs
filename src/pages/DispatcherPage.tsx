@@ -147,10 +147,20 @@ export default function DispatcherPage() {
       return;
     }
 
+    const statusUpdateData: any = { status: nextStatus };
+
+    // Set resolved_time when marking as resolved or closed
+    if (
+      (nextStatus === "resolved" || nextStatus === "closed") &&
+      !incident.resolved_time
+    ) {
+      statusUpdateData.resolved_time = new Date().toISOString();
+    }
+
     updateStatusMutation.mutate(
       {
         id: incident.backend_accident_id,
-        data: { status: nextStatus },
+        data: statusUpdateData,
       },
       {
         onError: (error) => {

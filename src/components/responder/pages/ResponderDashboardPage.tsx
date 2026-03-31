@@ -152,8 +152,8 @@ export default function ResponderDashboardPage({
             {recentIncidents.map((incident) => {
               const isCritical = incident.severity_level === "Critical";
               const isPending =
-                incident.status === "Submitted" ||
-                incident.status === "Under Review";
+                incident.status === "reported" ||
+                incident.status === "under_investigation";
               const isExpanded = expandedIncidents.has(incident.report_id!);
 
               return (
@@ -218,7 +218,7 @@ export default function ResponderDashboardPage({
                           {incident.severity_level}
                         </span>
                         <span className="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200">
-                          {incident.status === "Closed"
+                          {incident.status === "closed"
                             ? "✓ Done"
                             : incident.status}
                         </span>

@@ -60,7 +60,7 @@ export default function UserDashboardPage() {
     setSession(parsedSession);
 
     // Prioritize backend data, fallback to local store
-    let reports = Array.isArray(backendAccidents)
+    const reports = Array.isArray(backendAccidents)
       ? backendAccidents
       : localIncidents.filter((inc) => inc.email === parsedSession.email);
     setMyReports(reports);
@@ -141,7 +141,7 @@ export default function UserDashboardPage() {
                 <div className="space-y-2">
                   <p className="text-sm text-muted-foreground">Submitted</p>
                   <p className="text-3xl font-black text-primary">
-                    {myReports.filter((r) => r.status === "Submitted").length}
+                    {myReports.filter((r) => r.status === "reported").length}
                   </p>
                 </div>
               </CardContent>
@@ -153,8 +153,9 @@ export default function UserDashboardPage() {
                   <p className="text-sm text-muted-foreground">Under Review</p>
                   <p className="text-3xl font-black text-warning">
                     {
-                      myReports.filter((r) => r.status === "Under Review")
-                        .length
+                      myReports.filter(
+                        (r) => r.status === "under_investigation",
+                      ).length
                     }
                   </p>
                 </div>
@@ -166,7 +167,7 @@ export default function UserDashboardPage() {
                 <div className="space-y-2">
                   <p className="text-sm text-muted-foreground">Resolved</p>
                   <p className="text-3xl font-black text-success">
-                    {myReports.filter((r) => r.status === "Resolved").length}
+                    {myReports.filter((r) => r.status === "resolved").length}
                   </p>
                 </div>
               </CardContent>
@@ -274,13 +275,13 @@ export default function UserDashboardPage() {
                         </div>
                       </div>
                       <div className="flex gap-2 flex-shrink-0">
-                        {report.status === "Resolved" && (
+                        {report.status === "resolved" && (
                           <CheckCircle2 className="h-5 w-5 text-success" />
                         )}
-                        {report.status === "Under Review" && (
+                        {report.status === "under_investigation" && (
                           <Clock className="h-5 w-5 text-warning animate-pulse" />
                         )}
-                        {report.status === "Submitted" && (
+                        {report.status === "reported" && (
                           <AlertTriangle className="h-5 w-5 text-primary" />
                         )}
                         <Button

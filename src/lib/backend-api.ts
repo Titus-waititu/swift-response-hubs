@@ -143,14 +143,14 @@ function mapSeverityToBackend(
 function mapStatusFromBackend(status: BackendAccidentStatus): IncidentStatus {
   switch (status) {
     case "under_investigation":
-      return "Under Review";
+      return "under_investigation";
     case "resolved":
-      return "Resolved";
+      return "resolved";
     case "closed":
-      return "Closed";
+      return "closed";
     case "reported":
     default:
-      return "Submitted";
+      return "reported";
   }
 }
 
@@ -158,13 +158,15 @@ export function mapStatusToBackend(
   status: IncidentStatus,
 ): BackendAccidentStatus {
   switch (status) {
-    case "Resolved":
+    case "resolved":
       return "resolved";
-    case "Closed":
+    case "closed":
       return "closed";
-    case "Under Review":
+    case "under_investigation":
       return "under_investigation";
-    case "Submitted":
+    case "in_progress":
+      return "under_investigation"; // No in_progress in backend, map to under_investigation
+    case "reported":
     default:
       return "reported";
   }

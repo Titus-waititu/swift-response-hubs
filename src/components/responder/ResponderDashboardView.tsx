@@ -145,7 +145,7 @@ export default function ResponderDashboardView({
     (incident) => incident.status === "reported",
   ).length;
   const underReviewCount = activeIncidents.filter(
-    (incident) => incident.status === "Under Review",
+    (incident) => incident.status === "under_investigation",
   ).length;
   const criticalActiveCount = activeIncidents.filter(
     (incident) => incident.severity_level === "Critical",

@@ -72,7 +72,7 @@ const normalizeIncidents = (incidents: any[]): any[] => {
   if (!Array.isArray(incidents)) return [];
   return incidents.map((incident) => {
     // Try multiple field names for status
-    let rawStatus =
+    const rawStatus =
       incident.status ||
       incident.incident_status ||
       incident.report_status ||
@@ -425,15 +425,20 @@ export const useUpdateResponderResponse = () => {
       accidentId,
       status,
       description,
+      resolved_time,
     }: {
       accidentId: string | number;
       status?: string;
       description?: string;
-    }) =>
-      apiClient.patch(`/accidents/${accidentId}`, {
-        status,
-        description,
-      }),
+      resolved_time?: string;
+    }) => {
+      const data: any = {};
+      if (status) data.status = status;
+      if (description) data.description = description;
+      if (resolved_time) data.resolved_time = resolved_time;
+
+      return apiClient.patch(`/accidents/${accidentId}`, data);
+    },
     onSuccess: (_, { accidentId }) => {
       console.log("Responder response updated:", accidentId);
       // Invalidate specific incident detail

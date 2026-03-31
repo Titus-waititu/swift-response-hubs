@@ -92,16 +92,17 @@ export function getLandingStats(incidents: IncidentReport[], now = new Date()) {
 
 export function getDispatcherQueueStats(incidents: IncidentReport[]) {
   return {
-    newCount: incidents.filter((incident) => incident.status === "Submitted")
+    newCount: incidents.filter((incident) => incident.status === "reported")
       .length,
     inProgressCount: incidents.filter(
-      (incident) => incident.status === "Under Review",
+      (incident) => incident.status === "under_investigation",
     ).length,
     dispatchedCount: incidents.filter(
-      (incident) => incident.status === "Resolved",
+      (incident) => incident.status === "in_progress",
     ).length,
-    resolvedCount: incidents.filter((incident) => incident.status === "Closed")
-      .length,
+    resolvedCount: incidents.filter(
+      (incident) => incident.status === "resolved",
+    ).length,
   };
 }
 

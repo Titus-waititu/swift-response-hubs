@@ -65,7 +65,7 @@ export default function DispatcherIncidentsQueue({
 
   // Separate into active and closed
   const activeIncidents = incidents.filter((i) => i.status !== "Closed");
-  const closedIncidents = incidents.filter((i) => i.status === "Closed");
+  const closedIncidents = incidents.filter((i) => i.status === "closed");
 
   const getSeverityColor = (severity: string) => {
     switch (severity) {

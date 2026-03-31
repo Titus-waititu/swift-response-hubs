@@ -402,7 +402,7 @@ export default function DispatcherDashboardView({
                                 Status
                               </p>
                               <p className="mt-1 text-sm font-medium text-foreground">
-                                {incident.status === "Submitted"
+                                {incident.status === "reported"
                                   ? "Needs Review"
                                   : "In Progress"}
                               </p>

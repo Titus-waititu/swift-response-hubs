@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { StatusBadge, SeverityBadge } from "@/components/StatusBadge";
+import MapViewer from "@/components/MapViewer";
 import { useIncidentStore } from "@/context/IncidentStore";
 import type { IncidentReport, IncidentStatus } from "@/types/incident";
 import { toast } from "sonner";
@@ -47,6 +48,20 @@ export default function IncidentDetailPanel({
   onSyncStatus,
 }: Props) {
   const { updateIncident } = useIncidentStore();
+
+  useEffect(() => {
+    console.log("🔍 IncidentDetailPanel opened with data:", {
+      incident,
+      gps_latitude: incident.gps_latitude,
+      gps_longitude: incident.gps_longitude,
+      role,
+      hasGPS: !!incident.gps_latitude && !!incident.gps_longitude,
+      shouldShowMap:
+        role === "responder" &&
+        !!incident.gps_latitude &&
+        !!incident.gps_longitude,
+    });
+  }, [incident, role]);
   const [status, setStatus] = useState<IncidentStatus>(incident.status);
 
   useEffect(() => {
@@ -66,7 +81,7 @@ export default function IncidentDetailPanel({
     updateIncident(incident.report_id, {
       status,
       resolved_time:
-        status === "Resolved" && !incident.resolved_time
+        status === "resolved" && !incident.resolved_time
           ? now
           : incident.resolved_time,
     });
@@ -142,6 +157,27 @@ export default function IncidentDetailPanel({
               label="GPS"
               value={`${incident.gps_latitude}, ${incident.gps_longitude}`}
             />
+
+            {/* Map Viewer for Responders */}
+            {role === "responder" &&
+              incident.gps_latitude !== undefined &&
+              incident.gps_latitude !== null &&
+              incident.gps_longitude !== undefined &&
+              incident.gps_longitude !== null &&
+              !isNaN(Number(incident.gps_latitude)) &&
+              !isNaN(Number(incident.gps_longitude)) && (
+                <div className="border-t border-border pt-3 mt-3">
+                  <p className="font-medium text-foreground mb-2">
+                    Location Map
+                  </p>
+                  <MapViewer
+                    latitude={incident.gps_latitude}
+                    longitude={incident.gps_longitude}
+                    address={incident.location_address}
+                  />
+                </div>
+              )}
+
             <div className="border-t border-border pt-3">
               <Row label="Reporter" value={incident.reporter_name} />
               <Row label="Phone" value={incident.phone_number} />

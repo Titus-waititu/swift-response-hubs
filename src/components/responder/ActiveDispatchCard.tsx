@@ -244,8 +244,8 @@ export default function ActiveDispatchCard({
 
         {/* Completion Status */}
         {incident.status === "Completed" ||
-        incident.status === "Resolved" ||
-        incident.status === "Closed" ? (
+        incident.status === "resolved" ||
+        incident.status === "closed" ? (
           <div className="bg-green-50 dark:bg-green-900/20 border border-green-300 dark:border-green-800 rounded-lg p-3 text-center">
             <p className="text-sm font-semibold text-green-800 dark:text-green-200">
               ✓ Incident Complete

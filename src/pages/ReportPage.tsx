@@ -213,7 +213,7 @@ export default function ReportPage() {
 
   const handleNext = () => {
     const values = form.state.values;
-    let errors: string[] = [];
+    const errors: string[] = [];
     if (step === 0) {
       if (!values.reporter_name) errors.push("Reporter Name is required");
       if (!values.phone_number) errors.push("Phone Number is required");

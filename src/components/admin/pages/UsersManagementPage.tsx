@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -35,6 +35,14 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Plus, Edit, Trash2, Search, Shield, Mail, Power } from "lucide-react";
+import {
+  useGetUsers,
+  useCreateUser,
+  useUpdateUser,
+  useDeleteUser,
+  useActivateUser,
+  useDeactivateUser,
+} from "@/hooks/useUsers";
 
 interface User {
   id: string;
@@ -46,55 +54,19 @@ interface User {
   lastLogin?: string;
 }
 
-const mockUsers: User[] = [
-  {
-    id: "1",
-    name: "Admin User",
-    email: "admin@example.com",
-    role: "ADMIN",
-    status: "Active",
-    createdDate: "2024-01-15",
-    lastLogin: "2024-03-20",
-  },
-  {
-    id: "2",
-    name: "Officer John",
-    email: "john.officer@example.com",
-    role: "OFFICER",
-    status: "Active",
-    createdDate: "2024-02-01",
-    lastLogin: "2024-03-20",
-  },
-  {
-    id: "3",
-    name: "Responder Alice",
-    email: "alice.responder@example.com",
-    role: "RESPONDER",
-    status: "Active",
-    createdDate: "2024-02-10",
-    lastLogin: "2024-03-19",
-  },
-  {
-    id: "4",
-    name: "Officer Bob",
-    email: "bob.officer@example.com",
-    role: "OFFICER",
-    status: "Inactive",
-    createdDate: "2024-01-20",
-  },
-  {
-    id: "5",
-    name: "User Charlie",
-    email: "charlie@example.com",
-    role: "USER",
-    status: "Active",
-    createdDate: "2024-03-01",
-    lastLogin: "2024-03-18",
-  },
-];
-
 const UsersManagementPage = () => {
-  const [users, setUsers] = useState<User[]>(mockUsers);
+  // Fetch users from backend
+  const { data: usersData, isLoading } = useGetUsers();
+  const users = usersData?.data || [];
+
+  // API mutations
+  const createUserMutation = useCreateUser();
+  const updateUserMutation = useUpdateUser();
+  const deleteUserMutation = useDeleteUser();
+  const activateUserMutation = useActivateUser();
+  const deactivateUserMutation = useDeactivateUser();
+
+  // Local state
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("all");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -105,6 +77,7 @@ const UsersManagementPage = () => {
     role: "OFFICER",
     status: "Active",
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const filteredUsers = users.filter((user) => {
     const matchesSearch =
@@ -133,7 +106,7 @@ const UsersManagementPage = () => {
     setIsDialogOpen(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!formData.name?.trim() || !formData.email?.trim()) {
       toast.error("Please fill in all required fields");
       return;
@@ -144,51 +117,62 @@ const UsersManagementPage = () => {
       return;
     }
 
-    if (editingId) {
-      setUsers(
-        users.map((user) =>
-          user.id === editingId ? { ...user, ...(formData as User) } : user,
-        ),
-      );
-      toast.success("User updated successfully");
-    } else {
-      const newUser: User = {
-        id: String(users.length + 1),
-        ...(formData as User),
-        createdDate: new Date().toISOString().split("T")[0],
-        status: "Active",
-      };
-      setUsers([...users, newUser]);
-      toast.success("User created successfully");
+    setIsSubmitting(true);
+    try {
+      if (editingId) {
+        // Update user via API
+        await updateUserMutation.mutateAsync({
+          id: editingId,
+          data: {
+            name: formData.name,
+            email: formData.email,
+            role: formData.role,
+            status: formData.status,
+          },
+        });
+        toast.success("User updated successfully");
+      } else {
+        // Create new user via API
+        await createUserMutation.mutateAsync({
+          name: formData.name,
+          email: formData.email,
+          role: formData.role,
+          password: "TempPassword123!", // Backend should handle this
+        });
+        toast.success("User created successfully");
+      }
+      setIsDialogOpen(false);
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || "Failed to save user");
+    } finally {
+      setIsSubmitting(false);
     }
-
-    setIsDialogOpen(false);
   };
 
-  const handleDelete = (id: string) => {
-    setUsers(users.filter((user) => user.id !== id));
-    toast.success("User deleted successfully");
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteUserMutation.mutateAsync(id);
+      toast.success("User deleted successfully");
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || "Failed to delete user");
+    }
   };
 
-  const handleToggleStatus = (id: string) => {
-    const userToToggle = users.find((u) => u.id === id);
-    if (!userToToggle) return;
+  const handleToggleStatus = async (id: string) => {
+    try {
+      const user = users.find((u) => u.id === id);
+      if (!user) return;
 
-    setUsers(
-      users.map((user) =>
-        user.id === id
-          ? {
-              ...user,
-              status: user.status === "Active" ? "Inactive" : "Active",
-            }
-          : user,
-      ),
-    );
-
-    const newStatus = userToToggle.status === "Active" ? "Inactive" : "Active";
-    toast.success(
-      `User ${newStatus === "Active" ? "activated" : "deactivated"} successfully`,
-    );
+      if (user.status === "Active") {
+        await deactivateUserMutation.mutateAsync(id);
+        toast.success("User deactivated successfully");
+      } else {
+        await activateUserMutation.mutateAsync(id);
+        toast.success("User activated successfully");
+      }
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || "Failed to update user status");
+    }
   };
 
   const getRoleColor = (role: string) => {
@@ -310,11 +294,12 @@ const UsersManagementPage = () => {
                   type="button"
                   variant="outline"
                   onClick={() => setIsDialogOpen(false)}
+                  disabled={isSubmitting}
                 >
                   Cancel
                 </Button>
-                <Button onClick={handleSave}>
-                  {editingId ? "Update" : "Create"} User
+                <Button onClick={handleSave} disabled={isSubmitting}>
+                  {isSubmitting ? "Saving..." : editingId ? "Update User" : "Create User"}
                 </Button>
               </div>
             </div>
@@ -427,7 +412,13 @@ const UsersManagementPage = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredUsers.length === 0 ? (
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-8">
+                      <p className="text-slate-400">Loading users...</p>
+                    </TableCell>
+                  </TableRow>
+                ) : filteredUsers.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={7} className="text-center py-8">
                       <p className="text-slate-400">No users found</p>

@@ -430,6 +430,75 @@ export async function updateBackendAccidentStatus(input: {
 }
 
 /**
+ * Submit a public accident report (for users without accounts)
+ * Creates a temporary guest account if needed
+ */
+export async function submitPublicAccidentReport(input: {
+  description: string;
+  severity: SeverityLevel;
+  latitude: number;
+  longitude: number;
+  locationAddress: string;
+  accidentDate: string;
+  reporterName: string;
+  reporterEmail: string;
+  reporterPhone: string;
+  numberOfVehicles?: number;
+  numberOfInjuries?: number;
+}) {
+  try {
+    // Try to get or create a guest user for this report
+    const guestEmail = `public-${Date.now()}@emergency.local`;
+    const guestPassword = `Public-${Math.random().toString(36).slice(2, 10)}!`;
+
+    let userId: string;
+
+    try {
+      // Try to create a new guest account
+      const userResult = await createUserAccount({
+        fullName: input.reporterName,
+        email: guestEmail,
+        username: `public_${Date.now()}`,
+        password: guestPassword,
+        role: "user",
+        phoneNumber: input.reporterPhone,
+      });
+      userId = userResult.id;
+    } catch (userError) {
+      // If user creation fails, try with a common public user
+      console.warn("Failed to create guest user, attempting fallback:", userError);
+      userId = "public-user";
+    }
+
+    // Now submit the accident report
+    const response = await fetch(`${API_BASE_URL}/accidents`, {
+      method: "POST",
+      headers: getHeaders(),
+      body: JSON.stringify({
+        description: `${input.description}\n\nReporter: ${input.reporterName}\nEmail: ${input.reporterEmail}\nPhone: ${input.reporterPhone}`,
+        severity: mapSeverityToBackend(input.severity),
+        latitude: Number(input.latitude),
+        longitude: Number(input.longitude),
+        locationAddress: input.locationAddress,
+        accidentDate: input.accidentDate,
+        reportedById: userId,
+        ...(typeof input.numberOfVehicles === "number"
+          ? { numberOfVehicles: input.numberOfVehicles }
+          : {}),
+        ...(typeof input.numberOfInjuries === "number"
+          ? { numberOfInjuries: input.numberOfInjuries }
+          : {}),
+      }),
+    });
+
+    return parseResponse<BackendAccident>(response);
+  } catch (error) {
+    console.error("Error submitting public accident report:", error);
+    throw error;
+  }
+}
+
+/**
  * Initiates Google OAuth flow by redirecting to backend
  * The backend handles OAuth exchange and redirects back with tokens
  */

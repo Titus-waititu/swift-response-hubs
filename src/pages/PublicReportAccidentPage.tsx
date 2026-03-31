@@ -23,7 +23,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { client } from "@/lib/api";
+import { submitPublicAccidentReport } from "@/lib/backend-api";
 import Navigation from "@/components/premium/Navigation";
 import Footer from "@/components/premium/Footer";
 import { useTheme } from "@/hooks/useTheme";
@@ -88,27 +88,27 @@ export default function PublicReportAccidentPage() {
           return;
         }
 
-        // Map form values to backend expectations
-        const response = await client.post("/accidents", {
-          description: `${value.description}\n\nReporter: ${value.fullName}\nEmail: ${value.email}\nPhone: ${value.phoneNumber}`,
-          severity: "moderate",
+        // Submit public accident report
+        await submitPublicAccidentReport({
+          description: value.description,
+          severity: "Medium",
           latitude: geoLocation.latitude,
           longitude: geoLocation.longitude,
           locationAddress: value.location,
           accidentDate: new Date().toISOString(),
-          reportedById: "public-user", // Temporary ID for public reports
+          reporterName: value.fullName,
+          reporterEmail: value.email,
+          reporterPhone: value.phoneNumber,
           numberOfVehicles: 1,
         });
 
-        if (response.status === 201 || response.status === 200) {
-          setIsSuccess(true);
-          toast.success("Accident report submitted successfully!");
+        setIsSuccess(true);
+        toast.success("Accident report submitted successfully!");
 
-          // Redirect after 3 seconds
-          setTimeout(() => {
-            navigate("/");
-          }, 3000);
-        }
+        // Redirect after 3 seconds
+        setTimeout(() => {
+          navigate("/");
+        }, 3000);
       } catch (error: any) {
         const message =
           error.response?.data?.message ||

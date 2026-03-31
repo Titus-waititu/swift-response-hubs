@@ -58,8 +58,6 @@ export default function DispatcherDashboardPage({
 
     if (Array.isArray(apiData)) {
       data = apiData;
-    } else if (apiData?.data && Array.isArray(apiData.data)) {
-      data = apiData.data;
     } else if (apiData) {
       data = [apiData];
     } else {

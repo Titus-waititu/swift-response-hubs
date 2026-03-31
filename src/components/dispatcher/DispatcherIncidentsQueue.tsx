@@ -49,7 +49,7 @@ export default function DispatcherIncidentsQueue({
   const incidents = useMemo(() => {
     const accidentsData = Array.isArray(accidentsResponse)
       ? accidentsResponse
-      : accidentsResponse?.data || [];
+      : accidentsResponse || [];
 
     return accidentsData.map(mapBackendAccidentToIncident).sort((a, b) => {
       // Sort by priority (submitted first) then by time
@@ -64,7 +64,9 @@ export default function DispatcherIncidentsQueue({
   }, [accidentsResponse]);
 
   // Separate into active and closed
-  const activeIncidents = incidents.filter((i) => i.status !== "Closed");
+  const activeIncidents = incidents.filter(
+    (i) => i.status !== "resolved" && i.status !== "closed",
+  );
   const closedIncidents = incidents.filter((i) => i.status === "closed");
 
   const getSeverityColor = (severity: string) => {

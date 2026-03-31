@@ -11,7 +11,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { GoogleLogin } from "@react-oauth/google";
+import { loginWithGoogle } from "@/lib/backend-api";
 import {
   AlertTriangle,
   Clock,
@@ -409,14 +409,14 @@ export default function LoginPage() {
                   </div>
 
                   <div className="flex items-center justify-center rounded-lg border border-primary/20 bg-white dark:bg-slate-800 p-4 min-h-16 dark:border-primary/30">
-                    <GoogleLogin
-                      onSuccess={handleDispatcherGoogleLogin}
-                      onError={() => toast.error("Google sign-in failed")}
-                      size="large"
-                      text="signin_with"
-                      theme="light"
-                      locale="en"
-                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleDispatcherGoogleLogin}
+                      className="w-full"
+                    >
+                      Sign in with Google
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
@@ -517,14 +517,14 @@ export default function LoginPage() {
                   </div>
 
                   <div className="flex items-center justify-center rounded-lg border border-info/20 bg-white dark:bg-slate-800 p-4 min-h-16 dark:border-info/30">
-                    <GoogleLogin
-                      onSuccess={handleResponderGoogleLogin}
-                      onError={() => toast.error("Google sign-in failed")}
-                      size="large"
-                      text="signin_with"
-                      theme="light"
-                      locale="en"
-                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleResponderGoogleLogin}
+                      className="w-full"
+                    >
+                      Sign in with Google
+                    </Button>
                   </div>
                 </CardContent>
               </Card>

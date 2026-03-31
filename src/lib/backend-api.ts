@@ -427,3 +427,13 @@ export async function updateBackendAccidentStatus(input: {
 
   return parseResponse<BackendAccident>(response);
 }
+
+/**
+ * Initiates Google OAuth flow by redirecting to backend
+ * The backend handles OAuth exchange and redirects back with tokens
+ */
+export const loginWithGoogle = () => {
+  // Redirect to backend Google OAuth endpoint
+  // Backend will handle the OAuth flow and redirect to /auth/google/callback
+  window.location.href = `${API_BASE_URL}/auth/google`;
+};

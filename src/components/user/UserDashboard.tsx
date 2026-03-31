@@ -52,9 +52,7 @@ const UserDashboard = () => {
     enabled: true,
   });
 
-  const accidentsArray = Array.isArray(accidents)
-    ? accidents
-    : accidents?.data || [];
+  const accidentsArray = Array.isArray(accidents) ? accidents : accidents || [];
   const incidents: IncidentReport[] = accidentsArray.map(
     mapBackendAccidentToIncident,
   );

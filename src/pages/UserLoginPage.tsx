@@ -2,15 +2,13 @@ import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Eye, EyeOff, Mail, Lock, ArrowRight } from "lucide-react";
 import { useForm } from "@tanstack/react-form";
-import { GoogleLogin } from "@react-oauth/google";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { Navigation } from "@/components/premium/Navigation";
 import { Footer } from "@/components/premium/Footer";
-import { signInToBackend } from "@/lib/backend-api";
+import { signInToBackend, loginWithGoogle } from "@/lib/backend-api";
 import { loginSchema } from "@/lib/validation-schemas";
-import { useGoogleAuth } from "@/hooks/useGoogleAuth";
 
 const USER_SESSION_KEY = "swift-response-hub/user-session/v1";
 
@@ -27,7 +25,6 @@ export default function UserLoginPage() {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
-  const { handleGoogleSuccess } = useGoogleAuth();
 
   // Redirect if already logged in
   useEffect(() => {
@@ -90,29 +87,12 @@ export default function UserLoginPage() {
     },
   });
 
-  const handleGoogleLogin = (credentialResponse: any) => {
-    const googleAuthData = handleGoogleSuccess(credentialResponse);
-    if (googleAuthData) {
-      // Store user session without Google JWT (won't work with backend API)
-      const session: UserSession = {
-        userId: googleAuthData.googleId,
-        email: googleAuthData.email,
-        name: googleAuthData.name || "User",
-        role: "user",
-        accessToken: "", // Don't store Google JWT
-        refreshToken: undefined,
-      };
-      window.localStorage.setItem(USER_SESSION_KEY, JSON.stringify(session));
-      window.localStorage.setItem(
-        "google-auth-session",
-        JSON.stringify({
-          googleId: googleAuthData.googleId,
-          email: googleAuthData.email,
-          isGoogleAuth: true,
-        }),
-      );
-      toast.success(`Welcome back, ${googleAuthData.name}!`);
-      navigate("/user-dashboard");
+  const handleGoogleLogin = async () => {
+    try {
+      await loginWithGoogle();
+      toast.success("Redirecting to Google sign-in...");
+    } catch (error: any) {
+      toast.error(error.message || "Google login failed");
     }
   };
 
@@ -303,15 +283,15 @@ export default function UserLoginPage() {
             </div>
 
             {/* Google Login */}
-            <div className="mb-6 rounded-lg border border-teal-200 dark:border-teal-700 bg-white dark:bg-slate-800 p-4 flex items-center justify-center min-h-16">
-              <GoogleLogin
-                onSuccess={handleGoogleLogin}
-                onError={() => toast.error("Google sign-in failed")}
-                size="large"
-                text="signin_with"
-                theme="light"
-                locale="en"
-              />
+            <div className="mb-6 rounded-lg border border-teal-200 dark:border-teal-700 bg-white dark:bg-slate-800 p-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleGoogleLogin}
+                className="w-full"
+              >
+                Sign in with Google
+              </Button>
             </div>
 
             {/* Forgot Password */}

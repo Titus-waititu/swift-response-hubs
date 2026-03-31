@@ -59,7 +59,7 @@ export default function ResponderDashboardLayout({
   const accidentsData = useMemo(() => {
     const data = Array.isArray(accidentsResponse)
       ? accidentsResponse
-      : accidentsResponse?.data || [];
+      : accidentsResponse || [];
     return data.map(mapBackendAccidentToIncident);
   }, [accidentsResponse]);
 
@@ -102,7 +102,7 @@ export default function ResponderDashboardLayout({
   // Unread notifications count
   const unreadNotifications = Array.isArray(unreadNotificationsResponse)
     ? unreadNotificationsResponse
-    : unreadNotificationsResponse?.data || [];
+    : unreadNotificationsResponse || [];
   const unreadCount = unreadNotifications.length;
 
   // Handle status update

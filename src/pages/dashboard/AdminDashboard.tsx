@@ -44,9 +44,7 @@ const AdminDashboard = () => {
   }, [isDarkMode]);
 
   const { data: accidents } = useGetAccidents();
-  const accidentsArray = Array.isArray(accidents)
-    ? accidents
-    : accidents?.data || [];
+  const accidentsArray = Array.isArray(accidents) ? accidents : accidents || [];
   const incidents: IncidentReport[] = accidentsArray.map(
     mapBackendAccidentToIncident,
   );
@@ -99,7 +97,10 @@ const AdminDashboard = () => {
           onLogout={handleLogout}
           criticalIncidentCount={
             incidents.filter(
-              (i) => i.severity_level === "Critical" && i.status !== "Closed",
+              (i) =>
+                i.severity_level === "Critical" &&
+                i.status !== "resolved" &&
+                i.status !== "closed",
             ).length
           }
         />

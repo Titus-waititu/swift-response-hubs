@@ -1,7 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { z } from "zod";
-import { GoogleLogin } from "@react-oauth/google";
 import { Separator } from "@/components/ui/separator";
 import LandingPageHeader from "@/components/LandingPageHeader";
 import { Button } from "@/components/ui/button";
@@ -17,10 +16,10 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CheckCircle2, Loader2, AlertCircle } from "lucide-react";
 import { authAPI } from "@/lib/api";
-import { useGoogleAuth } from "@/hooks/useGoogleAuth";
-import { useAuthStore, type UserRole } from "@/stores/authStore";
+import { loginWithGoogle } from "@/lib/backend-api";
+import { useAuthStore } from "@/stores/authStore";
 import { toast } from "sonner";
-import { registerSchema, RegisterFormValues } from "@/lib/validation-schemas";
+import { registerSchema } from "@/lib/validation-schemas";
 
 const RegisterPage = () => {
   const navigate = useNavigate();
@@ -32,33 +31,14 @@ const RegisterPage = () => {
   const [serverError, setServerError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
-  const { handleGoogleSuccess } = useGoogleAuth();
   const { setUser, setAccessToken } = useAuthStore();
 
-  const handleGoogleLogin = (credentialResponse: any) => {
-    const googleAuthData = handleGoogleSuccess(credentialResponse);
-    if (googleAuthData) {
-      const normalizedUser = {
-        id: googleAuthData.googleId,
-        email: googleAuthData.email,
-        name: googleAuthData.name || "User",
-        role: "USER" as UserRole,
-      };
-
-      // Store user info but NOT the Google JWT as accessToken
-      setUser(normalizedUser);
-
-      // Store a flag indicating Google auth for reference
-      const loginData = {
-        user: normalizedUser,
-        googleId: googleAuthData.googleId,
-        email: googleAuthData.email,
-        isGoogleAuth: true,
-      };
-      localStorage.setItem("user-login-session", JSON.stringify(loginData));
-
-      toast.success(`Welcome, ${googleAuthData.name}!`);
-      navigate("/dashboard/user");
+  const handleGoogleLogin = async () => {
+    try {
+      await loginWithGoogle();
+      toast.success("Redirecting to Google sign-in...");
+    } catch (error: any) {
+      toast.error(error.message || "Google login failed");
     }
   };
 
@@ -290,14 +270,14 @@ const RegisterPage = () => {
 
                 {/* Google Login */}
                 <div className="flex items-center justify-center rounded-lg border border-primary/20 bg-white dark:bg-slate-800 p-4 min-h-16 dark:border-primary/30">
-                  <GoogleLogin
-                    onSuccess={handleGoogleLogin}
-                    onError={() => toast.error("Google sign-up failed")}
-                    size="large"
-                    text="signup_with"
-                    theme="light"
-                    locale="en"
-                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleGoogleLogin}
+                    className="w-full"
+                  >
+                    Sign up with Google
+                  </Button>
                 </div>
               </form>
 

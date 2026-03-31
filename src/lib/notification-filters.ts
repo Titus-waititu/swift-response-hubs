@@ -89,12 +89,11 @@ export const filterNotificationsByRole = (
 
       // Include if it's about incident management but exclude internal responder chatter
       const isRelevant =
-        notification.type === "status_update" ||
-        notification.type === "alert" ||
-        notification.type === "critical" ||
-        notification.type === "emergency_alert" ||
         notification.type === "accident_reported" ||
-        notification.type === "dispatch_instruction";
+        notification.type === "emergency_alert" ||
+        notification.type === "dispatch_instruction" ||
+        notification.type === "responder_assignment" ||
+        notification.type === "system_notification";
 
       return isRelevant && !isResponderInternalMessage;
     }

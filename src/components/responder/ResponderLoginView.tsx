@@ -164,12 +164,14 @@ export default function ResponderLoginView({
             </div>
 
             <div className="flex justify-center">
-              <GoogleLogin
-                onSuccess={onGoogleLogin}
-                onError={() => {}}
-                size="large"
-                width="100%"
-              />
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onGoogleLogin()}
+                className="w-full"
+              >
+                Sign in with Google
+              </Button>
             </div>
 
             <div className="rounded-2xl border border-border/70 bg-secondary/55 p-4">

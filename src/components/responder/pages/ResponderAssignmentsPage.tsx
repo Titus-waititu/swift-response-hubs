@@ -422,37 +422,38 @@ export default function ResponderAssignmentsPage({
                                             : "Go to Scene"}
                                         </Button>
                                       )}
-                                      {incident.status !== "resolved" && (
+                                      {incident.status !== "in_progress" && (
                                         <Button
                                           size="sm"
                                           variant="outline"
                                           onClick={() =>
                                             handleQuickStatusUpdate(
                                               incident,
-                                              "resolved",
+                                              "in_progress",
                                             )
                                           }
                                           disabled={
                                             quickActionLoading ===
                                             incident.report_id
                                           }
-                                          className="text-xs border-green-300 dark:border-green-800 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20"
+                                          className="text-xs border-blue-300 dark:border-blue-800 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20"
                                         >
                                           <CheckCircle2 className="h-3 w-3 mr-1" />
                                           {quickActionLoading ===
                                           incident.report_id
                                             ? "..."
-                                            : "Resolved"}
+                                            : "In Progress"}
                                         </Button>
                                       )}
-                                      {incident.status !== "closed" && (
+                                      {incident.status !==
+                                        "under_investigation" && (
                                         <Button
                                           size="sm"
                                           variant="outline"
                                           onClick={() =>
                                             handleQuickStatusUpdate(
                                               incident,
-                                              "closed",
+                                              "under_investigation",
                                             )
                                           }
                                           disabled={

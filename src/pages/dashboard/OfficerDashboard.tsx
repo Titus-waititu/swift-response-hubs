@@ -46,9 +46,7 @@ const OfficerDashboard = () => {
   }, [isDarkMode]);
 
   const { data: accidents } = useGetAccidents();
-  const accidentsArray = Array.isArray(accidents)
-    ? accidents
-    : accidents?.data || [];
+  const accidentsArray = Array.isArray(accidents) ? accidents : accidents || [];
   const incidents: IncidentReport[] = accidentsArray.map(
     mapBackendAccidentToIncident,
   );
@@ -86,7 +84,7 @@ const OfficerDashboard = () => {
           <AIInvestigationAssistantPage
             incident={
               incidents[0] || {
-                id: "",
+                report_id: "",
                 incident_type: "",
                 severity_level: "MEDIUM",
                 status: "Submitted",
@@ -122,7 +120,10 @@ const OfficerDashboard = () => {
           onLogout={handleLogout}
           criticalIncidentCount={
             incidents.filter(
-              (i) => i.severity_level === "Critical" && i.status !== "Closed",
+              (i) =>
+                i.severity_level === "Critical" &&
+                i.status !== "resolved" &&
+                i.status !== "closed",
             ).length
           }
         />

@@ -49,7 +49,10 @@ export default function ResponderDashboardPage({
     (i) => i.status === "reported" || i.status === "under_investigation",
   ).length;
   const criticalCount = incidents.filter(
-    (i) => i.severity_level === "Critical" && i.status !== "Closed",
+    (i) =>
+      i.severity_level === "Critical" &&
+      i.status !== "resolved" &&
+      i.status !== "closed",
   ).length;
   const recentIncidents = incidents.slice(0, 8);
 

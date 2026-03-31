@@ -21,8 +21,8 @@ export default function NotificationsDropdown() {
   // Ensure we always have an array
   const notificationsArray = Array.isArray(unreadNotifications)
     ? unreadNotifications
-    : unreadNotifications?.data && Array.isArray(unreadNotifications.data)
-      ? unreadNotifications.data
+    : unreadNotifications && Array.isArray(unreadNotifications)
+      ? unreadNotifications
       : [];
 
   // Notifications are already filtered by role in the hook

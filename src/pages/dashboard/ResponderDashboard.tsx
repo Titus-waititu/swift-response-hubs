@@ -37,9 +37,7 @@ const ResponderDashboard = () => {
 
   const { data: accidents, refetch: refetchAccidents } =
     useGetMyAssignedIncidents();
-  const accidentsArray = Array.isArray(accidents)
-    ? accidents
-    : accidents?.data || [];
+  const accidentsArray = Array.isArray(accidents) ? accidents : accidents || [];
   const incidents: IncidentReport[] = accidentsArray.map(
     mapBackendAccidentToIncident,
   );

@@ -56,7 +56,7 @@ export default function IncidentStatusPage() {
 
     const accidentsData = Array.isArray(accidentsResponse)
       ? accidentsResponse
-      : accidentsResponse?.data || [];
+      : accidentsResponse || [];
 
     const found = accidentsData.find((acc: any) => {
       const mapped = mapBackendAccidentToIncident(acc);

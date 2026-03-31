@@ -47,7 +47,7 @@ export default function ResponderActiveDispatches({
   const activeDispatches = useMemo(() => {
     const accidentsData = Array.isArray(accidentsResponse)
       ? accidentsResponse
-      : accidentsResponse?.data || [];
+      : accidentsResponse || [];
 
     return accidentsData
       .map(mapBackendAccidentToIncident)

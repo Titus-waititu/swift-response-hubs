@@ -15,6 +15,7 @@ import PublicReportAccidentPage from "./pages/PublicReportAccidentPage";
 // Auth Pages
 import LoginPage from "./pages/auth/LoginPage";
 import RegisterPage from "./pages/auth/RegisterPage";
+import GoogleCallbackHandler from "./pages/auth/GoogleCallback";
 
 // Dashboard Pages
 import UserDashboard from "./pages/dashboard/UserDashboard";
@@ -63,6 +64,10 @@ const App = () => (
               <Route path="/" element={<LandingPage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
+              <Route
+                path="/auth/google/callback"
+                element={<GoogleCallbackHandler />}
+              />
               <Route
                 path="/report-accident"
                 element={<PublicReportAccidentPage />}

@@ -109,7 +109,10 @@ export const accidentKeys = {
 };
 
 // Queries
-export const useGetAccidents = (options?: { enabled?: boolean; staleTime?: number }) => {
+export const useGetAccidents = (options?: {
+  enabled?: boolean;
+  staleTime?: number;
+}) => {
   const { user } = useAuthStore();
 
   return useQuery({

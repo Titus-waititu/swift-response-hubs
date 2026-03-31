@@ -70,14 +70,22 @@ export default function ResponderPage() {
   const notifyDispatcherMutation = useNotifyDispatcherOfResponse();
 
   const queryClient = useQueryClient();
-  
+
   // Fetch assignments immediately on login
   useEffect(() => {
     if (session) {
-      console.log("Session established, fetching assigned incidents and dispatches...");
+      console.log(
+        "Session established, fetching assigned incidents and dispatches...",
+      );
       // Invalidate both responder assignment queries to trigger fresh fetches
-      queryClient.invalidateQueries({ queryKey: ["accidents", "my-assigned"], exact: false });
-      queryClient.invalidateQueries({ queryKey: ["dispatches", "active", "my-pending"], exact: false });
+      queryClient.invalidateQueries({
+        queryKey: ["accidents", "my-assigned"],
+        exact: false,
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["dispatches", "active", "my-pending"],
+        exact: false,
+      });
     }
   }, [session, queryClient]);
 
@@ -100,7 +108,7 @@ export default function ResponderPage() {
     ? accidentsResponse
     : (accidentsResponse as any)?.data || [];
   console.log("ResponderPage - Raw accidents data:", accidentsData);
-  
+
   // Note: useGetMyAssignedIncidents returns already-normalized incidents, so skip remapping
   const incidents = accidentsData.map((incident: any) => {
     // Check if already has report_id (already normalized from my-assigned hook)
@@ -111,9 +119,9 @@ export default function ResponderPage() {
     return mapBackendAccidentToIncident(incident);
   });
   console.log("ResponderPage - Mapped incidents:", incidents);
-  
-  const assignedStatuses = ["reported", "under_investigation"];  // Use normalized statuses
-  const completedStatuses = ["resolved", "closed"];  // Use normalized statuses
+
+  const assignedStatuses = ["reported", "under_investigation"]; // Use normalized statuses
+  const completedStatuses = ["resolved", "closed"]; // Use normalized statuses
 
   const selectedIncident = selectedIncidentId
     ? (incidents.find(
@@ -123,8 +131,13 @@ export default function ResponderPage() {
   const activeIncidents = incidents.filter((incident) =>
     assignedStatuses.includes(incident.status),
   );
-  console.log("ResponderPage - Active incidents (count):", activeIncidents.length, "Incidents:", activeIncidents);
-  
+  console.log(
+    "ResponderPage - Active incidents (count):",
+    activeIncidents.length,
+    "Incidents:",
+    activeIncidents,
+  );
+
   const completedIncidents = incidents.filter((incident) =>
     completedStatuses.includes(incident.status),
   );

@@ -321,7 +321,7 @@ export const useGetMyPendingDispatches = (enabled = true) => {
     },
     enabled,
     staleTime: 0, // Always consider data stale to allow immediate refetch
-    refetchInterval: 3000,  // Auto-refresh every 3 seconds
+    refetchInterval: 3000, // Auto-refresh every 3 seconds
   });
 };
 

@@ -56,10 +56,10 @@ const UserDashboard = () => {
   const allIncidents: IncidentReport[] = accidentsArray.map(
     mapBackendAccidentToIncident,
   );
-  
+
   // Filter incidents to show only those reported by the current user
   const incidents: IncidentReport[] = allIncidents.filter(
-    (incident) => incident.reportedById === user?.id
+    (incident) => incident.reportedById === user?.id,
   );
 
   const handleLogout = async () => {

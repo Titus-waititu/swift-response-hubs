@@ -6,7 +6,6 @@ import UserTopNav from "@/components/user/UserTopNav";
 import UserDashboardPage from "@/components/user/pages/UserDashboardPage";
 import UserSubmitReportPage from "@/components/user/pages/UserSubmitReportPage";
 import UserReportsPage from "@/components/user/pages/UserReportsPage";
-import UserVehiclesPage from "@/components/user/pages/UserVehiclesPage";
 import UserSettingsPage from "@/components/user/pages/UserSettingsPage";
 import ProfilePage from "@/components/ProfilePage";
 import { useGetAccidents } from "@/hooks/useAccidents";
@@ -14,13 +13,7 @@ import { useRealtimeUpdates } from "@/hooks/useRealtimeUpdates";
 import { mapBackendAccidentToIncident } from "@/lib/backend-api";
 import type { IncidentReport } from "@/types/incident";
 
-type UserPage =
-  | "dashboard"
-  | "submit"
-  | "reports"
-  | "vehicles"
-  | "settings"
-  | "profile";
+type UserPage = "dashboard" | "submit" | "reports" | "settings" | "profile";
 
 const UserDashboard = () => {
   const navigate = useNavigate();
@@ -80,8 +73,6 @@ const UserDashboard = () => {
         return <UserSubmitReportPage />;
       case "reports":
         return <UserReportsPage incidents={incidents} />;
-      case "vehicles":
-        return <UserVehiclesPage />;
       case "settings":
         return <UserSettingsPage user={user} />;
       case "profile":

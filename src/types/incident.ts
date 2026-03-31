@@ -53,6 +53,7 @@ export interface IncidentReport {
   resolved_time?: string;
   ai_insights?: string;
   assigned_to?: string;
+  reportedById?: string;
 }
 
 export const INCIDENT_TYPES: IncidentType[] = [

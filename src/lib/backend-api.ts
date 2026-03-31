@@ -232,6 +232,7 @@ export function mapBackendAccidentToIncident(
       accident.status === "resolved" || accident.status === "closed"
         ? accident.updatedAt
         : undefined,
+    reportedById: accident.reportedById,
   };
 }
 

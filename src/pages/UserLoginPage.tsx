@@ -311,7 +311,6 @@ export default function UserLoginPage() {
                 text="signin_with"
                 theme="light"
                 locale="en"
-                flow="auth-code"
               />
             </div>
 

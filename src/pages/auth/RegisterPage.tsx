@@ -297,7 +297,6 @@ const RegisterPage = () => {
                     text="signup_with"
                     theme="light"
                     locale="en"
-                    flow="auth-code"
                   />
                 </div>
               </form>

@@ -295,7 +295,6 @@ const LoginPage = () => {
                         text="signin_with"
                         theme="light"
                         locale="en"
-                        flow="auth-code"
                       />
                     </div>
                   </form>

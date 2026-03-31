@@ -416,7 +416,6 @@ export default function LoginPage() {
                       text="signin_with"
                       theme="light"
                       locale="en"
-                      flow="auth-code"
                     />
                   </div>
                 </CardContent>
@@ -525,7 +524,6 @@ export default function LoginPage() {
                       text="signin_with"
                       theme="light"
                       locale="en"
-                      flow="auth-code"
                     />
                   </div>
                 </CardContent>

@@ -169,7 +169,6 @@ export default function ResponderLoginView({
                 onError={() => {}}
                 size="large"
                 width="100%"
-                flow="auth-code"
               />
             </div>
 

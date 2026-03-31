@@ -5,12 +5,14 @@ import "./index.css";
 // Suppress GSI_LOGGER warnings (multiple initialization warnings are harmless in StrictMode)
 const originalWarn = console.warn;
 console.warn = function (...args: any[]) {
+  const message = String(args[0] || "");
   if (
-    typeof args[0] === "string" &&
-    (args[0].includes("[GSI_LOGGER]") ||
-      args[0].includes("google.accounts.id.initialize"))
+    message.includes("[GSI_LOGGER]") ||
+    message.includes("google.accounts.id.initialize") ||
+    message.includes("Cross-Origin-Opener-Policy") ||
+    message.includes("Cross-Origin-Embedder-Policy")
   ) {
-    return; // Suppress GSI warnings
+    return; // Suppress GSI and COOP warnings
   }
   originalWarn.apply(console, args);
 };
@@ -18,10 +20,11 @@ console.warn = function (...args: any[]) {
 // Suppress COOP/COEP policy warnings as they're informational
 const originalError = console.error;
 console.error = function (...args: any[]) {
+  const message = String(args[0] || "");
   if (
-    typeof args[0] === "string" &&
-    (args[0].includes("Cross-Origin-Opener-Policy") ||
-      args[0].includes("Cross-Origin-Embedder-Policy"))
+    message.includes("Cross-Origin-Opener-Policy") ||
+    message.includes("Cross-Origin-Embedder-Policy") ||
+    message.includes("postMessage")
   ) {
     return; // Suppress COOP/COEP errors
   }

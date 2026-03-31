@@ -57,7 +57,9 @@ interface User {
 const UsersManagementPage = () => {
   // Fetch users from backend
   const { data: usersData, isLoading, error: usersError } = useGetUsers();
+  console.log("usersData in component:", usersData); // Debug log
   const users = Array.isArray(usersData) ? usersData : usersData?.data || [];
+  console.log("Processed users array:", users); // Debug log
 
   // API mutations
   const createUserMutation = useCreateUser();
@@ -207,7 +209,19 @@ const UsersManagementPage = () => {
               <p className="text-sm mt-1">
                 {usersError?.message || "Failed to fetch users from backend. Please check the server logs."}
               </p>
+              <p className="text-xs mt-2 text-red-300/70">Check browser console for details</p>
             </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Debug Info - Remove in production */}
+      {!isLoading && (
+        <Card className="bg-slate-700/50 border-slate-600">
+          <CardContent className="pt-6">
+            <p className="text-xs text-slate-300">
+              Users loaded: {users.length} | Data type: {Array.isArray(usersData) ? "array" : typeof usersData}
+            </p>
           </CardContent>
         </Card>
       )}

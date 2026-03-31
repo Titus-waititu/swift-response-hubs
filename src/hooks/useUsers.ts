@@ -15,7 +15,33 @@ export const usersKeys = {
 export const useGetUsers = () =>
   useQuery({
     queryKey: usersKeys.lists(),
-    queryFn: () => apiClient.get("/users/"),
+    queryFn: async () => {
+      try {
+        const response = await apiClient.get("/users/");
+        console.log("Users API Response:", response); // Debug log
+        
+        // Handle array directly
+        if (Array.isArray(response)) {
+          return response;
+        }
+        
+        // Handle wrapped response (data property)
+        if (response?.data && Array.isArray(response.data)) {
+          return response.data;
+        }
+        
+        // Handle paginated response
+        if (response?.users && Array.isArray(response.users)) {
+          return response.users;
+        }
+        
+        // Fallback
+        return [];
+      } catch (error) {
+        console.error("Error fetching users:", error);
+        throw error;
+      }
+    },
   });
 
 export const useGetUserById = (id: string | undefined) =>

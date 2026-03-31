@@ -153,6 +153,7 @@ export default function DispatcherLoginView({
                 onError={() => {}}
                 size="large"
                 width="100%"
+                flow="auth-code"
               />
             </div>
 

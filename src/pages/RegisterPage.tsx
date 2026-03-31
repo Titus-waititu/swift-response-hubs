@@ -355,6 +355,7 @@ export default function RegisterPage() {
                 text="signup_with"
                 theme="light"
                 locale="en"
+                flow="auth-code"
               />
             </div>
 

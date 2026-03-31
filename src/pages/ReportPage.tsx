@@ -209,6 +209,7 @@ export default function ReportPage() {
     if (step === 2 && !locationAttempted) {
       getLocationAuto();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step, locationAttempted]);
 
   const handleNext = () => {

@@ -69,6 +69,7 @@ export default function SubmitAccidentReportPage({
 
   useEffect(() => {
     requestLocation();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const form = useForm<UserSubmitReportFormValues>({
@@ -101,25 +102,25 @@ export default function SubmitAccidentReportPage({
       }
 
       const payload = {
-          description: parsed.data.description,
-          locationAddress: parsed.data.location,
-          latitude: parseFloat(parsed.data.latitude || "0"),
-          longitude: parseFloat(parsed.data.longitude || "0"),
-          severity: parsed.data.injuriesReported ? "severe" : "moderate",
-          accidentDate: new Date().toISOString(),
-          reportedById: user?.id || "unknown"
-        };
-        try {
-          await createReport.mutateAsync(payload as any);
-          if (onSubmit) {
-            onSubmit(parsed.data);
-          }
-          toast.success("Report submitted successfully!");
-          form.reset();
-        } catch (error) {
-          console.error(error);
-          toast.error("Failed to submit report.");
+        description: parsed.data.description,
+        locationAddress: parsed.data.location,
+        latitude: parseFloat(parsed.data.latitude || "0"),
+        longitude: parseFloat(parsed.data.longitude || "0"),
+        severity: parsed.data.injuriesReported ? "severe" : "moderate",
+        accidentDate: new Date().toISOString(),
+        reportedById: user?.id || "unknown",
+      };
+      try {
+        await createReport.mutateAsync(payload as any);
+        if (onSubmit) {
+          onSubmit(parsed.data);
         }
+        toast.success("Report submitted successfully!");
+        form.reset();
+      } catch (error) {
+        console.error(error);
+        toast.error("Failed to submit report.");
+      }
     },
   });
 
@@ -196,7 +197,10 @@ export default function SubmitAccidentReportPage({
                 <form.Field
                   name="description"
                   validators={{
-                    onChange: ({ value }) => !value || value.length < 10 ? "Description must be at least 10 characters" : undefined,
+                    onChange: ({ value }) =>
+                      !value || value.length < 10
+                        ? "Description must be at least 10 characters"
+                        : undefined,
                   }}
                 >
                   {(field) => (
@@ -230,7 +234,10 @@ export default function SubmitAccidentReportPage({
                   <form.Field
                     name="location"
                     validators={{
-                      onChange: ({ value }) => !value || value.length < 5 ? "Location address is required" : undefined,
+                      onChange: ({ value }) =>
+                        !value || value.length < 5
+                          ? "Location address is required"
+                          : undefined,
                     }}
                   >
                     {(field) => (
@@ -651,4 +658,3 @@ export default function SubmitAccidentReportPage({
     </form.Subscribe>
   );
 }
-

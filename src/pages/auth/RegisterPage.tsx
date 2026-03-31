@@ -15,8 +15,7 @@ import {
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CheckCircle2, Loader2, AlertCircle } from "lucide-react";
-import { createUserAccount, signInToBackend, loginWithGoogle } from "@/lib/backend-api";
-import { useAuthStore } from "@/stores/authStore";
+import { createUserAccount, loginWithGoogle } from "@/lib/backend-api";
 import { toast } from "sonner";
 import { registerSchema } from "@/lib/validation-schemas";
 
@@ -30,7 +29,6 @@ const RegisterPage = () => {
   const [serverError, setServerError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
-  const { setUser, setAccessToken } = useAuthStore();
 
   const handleGoogleLogin = async () => {
     try {
@@ -65,39 +63,13 @@ const RegisterPage = () => {
         role: "user",
       });
 
-      // Sign in after account creation
-      const authResponse = await signInToBackend(
-        email.trim().toLowerCase(),
-        password
-      );
+      setIsSuccess(true);
+      toast.success("Account created successfully! Redirecting to login...");
 
-      if (authResponse.success && authResponse.user && authResponse.tokens) {
-        // Store auth data in Zustand store
-        setAccessToken(authResponse.tokens.accessToken);
-        setUser({
-          id: authResponse.user.id,
-          email: authResponse.user.email,
-          name: authResponse.user.fullName,
-          role: authResponse.user.role as any,
-        });
-
-        // Also store in localStorage for persistence
-        localStorage.setItem(
-          "auth-tokens",
-          JSON.stringify({
-            accessToken: authResponse.tokens.accessToken,
-            refreshToken: authResponse.tokens.refreshToken,
-          })
-        );
-
-        setIsSuccess(true);
-        toast.success("Account created successfully!");
-
-        // Redirect to dashboard after 2 seconds
-        setTimeout(() => {
-          navigate("/dashboard/user");
-        }, 2000);
-      }
+      // Redirect to login page to sign in
+      setTimeout(() => {
+        navigate("/login");
+      }, 2000);
     } catch (err: any) {
       if (err instanceof z.ZodError) {
         const errors: Record<string, string> = {};

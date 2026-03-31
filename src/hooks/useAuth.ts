@@ -57,7 +57,8 @@ export const useGetProfile = () =>
 export const useUpdateProfile = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: any) => apiClient.patch("/auth/profile", data),
+    mutationFn: ({ userId, data }: { userId: string; data: any }) =>
+      apiClient.patch(`/users/${userId}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: authKeys.profile() });
     },
@@ -87,6 +88,20 @@ export const useDeleteAllSessions = () => {
     mutationFn: () => apiClient.delete("/auth/sessions"),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: authKeys.sessions() });
+    },
+  });
+};
+
+// Avatar Upload
+export const useUploadAvatar = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (formData: FormData) =>
+      apiClient.post("/auth/avatar", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: authKeys.profile() });
     },
   });
 };

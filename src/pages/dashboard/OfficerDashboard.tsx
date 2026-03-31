@@ -7,6 +7,7 @@ import OfficerDashboardPage from "@/components/officer/pages/OfficerDashboardPag
 import AccidentsManagementPage from "@/components/officer/pages/AccidentsManagementPage";
 import AIInvestigationAssistantPage from "@/components/officer/pages/AIInvestigationAssistantPage";
 import UsersProfilePage from "@/components/officer/pages/UsersProfilePage";
+import ProfilePage from "@/components/ProfilePage";
 import { useGetAccidents } from "@/hooks/useAccidents";
 import { mapBackendAccidentToIncident } from "@/lib/backend-api";
 import {
@@ -16,7 +17,12 @@ import {
 } from "@/lib/incident-analytics";
 import type { IncidentReport } from "@/types/incident";
 
-type OfficerPage = "dashboard" | "accidents" | "ai-assistant" | "users";
+type OfficerPage =
+  | "dashboard"
+  | "accidents"
+  | "ai-assistant"
+  | "users"
+  | "profile";
 
 const OfficerDashboard = () => {
   const navigate = useNavigate();
@@ -51,8 +57,8 @@ const OfficerDashboard = () => {
   const incidentTypeBreakdown = getIncidentTypeBreakdown(incidents);
   const responseMetrics = getResponseTimeMetrics(incidents);
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     navigate("/");
   };
 
@@ -92,6 +98,8 @@ const OfficerDashboard = () => {
         );
       case "users":
         return <UsersProfilePage />;
+      case "profile":
+        return <ProfilePage />;
       default:
         return null;
     }
@@ -108,7 +116,7 @@ const OfficerDashboard = () => {
       />
       <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
         <OfficerTopNav
-          userName={user.name}
+          user={user}
           isDarkMode={isDarkMode}
           onToggleTheme={() => setIsDarkMode(!isDarkMode)}
           onLogout={handleLogout}

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Eye, EyeOff, Mail, Lock, ArrowRight } from "lucide-react";
 import { useForm } from "@tanstack/react-form";
+import { GoogleLogin } from "@react-oauth/google";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -9,6 +10,7 @@ import { Navigation } from "@/components/premium/Navigation";
 import { Footer } from "@/components/premium/Footer";
 import { signInToBackend } from "@/lib/backend-api";
 import { loginSchema } from "@/lib/validation-schemas";
+import { useGoogleAuth } from "@/hooks/useGoogleAuth";
 
 const USER_SESSION_KEY = "swift-response-hub/user-session/v1";
 
@@ -25,6 +27,7 @@ export default function UserLoginPage() {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+  const { handleGoogleSuccess } = useGoogleAuth();
 
   // Redirect if already logged in
   useEffect(() => {
@@ -86,6 +89,28 @@ export default function UserLoginPage() {
       }
     },
   });
+
+  const handleGoogleLogin = (credentialResponse: any) => {
+    const googleAuthData = handleGoogleSuccess(credentialResponse);
+    if (googleAuthData) {
+      // Store user session without Google JWT (won't work with backend API)
+      const session: UserSession = {
+        userId: googleAuthData.googleId,
+        email: googleAuthData.email,
+        name: googleAuthData.name || "User",
+        role: "user",
+        accessToken: "", // Don't store Google JWT
+        refreshToken: undefined,
+      };
+      window.localStorage.setItem(USER_SESSION_KEY, JSON.stringify(session));
+      window.localStorage.setItem(
+        "google-auth-session",
+        JSON.stringify({ googleId: googleAuthData.googleId, email: googleAuthData.email, isGoogleAuth: true }),
+      );
+      toast.success(`Welcome back, ${googleAuthData.name}!`);
+      navigate("/user-dashboard");
+    }
+  };
 
   return (
     <div className="min-h-screen bg-blue-50 dark:bg-blue-950 flex flex-col">
@@ -273,14 +298,27 @@ export default function UserLoginPage() {
               <div className="h-px flex-grow bg-blue-200 dark:bg-blue-800" />
             </div>
 
-            {/* Continue as Guest */}
-            <Button
-              variant="outline"
-              onClick={() => navigate("/")}
-              className="w-full border-blue-200 dark:border-blue-800 text-blue-900 dark:text-blue-50"
-            >
-              Continue as Guest
-            </Button>
+            {/* Google Login */}
+            <div className="mb-6 rounded-lg border border-teal-200 dark:border-teal-700 bg-white dark:bg-slate-800 p-4 flex items-center justify-center min-h-16">
+              <GoogleLogin
+                onSuccess={handleGoogleLogin}
+                onError={() => toast.error("Google sign-in failed")}
+                size="large"
+                text="signin_with"
+                theme="light"
+                locale="en"
+              />
+            </div>
+
+            {/* Forgot Password */}
+            <div className="flex items-center justify-center text-sm mb-6">
+              <Link
+                to="/forgot-password"
+                className="text-teal-700 dark:text-teal-400 hover:text-teal-800 dark:hover:text-teal-300 font-medium"
+              >
+                Forgot password?
+              </Link>
+            </div>
 
             {/* Sign Up Link */}
             <p className="text-center text-sm text-blue-600 dark:text-blue-400 mt-6">

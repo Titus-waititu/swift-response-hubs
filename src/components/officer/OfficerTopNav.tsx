@@ -1,28 +1,35 @@
 import { Search, Bell, Moon, Sun, LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import ProfileDropdown from "@/components/ProfileDropdown";
+import { User as UserType } from "@/stores/authStore";
+import { useState } from "react";
 
 interface OfficerTopNavProps {
-  userName: string;
+  user: UserType | null;
+  profileImage?: string | null;
   isDarkMode: boolean;
   onToggleTheme: () => void;
-  onLogout: () => void;
+  onLogout: () => Promise<void>;
   criticalIncidentCount: number;
 }
 
 export default function OfficerTopNav({
-  userName,
+  user,
+  profileImage,
   isDarkMode,
   onToggleTheme,
   onLogout,
   criticalIncidentCount,
 }: OfficerTopNavProps) {
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    await onLogout();
+    setIsLoggingOut(false);
+  };
+
   return (
     <header className="bg-blue-50 dark:bg-blue-950 border-b border-blue-100 dark:border-blue-900 px-6 py-4">
       <div className="flex items-center justify-between gap-4">
@@ -68,36 +75,13 @@ export default function OfficerTopNav({
             )}
           </Button>
 
-          {/* User Menu */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="text-teal-700 dark:text-teal-300 hover:text-teal-950 dark:hover:text-teal-50"
-              >
-                <User className="h-5 w-5" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent
-              align="end"
-              className="w-48 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800"
-            >
-              <div className="px-2 py-1.5 text-xs text-slate-600 dark:text-slate-400 font-medium">
-                Logged in as
-              </div>
-              <div className="px-2 py-1 text-sm text-slate-900 dark:text-slate-50 font-medium mb-2">
-                {userName}
-              </div>
-              <DropdownMenuItem
-                onClick={onLogout}
-                className="gap-2 text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 cursor-pointer"
-              >
-                <LogOut className="h-4 w-4" />
-                Logout
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {/* Profile Dropdown */}
+          <ProfileDropdown
+            user={user}
+            profileImage={profileImage}
+            onLogout={handleLogout}
+            isLoading={isLoggingOut}
+          />
         </div>
       </div>
     </header>

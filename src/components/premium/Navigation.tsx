@@ -1,162 +1,155 @@
 import { useState, useEffect } from "react";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Moon, Sun, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useProtectedNavigation } from "@/hooks/useProtectedNavigation";
+import { useAuthStore } from "@/stores/authStore";
+import { useTheme } from "@/hooks/useTheme";
+import ProfileDropdown from "@/components/ProfileDropdown";
 
-interface NavigationProps {
-  isLoggedIn?: boolean;
-  isDarkMode?: boolean;
-  onToggleTheme?: () => void;
-}
-
-export const Navigation = ({
-  isLoggedIn = false,
-  isDarkMode = false,
-  onToggleTheme,
-}: NavigationProps) => {
-  const [isScrolled, setIsScrolled] = useState(false);
+export const Navigation = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const navigate = useNavigate();
+  const { user, isAuthenticated } = useProtectedNavigation();
+  const { logout } = useAuthStore();
+  const { isDark, toggleTheme } = useTheme();
 
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50);
-    };
-
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    logout();
+    navigate("/");
+    setIsLoggingOut(false);
+    setMobileMenuOpen(false);
+  };
 
   const navLinks = [
-    { label: "Home", href: "/" },
+    { label: "Features", href: "/features" },
     { label: "How It Works", href: "#how-it-works" },
-    ...(isLoggedIn ? [{ label: "Dashboard", href: "/dashboard" }] : []),
+    { label: "Documentation", href: "/documentation" },
   ];
 
   return (
-    <nav
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        isScrolled
-          ? "bg-white dark:bg-blue-950 shadow-lg"
-          : "bg-transparent dark:bg-transparent"
-      }`}
-    >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16 md:h-20">
+    <header className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur-sm">
+      <div className="mx-auto max-w-7xl px-4 py-4">
+        <div className="flex items-center justify-between gap-4">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2 group">
-            <div className="w-8 h-8 md:w-10 md:h-10 bg-teal-700 dark:bg-teal-600 rounded-sm flex items-center justify-center">
-              <span className="text-white font-bold text-lg">S</span>
+          <Link to="/" className="flex items-center gap-2 font-bold text-lg">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/20">
+              <Zap className="h-5 w-5 text-primary" />
             </div>
-            <span
-              className={`font-semibold text-lg hidden sm:inline transition-colors ${
-                isScrolled
-                  ? "text-blue-950 dark:text-blue-50"
-                  : "text-blue-950 dark:text-blue-50"
-              }`}
-            >
-              SARS
-            </span>
+            <span className="hidden sm:inline text-foreground">SARS</span>
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-8">
-            {navLinks.map((link) => (
-              <a
-                key={link.label}
-                href={link.href}
-                className={`text-sm font-medium transition-colors ${
-                  isScrolled
-                    ? "text-blue-900 dark:text-blue-100 hover:text-teal-700 dark:hover:text-teal-400"
-                    : "text-blue-900 dark:text-blue-100 hover:text-teal-700 dark:hover:text-teal-400"
-                }`}
+          <nav className="hidden md:flex items-center gap-1">
+            {navLinks.map((item) => (
+              <Link
+                key={item.href}
+                to={item.href}
+                className="px-3 py-2 rounded-md text-sm font-medium transition-colors text-muted-foreground hover:text-foreground hover:bg-secondary/50"
               >
-                {link.label}
-              </a>
+                {item.label}
+              </Link>
             ))}
-          </div>
+          </nav>
 
-          {/* Right Section */}
-          <div className="flex items-center gap-3">
+          {/* Right Side */}
+          <div className="flex items-center gap-2">
+            {/* Mobile Menu */}
+            <div className="md:hidden">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              >
+                {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              </Button>
+            </div>
+
+            {/* Report Accident Button - Desktop */}
+            <Link to="/report-accident" className="hidden sm:block">
+              <Button className="bg-red-600 hover:bg-red-700 text-white">
+                Report Accident
+              </Button>
+            </Link>
+
             {/* Theme Toggle */}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onToggleTheme}
-              className={`${
-                isScrolled
-                  ? "text-blue-900 dark:text-blue-100"
-                  : "text-blue-900 dark:text-blue-100"
-              }`}
-            >
-              {isDarkMode ? "☀️" : "🌙"}
+            <Button variant="ghost" size="icon" onClick={toggleTheme} title="Toggle theme">
+              {isDark ? (
+                <Sun className="h-5 w-5 text-muted-foreground" />
+              ) : (
+                <Moon className="h-5 w-5 text-muted-foreground" />
+              )}
             </Button>
 
-            {/* Auth Buttons */}
-            {!isLoggedIn && (
-              <div className="hidden sm:flex gap-3">
-                <Button
-                  variant="outline"
-                  asChild
-                  className={`${
-                    isScrolled
-                      ? "border-blue-200 dark:border-blue-800 text-blue-900 dark:text-blue-50"
-                      : "border-blue-200 dark:border-blue-800 text-blue-900 dark:text-blue-50"
-                  }`}
-                >
-                  <Link to="/login">Login</Link>
+            {/* Login/Authenticated Button */}
+            {!isAuthenticated ? (
+              <Link to="/login" className="hidden sm:block">
+                <Button size="sm" className="bg-primary hover:bg-primary/90">
+                  Sign In
                 </Button>
-                <Button
-                  asChild
-                  className="bg-teal-700 hover:bg-teal-800 dark:bg-teal-600 dark:hover:bg-teal-700 text-white"
-                >
-                  <Link to="/register">Register</Link>
-                </Button>
-              </div>
+              </Link>
+            ) : (
+              <ProfileDropdown
+                user={user}
+                onLogout={handleLogout}
+                isLoading={isLoggingOut}
+              />
             )}
-
-            {/* Mobile Menu Button */}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden"
-            >
-              {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-            </Button>
           </div>
         </div>
 
-        {/* Mobile Navigation */}
+        {/* Mobile Navigation Menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden bg-white dark:bg-blue-950 border-t border-blue-100 dark:border-blue-900">
-            <div className="px-4 py-4 space-y-3">
-              {navLinks.map((link) => (
-                <a
-                  key={link.label}
-                  href={link.href}
-                  className="block text-sm font-medium text-blue-900 dark:text-blue-100 hover:text-teal-700 dark:hover:text-teal-400 py-2"
-                >
-                  {link.label}
-                </a>
-              ))}
-              {!isLoggedIn && (
-                <div className="flex gap-2 pt-2 border-t border-blue-100 dark:border-blue-900">
-                  <Button variant="outline" asChild className="flex-1">
-                    <Link to="/login">Login</Link>
-                  </Button>
-                  <Button
-                    asChild
-                    className="flex-1 bg-teal-700 hover:bg-teal-800 text-white"
-                  >
-                    <Link to="/register">Register</Link>
-                  </Button>
+          <div className="md:hidden border-t border-border mt-4 pt-4 space-y-3">
+            {navLinks.map((item) => (
+              <Link
+                key={item.href}
+                to={item.href}
+                className="block px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                {item.label}
+              </Link>
+            ))}
+
+            <div className="border-t border-border pt-3 space-y-2">
+              {/* Report Accident Button - Mobile */}
+              <Link to="/report-accident">
+                <Button className="w-full bg-red-600 hover:bg-red-700 text-white">
+                  Report Accident
+                </Button>
+              </Link>
+
+              {!isAuthenticated ? (
+                <div className="flex gap-2">
+                  <Link to="/login" className="flex-1">
+                    <Button variant="outline" className="w-full">
+                      Sign In
+                    </Button>
+                  </Link>
+                  <Link to="/register" className="flex-1">
+                    <Button className="w-full bg-primary hover:bg-primary/90">
+                      Register
+                    </Button>
+                  </Link>
                 </div>
+              ) : (
+                <Button
+                  onClick={handleLogout}
+                  disabled={isLoggingOut}
+                  className="w-full"
+                  variant="outline"
+                >
+                  {isLoggingOut ? "Signing out..." : "Sign Out"}
+                </Button>
               )}
             </div>
           </div>
         )}
       </div>
-    </nav>
+    </header>
   );
 };
 

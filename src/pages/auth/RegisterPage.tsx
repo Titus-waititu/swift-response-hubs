@@ -1,6 +1,8 @@
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { z } from "zod";
+import { GoogleLogin } from "@react-oauth/google";
+import { Separator } from "@/components/ui/separator";
 import LandingPageHeader from "@/components/LandingPageHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +17,9 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CheckCircle2, Loader2, AlertCircle } from "lucide-react";
 import { authAPI } from "@/lib/api";
+import { useGoogleAuth } from "@/hooks/useGoogleAuth";
+import { useAuthStore, type UserRole } from "@/stores/authStore";
+import { toast } from "sonner";
 import { registerSchema, RegisterFormValues } from "@/lib/validation-schemas";
 
 const RegisterPage = () => {
@@ -27,6 +32,35 @@ const RegisterPage = () => {
   const [serverError, setServerError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const { handleGoogleSuccess } = useGoogleAuth();
+  const { setUser, setAccessToken } = useAuthStore();
+
+  const handleGoogleLogin = (credentialResponse: any) => {
+    const googleAuthData = handleGoogleSuccess(credentialResponse);
+    if (googleAuthData) {
+      const normalizedUser = {
+        id: googleAuthData.googleId,
+        email: googleAuthData.email,
+        name: googleAuthData.name || "User",
+        role: "USER" as UserRole,
+      };
+
+      // Store user info but NOT the Google JWT as accessToken
+      setUser(normalizedUser);
+      
+      // Store a flag indicating Google auth for reference
+      const loginData = {
+        user: normalizedUser,
+        googleId: googleAuthData.googleId,
+        email: googleAuthData.email,
+        isGoogleAuth: true,
+      };
+      localStorage.setItem("user-login-session", JSON.stringify(loginData));
+      
+      toast.success(`Welcome, ${googleAuthData.name}!`);
+      navigate("/dashboard/user");
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -243,6 +277,28 @@ const RegisterPage = () => {
                     "Sign Up"
                   )}
                 </Button>
+
+                {/* Divider */}
+                <div className="relative">
+                  <Separator className="my-4" />
+                  <div className="absolute inset-x-0 top-1/2 flex justify-center">
+                    <span className="bg-background px-2 text-xs text-muted-foreground">
+                      Or
+                    </span>
+                  </div>
+                </div>
+
+                {/* Google Login */}
+                <div className="flex items-center justify-center rounded-lg border border-primary/20 bg-white dark:bg-slate-800 p-4 min-h-16 dark:border-primary/30">
+                  <GoogleLogin
+                    onSuccess={handleGoogleLogin}
+                    onError={() => toast.error("Google sign-up failed")}
+                    size="large"
+                    text="signup_with"
+                    theme="light"
+                    locale="en"
+                  />
+                </div>
               </form>
 
               {/* Sign In Link */}

@@ -180,12 +180,16 @@ export default function LoginPage() {
         userId: googleAuthData.googleId,
         email: googleAuthData.email,
         name: googleAuthData.name || "Dispatcher",
-        accessToken: googleAuthData.credential,
+        accessToken: "", // Don't store Google JWT
         refreshToken: undefined,
       };
       window.localStorage.setItem(
         DISPATCHER_SESSION_KEY,
         JSON.stringify(session),
+      );
+      window.localStorage.setItem(
+        "google-auth-session",
+        JSON.stringify({ googleId: googleAuthData.googleId, email: googleAuthData.email, isGoogleAuth: true }),
       );
       setDispatcherForm({ email: "", password: "" });
       toast.success(`Welcome back, ${googleAuthData.name}!`);
@@ -201,12 +205,16 @@ export default function LoginPage() {
         email: googleAuthData.email,
         name: googleAuthData.name || "Responder",
         unitLabel: responderForm.unitLabel || "Unit Response",
-        accessToken: googleAuthData.credential,
+        accessToken: "", // Don't store Google JWT
         refreshToken: undefined,
       };
       window.localStorage.setItem(
         RESPONDER_SESSION_KEY,
         JSON.stringify(session),
+      );
+      window.localStorage.setItem(
+        "google-auth-session",
+        JSON.stringify({ googleId: googleAuthData.googleId, email: googleAuthData.email, isGoogleAuth: true }),
       );
       setResponderForm({ email: "", password: "", unitLabel: "" });
       toast.success(`Welcome back, ${googleAuthData.name}!`);
@@ -383,7 +391,6 @@ export default function LoginPage() {
                     <LockKeyhole className="mr-2 h-4 w-4" />
                     {signinMutation.isPending ? "Signing in..." : "Sign In"}
                   </Button>
-
                   <div className="relative">
                     <Separator className="my-4" />
                     <div className="absolute inset-x-0 top-1/2 flex justify-center">
@@ -393,12 +400,14 @@ export default function LoginPage() {
                     </div>
                   </div>
 
-                  <div className="flex justify-center">
+                  <div className="flex items-center justify-center rounded-lg border border-primary/20 bg-white dark:bg-slate-800 p-4 min-h-16 dark:border-primary/30">
                     <GoogleLogin
                       onSuccess={handleDispatcherGoogleLogin}
                       onError={() => toast.error("Google sign-in failed")}
                       size="large"
-                      width="100%"
+                      text="signin_with"
+                      theme="light"
+                      locale="en"
                     />
                   </div>
                 </CardContent>
@@ -499,12 +508,14 @@ export default function LoginPage() {
                     </div>
                   </div>
 
-                  <div className="flex justify-center">
+                  <div className="flex items-center justify-center rounded-lg border border-info/20 bg-white dark:bg-slate-800 p-4 min-h-16 dark:border-info/30">
                     <GoogleLogin
                       onSuccess={handleResponderGoogleLogin}
                       onError={() => toast.error("Google sign-in failed")}
                       size="large"
-                      width="100%"
+                      text="signin_with"
+                      theme="light"
+                      locale="en"
                     />
                   </div>
                 </CardContent>

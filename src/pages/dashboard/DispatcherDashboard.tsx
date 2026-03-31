@@ -8,6 +8,7 @@ import IncidentsQueuePage from "@/components/dispatcher/pages/IncidentsQueuePage
 import RespondersManagementPage from "@/components/dispatcher/pages/RespondersManagementPage";
 import EmergencyServicesPage from "@/components/dispatcher/pages/EmergencyServicesPage";
 import DispatcherSettingsPage from "@/components/dispatcher/pages/DispatcherSettingsPage";
+import ProfilePage from "@/components/ProfilePage";
 import { useGetAccidents } from "@/hooks/useAccidents";
 import { mapBackendAccidentToIncident } from "@/lib/backend-api";
 import {
@@ -22,7 +23,8 @@ type DispatcherPage =
   | "queue"
   | "responders"
   | "services"
-  | "settings";
+  | "settings"
+  | "profile";
 
 export default function DispatcherDashboard() {
   const navigate = useNavigate();
@@ -64,8 +66,8 @@ export default function DispatcherDashboard() {
   const incidentTypeBreakdown = getIncidentTypeBreakdown(incidents);
   const responseMetrics = getResponseTimeMetrics(incidents);
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     navigate("/");
   };
 
@@ -88,6 +90,8 @@ export default function DispatcherDashboard() {
         return <EmergencyServicesPage />;
       case "settings":
         return <DispatcherSettingsPage />;
+      case "profile":
+        return <ProfilePage />;
       default:
         return null;
     }
@@ -109,7 +113,7 @@ export default function DispatcherDashboard() {
       />
       <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
         <DispatcherTopNav
-          userName={user.name}
+          user={user}
           isDarkMode={isDarkMode}
           onToggleTheme={() => setIsDarkMode(!isDarkMode)}
           onLogout={handleLogout}

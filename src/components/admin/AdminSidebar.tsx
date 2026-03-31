@@ -7,10 +7,17 @@ import {
   Settings,
   PanelLeftClose,
   PanelLeft,
+  User,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-type AdminPage = "dashboard" | "incidents" | "users" | "services" | "settings";
+type AdminPage =
+  | "dashboard"
+  | "incidents"
+  | "users"
+  | "services"
+  | "settings"
+  | "profile";
 
 interface AdminSidebarProps {
   currentPage: AdminPage;
@@ -50,6 +57,11 @@ const AdminSidebar = ({
       id: "settings",
       label: "Settings",
       icon: Settings,
+    },
+    {
+      id: "profile",
+      label: "Profile",
+      icon: User,
     },
   ];
 

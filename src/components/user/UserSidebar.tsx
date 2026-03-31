@@ -6,13 +6,26 @@ import {
   FileText,
   Car,
   Settings,
+  User,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface UserSidebarProps {
-  currentPage: "dashboard" | "submit" | "reports" | "vehicles" | "settings";
+  currentPage:
+    | "dashboard"
+    | "submit"
+    | "reports"
+    | "vehicles"
+    | "settings"
+    | "profile";
   onPageChange: (
-    page: "dashboard" | "submit" | "reports" | "vehicles" | "settings",
+    page:
+      | "dashboard"
+      | "submit"
+      | "reports"
+      | "vehicles"
+      | "settings"
+      | "profile",
   ) => void;
   sidebarOpen: boolean;
   onToggleSidebar: () => void;
@@ -32,6 +45,7 @@ export default function UserSidebar({
     { id: "reports", label: "My Reports", icon: FileText },
     { id: "vehicles", label: "My Vehicles", icon: Car },
     { id: "settings", label: "Settings", icon: Settings },
+    { id: "profile", label: "Profile", icon: User },
   ];
 
   return (
@@ -74,7 +88,8 @@ export default function UserSidebar({
                   | "submit"
                   | "reports"
                   | "vehicles"
-                  | "settings",
+                  | "settings"
+                  | "profile",
               )
             }
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-sm transition-colors ${

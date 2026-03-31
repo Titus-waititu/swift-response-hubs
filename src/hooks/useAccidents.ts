@@ -291,10 +291,10 @@ export const useGetMyAssignedIncidents = () => {
     },
     enabled: !!user && user?.role === "Responder",
     staleTime: 0, // Consider data stale immediately for real-time updates
-    refetchInterval: 2000, // Refetch every 2 seconds for faster sync
+    refetchInterval: 1000, // Refetch every 1 second for faster sync
     refetchOnWindowFocus: true,
     refetchOnMount: true,
-    retry: 2,
+    retry: 3, // Increased retry attempts for reliability
   });
 };
 

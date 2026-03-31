@@ -8,12 +8,19 @@ import IncidentsManagementPage from "../../components/admin/pages/IncidentsManag
 import UsersManagementPage from "../../components/admin/pages/UsersManagementPage";
 import EmergencyServicesPage from "../../components/admin/pages/EmergencyServicesPage";
 import AdminSettingsPage from "../../components/admin/pages/AdminSettingsPage";
+import ProfilePage from "../../components/ProfilePage";
 import { Toaster } from "@/components/ui/toaster";
 import { useGetAccidents } from "@/hooks/useAccidents";
 import { mapBackendAccidentToIncident } from "@/lib/backend-api";
 import type { IncidentReport } from "@/types/incident";
 
-type AdminPage = "dashboard" | "incidents" | "users" | "services" | "settings";
+type AdminPage =
+  | "dashboard"
+  | "incidents"
+  | "users"
+  | "services"
+  | "settings"
+  | "profile";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -44,8 +51,8 @@ const AdminDashboard = () => {
     mapBackendAccidentToIncident,
   );
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     navigate("/login");
   };
 
@@ -65,6 +72,8 @@ const AdminDashboard = () => {
         return <EmergencyServicesPage />;
       case "settings":
         return <AdminSettingsPage />;
+      case "profile":
+        return <ProfilePage />;
       default:
         return <AdminDashboardPage />;
     }

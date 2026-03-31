@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useProtectedNavigation } from "@/hooks/useProtectedNavigation";
 import { useAuthStore } from "@/stores/authStore";
+import ProfileDropdown from "@/components/ProfileDropdown";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,6 +22,7 @@ const navigationItems = [
 export default function LandingPageHeader() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isDark, setIsDark] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { user, isAuthenticated } = useProtectedNavigation();
@@ -46,6 +48,13 @@ export default function LandingPageHeader() {
       document.documentElement.classList.remove("dark");
     }
   }, []);
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    logout();
+    navigate("/");
+    setIsLoggingOut(false);
+  };
 
   const toggleTheme = () => {
     const htmlElement = document.documentElement;
@@ -146,94 +155,11 @@ export default function LandingPageHeader() {
                 <Link to="/login">Sign In</Link>
               </Button>
             ) : (
-              <div className="flex items-center gap-2">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="rounded-full w-10 h-10 p-0 flex items-center justify-center hover:bg-primary/10"
-                      title={`${user?.name} (${user?.role})`}
-                    >
-                      <div className="flex items-center justify-center w-full h-full rounded-full bg-gradient-to-br from-primary/60 to-primary text-white font-semibold">
-                        {user?.name?.charAt(0).toUpperCase() || "U"}
-                      </div>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-56">
-                    {/* User Info Header */}
-                    <div className="px-4 py-3 border-b border-border">
-                      <p className="font-semibold text-sm text-foreground">
-                        {user?.name}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {user?.email}
-                      </p>
-                      <p className="text-xs font-medium text-primary mt-1">
-                        Role: {user?.role}
-                      </p>
-                    </div>
-
-                    {/* Dashboard Options */}
-                    {user?.role === "ADMIN" && (
-                      <DropdownMenuItem
-                        onClick={() => navigate("/dashboard/admin")}
-                        className="cursor-pointer gap-2"
-                      >
-                        <LayoutDashboard className="h-4 w-4" />
-                        Admin Dashboard
-                      </DropdownMenuItem>
-                    )}
-                    {user?.role === "OFFICER" && (
-                      <DropdownMenuItem
-                        onClick={() => navigate("/dashboard/officer")}
-                        className="cursor-pointer gap-2"
-                      >
-                        <LayoutDashboard className="h-4 w-4" />
-                        Officer Dashboard
-                      </DropdownMenuItem>
-                    )}
-                    {user?.role === "RESPONDER" && (
-                      <DropdownMenuItem
-                        onClick={() => navigate("/dashboard/responder")}
-                        className="cursor-pointer gap-2"
-                      >
-                        <LayoutDashboard className="h-4 w-4" />
-                        Responder Dashboard
-                      </DropdownMenuItem>
-                    )}
-                    {user?.role === "DISPATCHER" && (
-                      <DropdownMenuItem
-                        onClick={() => navigate("/dashboard/dispatcher")}
-                        className="cursor-pointer gap-2"
-                      >
-                        <LayoutDashboard className="h-4 w-4" />
-                        Dispatcher Dashboard
-                      </DropdownMenuItem>
-                    )}
-                    {user?.role === "USER" && (
-                      <DropdownMenuItem
-                        onClick={() => navigate("/dashboard/user")}
-                        className="cursor-pointer gap-2"
-                      >
-                        <LayoutDashboard className="h-4 w-4" />
-                        My Dashboard
-                      </DropdownMenuItem>
-                    )}
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      onClick={() => {
-                        logout();
-                        navigate("/");
-                      }}
-                      className="cursor-pointer gap-2 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
-                    >
-                      <LogOut className="h-4 w-4" />
-                      Logout
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
+              <ProfileDropdown
+                user={user}
+                onLogout={handleLogout}
+                isLoading={isLoggingOut}
+              />
             )}
           </div>
         </div>

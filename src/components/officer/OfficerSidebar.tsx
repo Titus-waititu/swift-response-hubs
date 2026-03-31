@@ -5,14 +5,15 @@ import {
   AlertCircle,
   Wand2,
   Users,
+  User,
   LogOut,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface OfficerSidebarProps {
-  currentPage: "dashboard" | "accidents" | "ai-assistant" | "users";
+  currentPage: "dashboard" | "accidents" | "ai-assistant" | "users" | "profile";
   onPageChange: (
-    page: "dashboard" | "accidents" | "ai-assistant" | "users",
+    page: "dashboard" | "accidents" | "ai-assistant" | "users" | "profile",
   ) => void;
   sidebarOpen: boolean;
   onToggleSidebar: () => void;
@@ -31,6 +32,7 @@ export default function OfficerSidebar({
     { id: "accidents", label: "Manage Accidents", icon: AlertCircle },
     { id: "ai-assistant", label: "AI Investigation", icon: Wand2 },
     { id: "users", label: "Users Profile", icon: Users },
+    { id: "profile", label: "Profile", icon: User },
   ];
 
   return (
@@ -68,7 +70,12 @@ export default function OfficerSidebar({
             key={id}
             onClick={() =>
               onPageChange(
-                id as "dashboard" | "accidents" | "ai-assistant" | "users",
+                id as
+                  | "dashboard"
+                  | "accidents"
+                  | "ai-assistant"
+                  | "users"
+                  | "profile",
               )
             }
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-sm transition-colors ${

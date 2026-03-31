@@ -6,6 +6,7 @@ import ResponderTopNav from "@/components/responder/ResponderTopNav";
 import ResponderDashboardPage from "@/components/responder/pages/ResponderDashboardPage";
 import ResponderAssignmentsPage from "@/components/responder/pages/ResponderAssignmentsPage";
 import ResponderProfilePage from "@/components/responder/pages/ResponderProfilePage";
+import ProfilePage from "@/components/ProfilePage";
 import { useGetMyAssignedIncidents } from "@/hooks/useAccidents";
 import { useRealtimeUpdates } from "@/hooks/useRealtimeUpdates";
 import { mapBackendAccidentToIncident } from "@/lib/backend-api";
@@ -46,12 +47,12 @@ const ResponderDashboard = () => {
   // Enable real-time polling for incidents
   useRealtimeUpdates({
     queryKeys: [["accidents", "my-assigned"]],
-    interval: 5000,
+    interval: 1500, // Sync with hook polling (1000ms) but offset slightly
     enabled: !!user,
   });
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     navigate("/");
   };
 
@@ -74,7 +75,7 @@ const ResponderDashboard = () => {
           />
         );
       case "profile":
-        return <ResponderProfilePage user={user} />;
+        return <ProfilePage />;
       default:
         return null;
     }
@@ -91,7 +92,7 @@ const ResponderDashboard = () => {
       />
       <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
         <ResponderTopNav
-          userName={user.name}
+          user={user}
           isDarkMode={isDarkMode}
           onToggleTheme={() => setIsDarkMode(!isDarkMode)}
           onLogout={handleLogout}

@@ -166,12 +166,22 @@ export default function ResponderAssignmentsPage({
       {/* Header */}
       <div className="flex items-start justify-between">
         <div className="flex-1">
-          <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-50">
-            Assignments
-          </h1>
-          <p className="text-slate-600 dark:text-slate-400 mt-2">
-            View and manage your incident assignments
-          </p>
+          <div className="flex items-center gap-3">
+            <div>
+              <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-50">
+                Assignments
+              </h1>
+              <p className="text-slate-600 dark:text-slate-400 mt-2">
+                View and manage your incident assignments
+              </p>
+            </div>
+            <div className="flex items-center gap-1 px-2 py-1 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-full whitespace-nowrap h-fit">
+              <div className="h-2 w-2 bg-green-600 rounded-full animate-pulse"></div>
+              <span className="text-xs text-green-700 dark:text-green-300 font-medium">
+                Auto-updating
+              </span>
+            </div>
+          </div>
         </div>
         <Button
           onClick={handleManualRefresh}
@@ -179,7 +189,7 @@ export default function ResponderAssignmentsPage({
           variant="outline"
           size="sm"
           className="mt-1"
-          title="Manually refresh assignments"
+          title="Manually refresh assignments (auto-refresh happens every second)"
         >
           <RefreshCw
             className={`h-4 w-4 mr-2 ${isRefreshing ? "animate-spin" : ""}`}

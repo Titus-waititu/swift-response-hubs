@@ -1,15 +1,16 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
-import { GoogleOAuthProvider } from "@react-oauth/google";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { IncidentStoreProvider } from "@/context/IncidentStore";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { GoogleAuthProviderWrapper } from "@/components/GoogleAuthProvider";
 
 // Pages
 import LandingPage from "./pages/LandingPage";
 import NotFound from "./pages/NotFound";
+import PublicReportAccidentPage from "./pages/PublicReportAccidentPage";
 
 // Auth Pages
 import LoginPage from "./pages/auth/LoginPage";
@@ -33,23 +34,36 @@ import OfficerDashboardPage from "./pages/OfficerDashboardPage";
 import FeaturesPage from "./pages/FeaturesPage";
 import DocumentationPage from "./pages/DocumentationPage";
 import AboutPage from "./pages/AboutPage";
+import ProfilePage from "./components/ProfilePage";
 
-const queryClient = new QueryClient();
-const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: (failureCount, error: any) => {
+        // Don't retry on 401 Unauthorized
+        if (error?.response?.status === 401) {
+          return false;
+        }
+        return failureCount < 2;
+      },
+    },
+  },
+});
 
 const App = () => (
-  <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
-    <QueryClientProvider client={queryClient}>
-      <IncidentStoreProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
+  <BrowserRouter>
+    <GoogleAuthProviderWrapper>
+      <QueryClientProvider client={queryClient}>
+        <IncidentStoreProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
             <Routes>
               {/* Public Routes */}
               <Route path="/" element={<LandingPage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
+              <Route path="/report-accident" element={<PublicReportAccidentPage />} />
 
               {/* Protected Dashboard Routes */}
               <Route
@@ -98,6 +112,24 @@ const App = () => (
               <Route path="/documentation" element={<DocumentationPage />} />
               <Route path="/about" element={<AboutPage />} />
 
+              {/* Protected Profile Route */}
+              <Route
+                path="/profile"
+                element={
+                  <ProtectedRoute
+                    allowedRoles={[
+                      "USER",
+                      "ADMIN",
+                      "OFFICER",
+                      "RESPONDER",
+                      "DISPATCHER",
+                    ]}
+                  >
+                    <ProfilePage />
+                  </ProtectedRoute>
+                }
+              />
+
               {/* Legacy Routes (for backward compatibility) */}
               <Route path="/forgot-password" element={<ForgotPasswordPage />} />
               <Route path="/user-login" element={<UserLoginPage />} />
@@ -124,11 +156,11 @@ const App = () => (
               {/* 404 */}
               <Route path="*" element={<NotFound />} />
             </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
-      </IncidentStoreProvider>
-    </QueryClientProvider>
-  </GoogleOAuthProvider>
+          </TooltipProvider>
+        </IncidentStoreProvider>
+      </QueryClientProvider>
+    </GoogleAuthProviderWrapper>
+  </BrowserRouter>
 );
 
 export default App;

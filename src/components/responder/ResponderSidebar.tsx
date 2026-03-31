@@ -3,7 +3,7 @@ import {
   PanelLeft,
   LayoutDashboard,
   AlertCircle,
-  Users,
+  User,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -25,7 +25,7 @@ export default function ResponderSidebar({
   const menuItems = [
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
     { id: "assignments", label: "Assignments", icon: AlertCircle },
-    { id: "profile", label: "My Profile", icon: Users },
+    { id: "profile", label: "Profile", icon: User },
   ];
 
   return (

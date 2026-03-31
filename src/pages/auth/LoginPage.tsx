@@ -3,6 +3,8 @@ import { useState } from "react";
 import { useForm } from "@tanstack/react-form";
 import { z } from "zod";
 import { toast } from "sonner";
+import { GoogleLogin } from "@react-oauth/google";
+import { Separator } from "@/components/ui/separator";
 import { useAuthStore, type UserRole } from "@/stores/authStore";
 import LandingPageHeader from "@/components/LandingPageHeader";
 import { Button } from "@/components/ui/button";
@@ -18,12 +20,43 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { authAPI } from "@/lib/api";
+import { useGoogleAuth } from "@/hooks/useGoogleAuth";
 import { loginSchema, type LoginFormValues } from "@/lib/validation-schemas";
 
 const LoginPage = () => {
   const navigate = useNavigate();
   const { setUser, setAccessToken, setError: setAuthError } = useAuthStore();
   const [serverError, setServerError] = useState<string | null>(null);
+  const { handleGoogleSuccess } = useGoogleAuth();
+
+  const handleGoogleLogin = (credentialResponse: any) => {
+    const googleAuthData = handleGoogleSuccess(credentialResponse);
+    if (googleAuthData) {
+      const normalizedUser = {
+        id: googleAuthData.googleId,
+        email: googleAuthData.email,
+        name: googleAuthData.name || "User",
+        role: "USER" as UserRole,
+      };
+
+      // Store user info but NOT the Google JWT as accessToken 
+      // (backend doesn't recognize Google JWTs)
+      // For now, just store the user info locally
+      setUser(normalizedUser);
+      
+      // Store a flag indicating Google auth for reference
+      const loginData = {
+        user: normalizedUser,
+        googleId: googleAuthData.googleId,
+        email: googleAuthData.email,
+        isGoogleAuth: true,
+      };
+      localStorage.setItem("user-login-session", JSON.stringify(loginData));
+      
+      toast.success(`Welcome, ${googleAuthData.name}!`);
+      navigate("/dashboard/user");
+    }
+  };
 
   const form = useForm({
     defaultValues: {
@@ -241,6 +274,28 @@ const LoginPage = () => {
                       >
                         Forgot your password?
                       </button>
+                    </div>
+
+                    {/* Divider */}
+                    <div className="relative">
+                      <Separator className="my-4" />
+                      <div className="absolute inset-x-0 top-1/2 flex justify-center">
+                        <span className="bg-background px-2 text-xs text-muted-foreground">
+                          Or
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Google Login */}
+                    <div className="flex items-center justify-center rounded-lg border border-primary/20 bg-white dark:bg-slate-800 p-4 min-h-16 dark:border-primary/30">
+                      <GoogleLogin
+                        onSuccess={handleGoogleLogin}
+                        onError={() => toast.error("Google sign-in failed")}
+                        size="large"
+                        text="signin_with"
+                        theme="light"
+                        locale="en"
+                      />
                     </div>
                   </form>
                 )}

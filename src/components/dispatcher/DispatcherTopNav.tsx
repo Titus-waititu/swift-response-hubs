@@ -2,29 +2,35 @@ import { LogOut, Search, User, Moon, Sun } from "lucide-react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import NotificationsDropdown from "../NotificationsDropdown";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "../ui/dropdown-menu";
+import ProfileDropdown from "../ProfileDropdown";
+import { User as UserType } from "@/stores/authStore";
+import { useState } from "react";
 
 interface DispatcherTopNavProps {
-  userName: string;
-  onLogout: () => void;
+  user: UserType | null;
+  profileImage?: string | null;
+  onLogout: () => Promise<void>;
   criticalIncidentCount: number;
   isDarkMode: boolean;
   onToggleTheme: () => void;
 }
 
 export default function DispatcherTopNav({
-  userName,
+  user,
+  profileImage,
   onLogout,
   criticalIncidentCount,
   isDarkMode,
   onToggleTheme,
 }: DispatcherTopNavProps) {
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    await onLogout();
+    setIsLoggingOut(false);
+  };
+
   return (
     <header className="bg-blue-50 dark:bg-blue-950 border-b border-blue-100 dark:border-blue-900 sticky top-0 z-10">
       <div className="px-6 py-4 flex items-center justify-between gap-4">
@@ -59,32 +65,13 @@ export default function DispatcherTopNav({
             )}
           </Button>
 
-          {/* User Menu */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                className="text-teal-700 dark:text-teal-300 hover:text-teal-950 dark:hover:text-teal-50 hover:bg-blue-100 dark:hover:bg-blue-900 gap-2"
-              >
-                <User className="h-4 w-4" />
-                <p className="text-sm">{userName}</p>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
-              <DropdownMenuItem className="text-slate-900 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-50">
-                <User className="mr-2 h-4 w-4" />
-                Profile
-              </DropdownMenuItem>
-              <DropdownMenuSeparator className="bg-slate-200 dark:bg-slate-800" />
-              <DropdownMenuItem
-                onClick={onLogout}
-                className="text-slate-900 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-50"
-              >
-                <LogOut className="mr-2 h-4 w-4" />
-                Logout
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {/* Profile Dropdown */}
+          <ProfileDropdown
+            user={user}
+            profileImage={profileImage}
+            onLogout={handleLogout}
+            isLoading={isLoggingOut}
+          />
         </div>
       </div>
     </header>

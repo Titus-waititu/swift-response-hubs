@@ -8,12 +8,19 @@ import UserSubmitReportPage from "@/components/user/pages/UserSubmitReportPage";
 import UserReportsPage from "@/components/user/pages/UserReportsPage";
 import UserVehiclesPage from "@/components/user/pages/UserVehiclesPage";
 import UserSettingsPage from "@/components/user/pages/UserSettingsPage";
+import ProfilePage from "@/components/ProfilePage";
 import { useGetAccidents } from "@/hooks/useAccidents";
 import { useRealtimeUpdates } from "@/hooks/useRealtimeUpdates";
 import { mapBackendAccidentToIncident } from "@/lib/backend-api";
 import type { IncidentReport } from "@/types/incident";
 
-type UserPage = "dashboard" | "submit" | "reports" | "vehicles" | "settings";
+type UserPage =
+  | "dashboard"
+  | "submit"
+  | "reports"
+  | "vehicles"
+  | "settings"
+  | "profile";
 
 const UserDashboard = () => {
   const navigate = useNavigate();
@@ -52,8 +59,8 @@ const UserDashboard = () => {
     mapBackendAccidentToIncident,
   );
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     navigate("/");
   };
 
@@ -74,6 +81,8 @@ const UserDashboard = () => {
         return <UserVehiclesPage />;
       case "settings":
         return <UserSettingsPage user={user} />;
+      case "profile":
+        return <ProfilePage />;
       default:
         return null;
     }
@@ -90,7 +99,7 @@ const UserDashboard = () => {
       />
       <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
         <UserTopNav
-          userName={user.name}
+          user={user}
           isDarkMode={isDarkMode}
           onToggleTheme={() => setIsDarkMode(!isDarkMode)}
           onLogout={handleLogout}

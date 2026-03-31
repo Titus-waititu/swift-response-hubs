@@ -6,14 +6,27 @@ import {
   Users,
   Ambulance,
   Settings,
+  User,
   LogOut,
 } from "lucide-react";
 import { Button } from "../ui/button";
 
 interface DispatcherSidebarProps {
-  currentPage: "dashboard" | "queue" | "responders" | "services" | "settings";
+  currentPage:
+    | "dashboard"
+    | "queue"
+    | "responders"
+    | "services"
+    | "settings"
+    | "profile";
   onPageChange: (
-    page: "dashboard" | "queue" | "responders" | "services" | "settings",
+    page:
+      | "dashboard"
+      | "queue"
+      | "responders"
+      | "services"
+      | "settings"
+      | "profile",
   ) => void;
   sidebarOpen: boolean;
   onToggleSidebar: () => void;
@@ -33,6 +46,7 @@ export default function DispatcherSidebar({
     { id: "responders", label: "Responders", icon: Users },
     { id: "services", label: "Emergency Services", icon: Ambulance },
     { id: "settings", label: "Settings", icon: Settings },
+    { id: "profile", label: "Profile", icon: User },
   ];
 
   return (

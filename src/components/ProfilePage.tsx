@@ -4,7 +4,6 @@ import {
   useGetProfile,
   useUpdateProfile,
   useChangePassword,
-  useUploadAvatar,
 } from "@/hooks/useAuth";
 import { useAuthStore } from "@/stores/authStore";
 import { Button } from "@/components/ui/button";
@@ -18,10 +17,8 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import UserAvatar from "@/components/UserAvatar";
 import {
   ArrowLeft,
-  Upload,
   Eye,
   EyeOff,
   Loader2,
@@ -40,7 +37,6 @@ export default function ProfilePage() {
   } = useGetProfile();
   const updateProfileMutation = useUpdateProfile();
   const changePasswordMutation = useChangePassword();
-  const uploadAvatarMutation = useUploadAvatar();
 
   // Form states
   const [editName, setEditName] = useState("");
@@ -54,7 +50,6 @@ export default function ProfilePage() {
     new: false,
     confirm: false,
   });
-  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -62,49 +57,20 @@ export default function ProfilePage() {
   const initialTab = searchParams.get("tab") || "overview";
 
   // Initialize form with profile data
+  // Initialize form with profile data or fall back to auth store
   useEffect(() => {
     if (profileData?.data) {
       const profile = profileData.data;
-      setEditName(profile.name || user?.name || "");
+      setEditName(profile.fullName || profile.name || user?.name || "");
       setEditEmail(profile.email || user?.email || "");
-      setEditPhone(profile.phone || "");
+      setEditPhone(profile.phoneNumber || profile.phone || "");
+    } else if (user) {
+      // Fallback to auth store if profile data isn't loaded yet
+      setEditName(user.name || "");
+      setEditEmail(user.email || "");
+      setEditPhone("");
     }
   }, [profileData, user]);
-
-  // Handle avatar selection
-  const handleAvatarSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file && file.type.startsWith("image/")) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        setAvatarPreview(event.target?.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  // Upload avatar
-  const handleAvatarUpload = async () => {
-    const fileInput = document.getElementById(
-      "avatar-upload",
-    ) as HTMLInputElement;
-    const file = fileInput?.files?.[0];
-
-    if (!file) return;
-
-    const formData = new FormData();
-    formData.append("file", file);
-
-    try {
-      await uploadAvatarMutation.mutateAsync(formData);
-      setSuccessMessage("Profile picture updated successfully!");
-      setAvatarPreview(null);
-      setTimeout(() => setSuccessMessage(""), 3000);
-    } catch (error: any) {
-      setErrorMessage(error.message || "Failed to upload avatar");
-      setTimeout(() => setErrorMessage(""), 3000);
-    }
-  };
 
   // Update profile
   const handleUpdateProfile = async () => {
@@ -188,7 +154,6 @@ export default function ProfilePage() {
   }
 
   const profileInfo = profileData?.data || {};
-  const profileImage = profileInfo.profileImage || profileInfo.avatar;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900">
@@ -228,10 +193,9 @@ export default function ProfilePage() {
         )}
 
         <Tabs defaultValue={initialTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="edit">Edit Profile</TabsTrigger>
-            <TabsTrigger value="avatar">Avatar</TabsTrigger>
             <TabsTrigger value="password">Password</TabsTrigger>
           </TabsList>
 
@@ -243,49 +207,48 @@ export default function ProfilePage() {
                 <CardDescription>Your current account details</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                {/* Profile Picture */}
-                <div className="flex flex-col sm:flex-row gap-6 items-start">
-                  <div className="flex flex-col items-center gap-3">
-                    <UserAvatar
-                      user={user}
-                      profileImage={profileImage}
-                      size="lg"
-                    />
-                    <p className="text-xs text-slate-600 dark:text-slate-400">
-                      Profile Picture
+                <div className="space-y-4">
+                  {/* Name */}
+                  <div>
+                    <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
+                      Full Name
+                    </p>
+                    <p className="text-lg font-semibold text-slate-900 dark:text-white">
+                      {editName || "Not set"}
                     </p>
                   </div>
-                  <div className="flex-1 space-y-4">
-                    {/* Name */}
+
+                  {/* Email */}
+                  <div>
+                    <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
+                      Email Address
+                    </p>
+                    <p className="text-lg font-semibold text-slate-900 dark:text-white">
+                      {editEmail || "Not set"}
+                    </p>
+                  </div>
+
+                  {/* Phone */}
+                  {editPhone && (
                     <div>
                       <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
-                        Full Name
+                        Phone Number
                       </p>
                       <p className="text-lg font-semibold text-slate-900 dark:text-white">
-                        {editName}
+                        {editPhone}
                       </p>
                     </div>
+                  )}
 
-                    {/* Email */}
-                    <div>
-                      <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
-                        Email Address
-                      </p>
-                      <p className="text-lg font-semibold text-slate-900 dark:text-white">
-                        {editEmail}
-                      </p>
-                    </div>
-
-                    {/* Role */}
-                    <div>
-                      <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
-                        Role
-                      </p>
-                      <div className="mt-1">
-                        <Badge className="bg-teal-100 dark:bg-teal-900/30 text-teal-800 dark:text-teal-200">
-                          {user?.role}
-                        </Badge>
-                      </div>
+                  {/* Role */}
+                  <div>
+                    <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
+                      Role
+                    </p>
+                    <div className="mt-1">
+                      <Badge className="bg-teal-100 dark:bg-teal-900/30 text-teal-800 dark:text-teal-200">
+                        {user?.role || "User"}
+                      </Badge>
                     </div>
                   </div>
                 </div>
@@ -351,88 +314,6 @@ export default function ProfilePage() {
                     "Save Changes"
                   )}
                 </Button>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Avatar Tab */}
-          <TabsContent value="avatar" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Profile Picture</CardTitle>
-                <CardDescription>
-                  Upload or change your profile picture
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {/* Current Avatar */}
-                <div className="flex flex-col items-center">
-                  <UserAvatar
-                    user={user}
-                    profileImage={avatarPreview || profileImage}
-                    size="lg"
-                  />
-                  <p className="text-sm text-slate-600 dark:text-slate-400 mt-2">
-                    {avatarPreview ? "Preview" : "Current Avatar"}
-                  </p>
-                </div>
-
-                {/* Upload Input */}
-                <div className="space-y-3">
-                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                    Choose Image
-                  </label>
-                  <div className="flex items-center justify-center w-full">
-                    <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg cursor-pointer bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 transition">
-                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                        <Upload className="h-8 w-8 text-slate-400 mb-2" />
-                        <p className="text-sm text-slate-600 dark:text-slate-400">
-                          <span className="font-semibold">Click to upload</span>{" "}
-                          or drag and drop
-                        </p>
-                        <p className="text-xs text-slate-500 dark:text-slate-500">
-                          PNG, JPG, GIF up to 10MB
-                        </p>
-                      </div>
-                      <input
-                        id="avatar-upload"
-                        type="file"
-                        className="hidden"
-                        accept="image/*"
-                        onChange={handleAvatarSelect}
-                      />
-                    </label>
-                  </div>
-                </div>
-
-                {/* Upload Button */}
-                <Button
-                  onClick={handleAvatarUpload}
-                  disabled={!avatarPreview || uploadAvatarMutation.isPending}
-                  className="w-full bg-teal-600 hover:bg-teal-700"
-                >
-                  {uploadAvatarMutation.isPending ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Uploading...
-                    </>
-                  ) : (
-                    <>
-                      <Upload className="h-4 w-4 mr-2" />
-                      Upload Picture
-                    </>
-                  )}
-                </Button>
-
-                {avatarPreview && (
-                  <Button
-                    onClick={() => setAvatarPreview(null)}
-                    variant="outline"
-                    className="w-full"
-                  >
-                    Cancel
-                  </Button>
-                )}
               </CardContent>
             </Card>
           </TabsContent>

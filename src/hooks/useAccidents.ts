@@ -109,7 +109,7 @@ export const accidentKeys = {
 };
 
 // Queries
-export const useGetAccidents = () => {
+export const useGetAccidents = (options?: { enabled?: boolean; staleTime?: number }) => {
   const { user } = useAuthStore();
 
   return useQuery({
@@ -150,9 +150,9 @@ export const useGetAccidents = () => {
         throw error;
       }
     },
-    enabled: !!user,
-    staleTime: 5000, // Data is considered fresh for 5 seconds
-    refetchInterval: 10000, // Refetch every 10 seconds for real-time updates
+    enabled: options?.enabled ?? !!user,
+    staleTime: options?.staleTime !== undefined ? options.staleTime : 5000, // Default to 5s for other pages, 0 for ResponderPage
+    refetchInterval: 3000, // Refetch every 3 seconds for real-time updates
     refetchOnWindowFocus: true, // Refetch when window regains focus
   });
 };
@@ -289,7 +289,7 @@ export const useGetMyAssignedIncidents = () => {
 
       return myIncidents;
     },
-    enabled: !!user && user?.role === "Responder",
+    enabled: !!user,
     staleTime: 0, // Consider data stale immediately for real-time updates
     refetchInterval: 1000, // Refetch every 1 second for faster sync
     refetchOnWindowFocus: true,

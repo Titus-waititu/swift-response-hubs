@@ -284,7 +284,7 @@ export const useGetDispatchDetails = (id: string | undefined) =>
   });
 
 // Responder-specific hooks - for viewing and accepting dispatches
-export const useGetMyPendingDispatches = () => {
+export const useGetMyPendingDispatches = (enabled = true) => {
   return useQuery({
     queryKey: [...respondersKeys.all, "my-pending"],
     queryFn: async () => {
@@ -319,8 +319,9 @@ export const useGetMyPendingDispatches = () => {
         }
       }
     },
-    staleTime: 3000,
-    refetchInterval: 3000,
+    enabled,
+    staleTime: 0, // Always consider data stale to allow immediate refetch
+    refetchInterval: 3000,  // Auto-refresh every 3 seconds
   });
 };
 

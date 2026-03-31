@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ClipboardList, Shield } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 
 import AppHeader from "@/components/AppHeader";
 import IncidentDetailPanel from "@/components/IncidentDetailPanel";
@@ -11,6 +12,7 @@ import {
   useGetAccidents,
   useUpdateResponderResponse,
   useNotifyDispatcherOfResponse,
+  useGetMyAssignedIncidents,
 } from "@/hooks/useAccidents";
 import { useRealtimeUpdates } from "@/hooks/useRealtimeUpdates";
 import {
@@ -59,12 +61,25 @@ export default function ResponderPage() {
 
   // React Query hooks
   const { data: accidentsResponse, refetch: refetchAccidents } =
-    useGetAccidents();
-  const { data: pendingDispatches = [] } = useGetMyPendingDispatches();
+    useGetMyAssignedIncidents();
+  const { data: pendingDispatches = [], refetch: refetchDispatches } =
+    useGetMyPendingDispatches(!!session);
   const acceptDispatchMutation = useAcceptDispatch();
   const rejectDispatchMutation = useRejectDispatch();
   const updateResponderMutation = useUpdateResponderResponse();
   const notifyDispatcherMutation = useNotifyDispatcherOfResponse();
+
+  const queryClient = useQueryClient();
+  
+  // Fetch assignments immediately on login
+  useEffect(() => {
+    if (session) {
+      console.log("Session established, fetching assigned incidents and dispatches...");
+      // Invalidate both responder assignment queries to trigger fresh fetches
+      queryClient.invalidateQueries({ queryKey: ["accidents", "my-assigned"], exact: false });
+      queryClient.invalidateQueries({ queryKey: ["dispatches", "active", "my-pending"], exact: false });
+    }
+  }, [session, queryClient]);
 
   // Enable real-time polling
   useRealtimeUpdates({
@@ -84,9 +99,21 @@ export default function ResponderPage() {
   const accidentsData = Array.isArray(accidentsResponse)
     ? accidentsResponse
     : (accidentsResponse as any)?.data || [];
-  const incidents = accidentsData.map(mapBackendAccidentToIncident);
-  const assignedStatuses = ["Submitted", "Under Review"];
-  const completedStatuses = ["Resolved", "Closed"];
+  console.log("ResponderPage - Raw accidents data:", accidentsData);
+  
+  // Note: useGetMyAssignedIncidents returns already-normalized incidents, so skip remapping
+  const incidents = accidentsData.map((incident: any) => {
+    // Check if already has report_id (already normalized from my-assigned hook)
+    if (incident.report_id) {
+      return incident;
+    }
+    // Otherwise map it
+    return mapBackendAccidentToIncident(incident);
+  });
+  console.log("ResponderPage - Mapped incidents:", incidents);
+  
+  const assignedStatuses = ["reported", "under_investigation"];  // Use normalized statuses
+  const completedStatuses = ["resolved", "closed"];  // Use normalized statuses
 
   const selectedIncident = selectedIncidentId
     ? (incidents.find(
@@ -96,6 +123,8 @@ export default function ResponderPage() {
   const activeIncidents = incidents.filter((incident) =>
     assignedStatuses.includes(incident.status),
   );
+  console.log("ResponderPage - Active incidents (count):", activeIncidents.length, "Incidents:", activeIncidents);
+  
   const completedIncidents = incidents.filter((incident) =>
     completedStatuses.includes(incident.status),
   );

@@ -15,8 +15,7 @@ import {
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CheckCircle2, Loader2, AlertCircle } from "lucide-react";
-import { authAPI } from "@/lib/api";
-import { loginWithGoogle } from "@/lib/backend-api";
+import { createUserAccount, signInToBackend, loginWithGoogle } from "@/lib/backend-api";
 import { useAuthStore } from "@/stores/authStore";
 import { toast } from "sonner";
 import { registerSchema } from "@/lib/validation-schemas";
@@ -57,14 +56,48 @@ const RegisterPage = () => {
         confirmPassword,
       });
 
-      await authAPI.register(name.trim(), email.trim().toLowerCase(), password);
+      // Create user account using the correct endpoint (/users, not /auth/signup)
+      await createUserAccount({
+        fullName: name.trim(),
+        email: email.trim().toLowerCase(),
+        username: email.trim().toLowerCase().split("@")[0],
+        password: password,
+        role: "user",
+      });
 
-      setIsSuccess(true);
+      // Sign in after account creation
+      const authResponse = await signInToBackend(
+        email.trim().toLowerCase(),
+        password
+      );
 
-      // Redirect to login after 2 seconds
-      setTimeout(() => {
-        navigate("/login");
-      }, 2000);
+      if (authResponse.success && authResponse.user && authResponse.tokens) {
+        // Store auth data in Zustand store
+        setAccessToken(authResponse.tokens.accessToken);
+        setUser({
+          id: authResponse.user.id,
+          email: authResponse.user.email,
+          name: authResponse.user.fullName,
+          role: authResponse.user.role as any,
+        });
+
+        // Also store in localStorage for persistence
+        localStorage.setItem(
+          "auth-tokens",
+          JSON.stringify({
+            accessToken: authResponse.tokens.accessToken,
+            refreshToken: authResponse.tokens.refreshToken,
+          })
+        );
+
+        setIsSuccess(true);
+        toast.success("Account created successfully!");
+
+        // Redirect to dashboard after 2 seconds
+        setTimeout(() => {
+          navigate("/dashboard/user");
+        }, 2000);
+      }
     } catch (err: any) {
       if (err instanceof z.ZodError) {
         const errors: Record<string, string> = {};
@@ -79,6 +112,7 @@ const RegisterPage = () => {
           err.message ||
           "Registration failed. Please try again.";
         setServerError(message);
+        toast.error(message);
       }
     } finally {
       setIsLoading(false);

@@ -189,7 +189,11 @@ export default function LoginPage() {
       );
       window.localStorage.setItem(
         "google-auth-session",
-        JSON.stringify({ googleId: googleAuthData.googleId, email: googleAuthData.email, isGoogleAuth: true }),
+        JSON.stringify({
+          googleId: googleAuthData.googleId,
+          email: googleAuthData.email,
+          isGoogleAuth: true,
+        }),
       );
       setDispatcherForm({ email: "", password: "" });
       toast.success(`Welcome back, ${googleAuthData.name}!`);
@@ -214,7 +218,11 @@ export default function LoginPage() {
       );
       window.localStorage.setItem(
         "google-auth-session",
-        JSON.stringify({ googleId: googleAuthData.googleId, email: googleAuthData.email, isGoogleAuth: true }),
+        JSON.stringify({
+          googleId: googleAuthData.googleId,
+          email: googleAuthData.email,
+          isGoogleAuth: true,
+        }),
       );
       setResponderForm({ email: "", password: "", unitLabel: "" });
       toast.success(`Welcome back, ${googleAuthData.name}!`);

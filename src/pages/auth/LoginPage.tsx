@@ -39,11 +39,11 @@ const LoginPage = () => {
         role: "USER" as UserRole,
       };
 
-      // Store user info but NOT the Google JWT as accessToken 
+      // Store user info but NOT the Google JWT as accessToken
       // (backend doesn't recognize Google JWTs)
       // For now, just store the user info locally
       setUser(normalizedUser);
-      
+
       // Store a flag indicating Google auth for reference
       const loginData = {
         user: normalizedUser,
@@ -52,7 +52,7 @@ const LoginPage = () => {
         isGoogleAuth: true,
       };
       localStorage.setItem("user-login-session", JSON.stringify(loginData));
-      
+
       toast.success(`Welcome, ${googleAuthData.name}!`);
       navigate("/dashboard/user");
     }

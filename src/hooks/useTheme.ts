@@ -4,7 +4,7 @@ export function useTheme() {
   const [isDark, setIsDark] = useState<boolean>(() => {
     // Initialize from localStorage or system preference
     if (typeof window === "undefined") return false;
-    
+
     const storedTheme = localStorage.getItem("theme");
     if (storedTheme) {
       return storedTheme === "dark";

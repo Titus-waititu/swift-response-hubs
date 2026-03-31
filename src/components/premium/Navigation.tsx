@@ -63,7 +63,11 @@ export const Navigation = () => {
                 size="icon"
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               >
-                {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+                {mobileMenuOpen ? (
+                  <X className="h-5 w-5" />
+                ) : (
+                  <Menu className="h-5 w-5" />
+                )}
               </Button>
             </div>
 
@@ -75,7 +79,12 @@ export const Navigation = () => {
             </Link>
 
             {/* Theme Toggle */}
-            <Button variant="ghost" size="icon" onClick={toggleTheme} title="Toggle theme">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleTheme}
+              title="Toggle theme"
+            >
               {isDark ? (
                 <Sun className="h-5 w-5 text-muted-foreground" />
               ) : (

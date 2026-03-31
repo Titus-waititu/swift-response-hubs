@@ -9,13 +9,17 @@ interface GoogleAuthProviderProps {
  * Google OAuth Provider wrapper
  * Handles client ID from environment variables
  */
-export function GoogleAuthProviderWrapper({ children }: GoogleAuthProviderProps) {
+export function GoogleAuthProviderWrapper({
+  children,
+}: GoogleAuthProviderProps) {
   const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
 
   // Suppress the "initialize() called multiple times" warning from React.StrictMode
   // This is harmless in development and expected behavior
   if (!GOOGLE_CLIENT_ID) {
-    console.warn("Google Client ID is not configured. Google Sign-In will not work.");
+    console.warn(
+      "Google Client ID is not configured. Google Sign-In will not work.",
+    );
     return <>{children}</>;
   }
 

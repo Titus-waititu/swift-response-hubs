@@ -47,7 +47,7 @@ const RegisterPage = () => {
 
       // Store user info but NOT the Google JWT as accessToken
       setUser(normalizedUser);
-      
+
       // Store a flag indicating Google auth for reference
       const loginData = {
         user: normalizedUser,
@@ -56,7 +56,7 @@ const RegisterPage = () => {
         isGoogleAuth: true,
       };
       localStorage.setItem("user-login-session", JSON.stringify(loginData));
-      
+
       toast.success(`Welcome, ${googleAuthData.name}!`);
       navigate("/dashboard/user");
     }

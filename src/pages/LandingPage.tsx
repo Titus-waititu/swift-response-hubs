@@ -32,7 +32,9 @@ export default function LandingPage() {
   };
 
   const handleLearnClick = () => {
-    document.getElementById("how-it-works")?.scrollIntoView({ behavior: "smooth" });
+    document
+      .getElementById("how-it-works")
+      ?.scrollIntoView({ behavior: "smooth" });
   };
 
   const faqItems = [
@@ -66,17 +68,20 @@ export default function LandingPage() {
   const features = [
     {
       title: "AI Severity Analysis",
-      description: "Instantly analyze incident severity to prioritize emergency response",
+      description:
+        "Instantly analyze incident severity to prioritize emergency response",
       icon: Sparkles,
     },
     {
       title: "Automated Dispatch",
-      description: "Smart assignment of responders based on location, availability, and expertise",
+      description:
+        "Smart assignment of responders based on location, availability, and expertise",
       icon: Zap,
     },
     {
       title: "Real-Time Tracking",
-      description: "Live location tracking and status updates from report to resolution",
+      description:
+        "Live location tracking and status updates from report to resolution",
       icon: MapPin,
     },
     {
@@ -86,7 +91,8 @@ export default function LandingPage() {
     },
     {
       title: "Multi-Role Coordination",
-      description: "Seamless communication between dispatchers, responders, and officers",
+      description:
+        "Seamless communication between dispatchers, responders, and officers",
       icon: Users,
     },
   ];
@@ -94,21 +100,24 @@ export default function LandingPage() {
   const roles = [
     {
       title: "Citizens",
-      description: "Report accidents instantly without registration during emergencies",
+      description:
+        "Report accidents instantly without registration during emergencies",
       actions: ["Report accidents", "Track response", "Receive updates"],
       icon: AlertCircle,
       gradient: "from-blue-500/20 to-blue-500/5",
     },
     {
       title: "Dispatchers",
-      description: "Manage incidents, assign responders, and coordinate emergency response",
+      description:
+        "Manage incidents, assign responders, and coordinate emergency response",
       actions: ["View live incidents", "Assign responders", "Monitor status"],
       icon: Radio,
       gradient: "from-orange-500/20 to-orange-500/5",
     },
     {
       title: "Responders",
-      description: "Receive field assignments and update incident status in real-time",
+      description:
+        "Receive field assignments and update incident status in real-time",
       actions: ["Get assignments", "Navigate to scene", "Submit updates"],
       icon: Shield,
       gradient: "from-green-500/20 to-green-500/5",
@@ -182,8 +191,8 @@ export default function LandingPage() {
                 </span>
               </h1>
               <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-                Report accidents instantly. AI analyzes severity. Responders arrive faster. Track
-                everything in real-time.
+                Report accidents instantly. AI analyzes severity. Responders
+                arrive faster. Track everything in real-time.
               </p>
             </div>
 
@@ -214,7 +223,9 @@ export default function LandingPage() {
               </div>
               <div className="space-y-2">
                 <div className="text-2xl font-bold text-primary">24/7</div>
-                <p className="text-sm text-muted-foreground">Always Available</p>
+                <p className="text-sm text-muted-foreground">
+                  Always Available
+                </p>
               </div>
               <div className="space-y-2">
                 <div className="text-2xl font-bold text-primary">100%</div>
@@ -232,7 +243,9 @@ export default function LandingPage() {
             <p className="text-sm text-muted-foreground uppercase tracking-widest mb-2">
               Trusted by
             </p>
-            <h2 className="text-3xl font-bold">Emergency Services Nationwide</h2>
+            <h2 className="text-3xl font-bold">
+              Emergency Services Nationwide
+            </h2>
           </div>
 
           <div className="grid md:grid-cols-4 gap-8">
@@ -243,7 +256,9 @@ export default function LandingPage() {
               { label: "Lives Supported", value: "1M+" },
             ].map((stat, i) => (
               <div key={i} className="text-center space-y-2">
-                <div className="text-3xl font-bold text-primary">{stat.value}</div>
+                <div className="text-3xl font-bold text-primary">
+                  {stat.value}
+                </div>
                 <p className="text-muted-foreground">{stat.label}</p>
               </div>
             ))}
@@ -285,7 +300,8 @@ export default function LandingPage() {
                 {
                   step: "03",
                   title: "Dispatch",
-                  description: "System automatically assigns best-fit responders",
+                  description:
+                    "System automatically assigns best-fit responders",
                   icon: Radio,
                 },
                 {
@@ -308,9 +324,13 @@ export default function LandingPage() {
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <p className="text-sm font-mono text-primary">{item.step}</p>
+                    <p className="text-sm font-mono text-primary">
+                      {item.step}
+                    </p>
                     <h3 className="font-bold text-lg">{item.title}</h3>
-                    <p className="text-sm text-muted-foreground">{item.description}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {item.description}
+                    </p>
                   </div>
                 </div>
               ))}
@@ -340,7 +360,9 @@ export default function LandingPage() {
                     <feature.icon className="h-6 w-6 text-primary" />
                   </div>
                   <h3 className="font-bold text-lg">{feature.title}</h3>
-                  <p className="text-sm text-muted-foreground">{feature.description}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {feature.description}
+                  </p>
                 </CardContent>
               </Card>
             ))}
@@ -364,7 +386,8 @@ export default function LandingPage() {
                 {[
                   {
                     title: "Severity Detection",
-                    description: "Instantly classify incident severity from descriptions and photos",
+                    description:
+                      "Instantly classify incident severity from descriptions and photos",
                   },
                   {
                     title: "Smart Dispatch",
@@ -378,14 +401,17 @@ export default function LandingPage() {
                   },
                   {
                     title: "Automated Reporting",
-                    description: "Generate comprehensive incident reports automatically",
+                    description:
+                      "Generate comprehensive incident reports automatically",
                   },
                 ].map((item, i) => (
                   <div key={i} className="flex gap-4">
                     <div className="h-2 w-2 rounded-full bg-primary mt-2 flex-shrink-0" />
                     <div>
                       <h4 className="font-bold">{item.title}</h4>
-                      <p className="text-sm text-muted-foreground">{item.description}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {item.description}
+                      </p>
                     </div>
                   </div>
                 ))}
@@ -403,8 +429,12 @@ export default function LandingPage() {
                     ].map((metric, i) => (
                       <div key={i}>
                         <div className="flex justify-between mb-2">
-                          <span className="text-sm font-medium">{metric.label}</span>
-                          <span className="text-sm text-primary font-bold">{metric.value}</span>
+                          <span className="text-sm font-medium">
+                            {metric.label}
+                          </span>
+                          <span className="text-sm text-primary font-bold">
+                            {metric.value}
+                          </span>
                         </div>
                         <div className="h-2 bg-secondary rounded-full overflow-hidden">
                           <div
@@ -434,14 +464,19 @@ export default function LandingPage() {
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {roles.map((role, i) => (
-              <Card key={i} className="group hover:border-primary/50 transition-all overflow-hidden">
+              <Card
+                key={i}
+                className="group hover:border-primary/50 transition-all overflow-hidden"
+              >
                 <div className={`h-32 bg-gradient-to-br ${role.gradient}`} />
                 <CardContent className="relative space-y-4 p-6 -mt-12 pt-16">
                   <div className="flex items-start justify-between">
                     <h3 className="font-bold text-lg">{role.title}</h3>
                     <role.icon className="h-5 w-5 text-primary" />
                   </div>
-                  <p className="text-sm text-muted-foreground">{role.description}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {role.description}
+                  </p>
                   <ul className="space-y-2 pt-4">
                     {role.actions.map((action, j) => (
                       <li key={j} className="flex gap-2 text-sm">
@@ -484,10 +519,14 @@ export default function LandingPage() {
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
-                        <span className="text-sm font-mono text-primary">{status.number}</span>
+                        <span className="text-sm font-mono text-primary">
+                          {status.number}
+                        </span>
                         <h3 className="font-bold text-lg">{status.title}</h3>
                       </div>
-                      <p className="text-muted-foreground">{status.description}</p>
+                      <p className="text-muted-foreground">
+                        {status.description}
+                      </p>
                     </div>
                     <ArrowRight className="h-5 w-5 text-primary/30 flex-shrink-0" />
                   </CardContent>
@@ -510,7 +549,10 @@ export default function LandingPage() {
 
           <div className="space-y-3">
             {faqItems.map((item, i) => (
-              <div key={i} className="border border-border rounded-lg overflow-hidden">
+              <div
+                key={i}
+                className="border border-border rounded-lg overflow-hidden"
+              >
                 <button
                   onClick={() => setOpenFaq(openFaq === i ? null : i)}
                   className="w-full p-6 flex items-center justify-between hover:bg-card/50 transition-colors text-left"
@@ -545,7 +587,8 @@ export default function LandingPage() {
               Be Prepared. Report Incidents Instantly.
             </h2>
             <p className="text-xl text-muted-foreground">
-              No registration needed. No delays. Get emergency help faster with AI-powered dispatch.
+              No registration needed. No delays. Get emergency help faster with
+              AI-powered dispatch.
             </p>
           </div>
 
@@ -558,7 +601,11 @@ export default function LandingPage() {
               <AlertCircle className="h-5 w-5" />
               Report Accident Now
             </Button>
-            <Button size="lg" variant="outline" onClick={() => navigate("/login")}>
+            <Button
+              size="lg"
+              variant="outline"
+              onClick={() => navigate("/login")}
+            >
               Login to Dashboard
             </Button>
           </div>
@@ -573,7 +620,10 @@ export default function LandingPage() {
               <h4 className="font-bold">Product</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li>
-                  <button onClick={handleReportClick} className="hover:text-foreground transition">
+                  <button
+                    onClick={handleReportClick}
+                    className="hover:text-foreground transition"
+                  >
                     Report Accident
                   </button>
                 </li>
@@ -586,10 +636,14 @@ export default function LandingPage() {
                   </button>
                 </li>
                 <li>
-                  <button className="hover:text-foreground transition">Features</button>
+                  <button className="hover:text-foreground transition">
+                    Features
+                  </button>
                 </li>
                 <li>
-                  <button className="hover:text-foreground transition">Pricing</button>
+                  <button className="hover:text-foreground transition">
+                    Pricing
+                  </button>
                 </li>
               </ul>
             </div>
@@ -598,16 +652,24 @@ export default function LandingPage() {
               <h4 className="font-bold">Company</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li>
-                  <button className="hover:text-foreground transition">About Us</button>
+                  <button className="hover:text-foreground transition">
+                    About Us
+                  </button>
                 </li>
                 <li>
-                  <button className="hover:text-foreground transition">Blog</button>
+                  <button className="hover:text-foreground transition">
+                    Blog
+                  </button>
                 </li>
                 <li>
-                  <button className="hover:text-foreground transition">Careers</button>
+                  <button className="hover:text-foreground transition">
+                    Careers
+                  </button>
                 </li>
                 <li>
-                  <button className="hover:text-foreground transition">Press</button>
+                  <button className="hover:text-foreground transition">
+                    Press
+                  </button>
                 </li>
               </ul>
             </div>
@@ -616,16 +678,24 @@ export default function LandingPage() {
               <h4 className="font-bold">Support</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li>
-                  <button className="hover:text-foreground transition">Documentation</button>
+                  <button className="hover:text-foreground transition">
+                    Documentation
+                  </button>
                 </li>
                 <li>
-                  <button className="hover:text-foreground transition">Contact</button>
+                  <button className="hover:text-foreground transition">
+                    Contact
+                  </button>
                 </li>
                 <li>
-                  <button className="hover:text-foreground transition">Emergency Hotline</button>
+                  <button className="hover:text-foreground transition">
+                    Emergency Hotline
+                  </button>
                 </li>
                 <li>
-                  <button className="hover:text-foreground transition">Status</button>
+                  <button className="hover:text-foreground transition">
+                    Status
+                  </button>
                 </li>
               </ul>
             </div>
@@ -634,16 +704,24 @@ export default function LandingPage() {
               <h4 className="font-bold">Legal</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li>
-                  <button className="hover:text-foreground transition">Privacy Policy</button>
+                  <button className="hover:text-foreground transition">
+                    Privacy Policy
+                  </button>
                 </li>
                 <li>
-                  <button className="hover:text-foreground transition">Terms of Service</button>
+                  <button className="hover:text-foreground transition">
+                    Terms of Service
+                  </button>
                 </li>
                 <li>
-                  <button className="hover:text-foreground transition">Compliance</button>
+                  <button className="hover:text-foreground transition">
+                    Compliance
+                  </button>
                 </li>
                 <li>
-                  <button className="hover:text-foreground transition">Security</button>
+                  <button className="hover:text-foreground transition">
+                    Security
+                  </button>
                 </li>
               </ul>
             </div>
@@ -652,8 +730,8 @@ export default function LandingPage() {
           <div className="border-t border-border pt-8">
             <div className="flex flex-col md:flex-row justify-between items-center gap-4">
               <p className="text-sm text-muted-foreground">
-                © {new Date().getFullYear()} SARS · Smart Accident Reporting System. All rights
-                reserved.
+                © {new Date().getFullYear()} SARS · Smart Accident Reporting
+                System. All rights reserved.
               </p>
               <div className="flex gap-4">
                 <button className="text-muted-foreground hover:text-foreground transition">

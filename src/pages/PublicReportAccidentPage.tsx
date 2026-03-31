@@ -2,7 +2,15 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "@tanstack/react-form";
 import { toast } from "sonner";
-import { AlertCircle, CheckCircle2, Loader2, MapPin, Phone, User, Mail } from "lucide-react";
+import {
+  AlertCircle,
+  CheckCircle2,
+  Loader2,
+  MapPin,
+  Phone,
+  User,
+  Mail,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -94,12 +102,14 @@ export default function PublicReportAccidentPage() {
                     Report Submitted!
                   </h2>
                   <p className="text-sm text-muted-foreground mt-2">
-                    Thank you for reporting the incident. Emergency responders have been
-                    notified and will be dispatched to your location shortly.
+                    Thank you for reporting the incident. Emergency responders
+                    have been notified and will be dispatched to your location
+                    shortly.
                   </p>
                 </div>
                 <p className="text-sm font-medium text-success">
-                  We may contact you at the phone number or email you provided for updates.
+                  We may contact you at the phone number or email you provided
+                  for updates.
                 </p>
                 <p className="text-xs text-muted-foreground/70 pt-4">
                   Redirecting to home page...
@@ -129,8 +139,9 @@ export default function PublicReportAccidentPage() {
               Report an Accident
             </h1>
             <p className="text-slate-600 dark:text-slate-300 max-w-md mx-auto">
-              In case of emergency, provide your details and incident information below.
-              Responders will be dispatched immediately to assist.
+              In case of emergency, provide your details and incident
+              information below. Responders will be dispatched immediately to
+              assist.
             </p>
           </div>
 
@@ -184,7 +195,9 @@ export default function PublicReportAccidentPage() {
                                 placeholder="John Doe"
                                 value={field.state.value}
                                 onBlur={field.handleBlur}
-                                onChange={(e) => field.handleChange(e.target.value)}
+                                onChange={(e) =>
+                                  field.handleChange(e.target.value)
+                                }
                                 disabled={isSubmitting || formSubmitting}
                                 className={`h-10 ${
                                   field.state.meta.errors.length
@@ -230,7 +243,9 @@ export default function PublicReportAccidentPage() {
                                 placeholder="you@example.com"
                                 value={field.state.value}
                                 onBlur={field.handleBlur}
-                                onChange={(e) => field.handleChange(e.target.value)}
+                                onChange={(e) =>
+                                  field.handleChange(e.target.value)
+                                }
                                 disabled={isSubmitting || formSubmitting}
                                 className={`h-10 ${
                                   field.state.meta.errors.length
@@ -273,7 +288,9 @@ export default function PublicReportAccidentPage() {
                                 placeholder="+1 (555) 000-0000"
                                 value={field.state.value}
                                 onBlur={field.handleBlur}
-                                onChange={(e) => field.handleChange(e.target.value)}
+                                onChange={(e) =>
+                                  field.handleChange(e.target.value)
+                                }
                                 disabled={isSubmitting || formSubmitting}
                                 className={`h-10 ${
                                   field.state.meta.errors.length
@@ -323,7 +340,9 @@ export default function PublicReportAccidentPage() {
                                 placeholder="Street address or landmark"
                                 value={field.state.value}
                                 onBlur={field.handleBlur}
-                                onChange={(e) => field.handleChange(e.target.value)}
+                                onChange={(e) =>
+                                  field.handleChange(e.target.value)
+                                }
                                 disabled={isSubmitting || formSubmitting}
                                 className={`h-10 ${
                                   field.state.meta.errors.length
@@ -364,7 +383,9 @@ export default function PublicReportAccidentPage() {
                                 placeholder="Describe what happened, number of people involved, injuries, etc."
                                 value={field.state.value}
                                 onBlur={field.handleBlur}
-                                onChange={(e) => field.handleChange(e.target.value)}
+                                onChange={(e) =>
+                                  field.handleChange(e.target.value)
+                                }
                                 disabled={isSubmitting || formSubmitting}
                                 rows={5}
                                 className={`resize-none ${
@@ -391,8 +412,9 @@ export default function PublicReportAccidentPage() {
                     <Alert>
                       <AlertCircle className="h-4 w-4" />
                       <AlertDescription>
-                        In life-threatening emergencies, call emergency services (911 in the US) immediately.
-                        This form supplements emergency calls.
+                        In life-threatening emergencies, call emergency services
+                        (911 in the US) immediately. This form supplements
+                        emergency calls.
                       </AlertDescription>
                     </Alert>
 
@@ -432,17 +454,23 @@ export default function PublicReportAccidentPage() {
           <div className="grid md:grid-cols-2 gap-4 mt-8">
             <Card className="border-primary/20 bg-primary/5 dark:bg-primary/10">
               <CardContent className="pt-6">
-                <h4 className="font-semibold text-sm mb-2">Why provide your details?</h4>
+                <h4 className="font-semibold text-sm mb-2">
+                  Why provide your details?
+                </h4>
                 <p className="text-sm text-muted-foreground">
-                  Emergency responders need your contact information to follow up, provide updates, and reach you if needed.
+                  Emergency responders need your contact information to follow
+                  up, provide updates, and reach you if needed.
                 </p>
               </CardContent>
             </Card>
             <Card className="border-info/20 bg-info/5 dark:bg-info/10">
               <CardContent className="pt-6">
-                <h4 className="font-semibold text-sm mb-2">What happens next?</h4>
+                <h4 className="font-semibold text-sm mb-2">
+                  What happens next?
+                </h4>
                 <p className="text-sm text-muted-foreground">
-                  Your report is immediately dispatched to the nearest responders. They will arrive with sirens and lights.
+                  Your report is immediately dispatched to the nearest
+                  responders. They will arrive with sirens and lights.
                 </p>
               </CardContent>
             </Card>

@@ -105,7 +105,11 @@ export default function UserLoginPage() {
       window.localStorage.setItem(USER_SESSION_KEY, JSON.stringify(session));
       window.localStorage.setItem(
         "google-auth-session",
-        JSON.stringify({ googleId: googleAuthData.googleId, email: googleAuthData.email, isGoogleAuth: true }),
+        JSON.stringify({
+          googleId: googleAuthData.googleId,
+          email: googleAuthData.email,
+          isGoogleAuth: true,
+        }),
       );
       toast.success(`Welcome back, ${googleAuthData.name}!`);
       navigate("/user-dashboard");

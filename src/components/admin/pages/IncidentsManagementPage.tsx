@@ -249,7 +249,7 @@ const IncidentsManagementPage = () => {
               Add Incident
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto bg-slate-900 border-slate-800">
+          <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
             <DialogHeader>
               <DialogTitle className="text-slate-50">
                 {editingId ? "Edit Incident" : "Add New Incident"}

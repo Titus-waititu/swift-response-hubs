@@ -57,9 +57,20 @@ interface User {
 const UsersManagementPage = () => {
   // Fetch users from backend
   const { data: usersData, isLoading, error: usersError } = useGetUsers();
-  console.log("usersData in component:", usersData); // Debug log
-  const users = Array.isArray(usersData) ? usersData : usersData?.data || [];
-  console.log("Processed users array:", users); // Debug log
+  
+  // Ensure users is always an array
+  const rawUsers = Array.isArray(usersData) ? usersData : usersData?.data || [];
+  
+  // Map backend fields to our User interface (flexible mapping)
+  const users = rawUsers.map(u => ({
+    id: u.id || u._id || String(Math.random()),
+    name: u.name || u.fullName || u.email?.split("@")[0] || "Unknown",
+    email: u.email || "no-email@example.com",
+    role: u.role || "USER",
+    status: u.status === false || u.status === "Inactive" ? "Inactive" : "Active",
+    createdDate: u.createdAt || u.createdDate || new Date().toISOString().split("T")[0],
+    lastLogin: u.lastLogin || u.lastLoginAt,
+  } as User)).filter(u => u.id && u.id !== String(Math.random()));
 
   // API mutations
   const createUserMutation = useCreateUser();
@@ -82,9 +93,12 @@ const UsersManagementPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const filteredUsers = users.filter((user) => {
+    if (!user) return false;
+    
+    const searchLower = searchQuery.toLowerCase();
     const matchesSearch =
-      user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchQuery.toLowerCase());
+      String(user.name || "").toLowerCase().includes(searchLower) ||
+      String(user.email || "").toLowerCase().includes(searchLower);
 
     const matchesRole = roleFilter === "all" || user.role === roleFilter;
 
@@ -122,14 +136,12 @@ const UsersManagementPage = () => {
     setIsSubmitting(true);
     try {
       if (editingId) {
-        // Update user via API
+        // Update user via API - backend only accepts email and role
         await updateUserMutation.mutateAsync({
           id: editingId,
           data: {
-            name: formData.name,
             email: formData.email,
             role: formData.role,
-            status: formData.status,
           },
         });
         toast.success("User updated successfully");
@@ -145,6 +157,7 @@ const UsersManagementPage = () => {
       }
       setIsDialogOpen(false);
     } catch (error: any) {
+      console.error("Save error:", error);
       toast.error(error?.response?.data?.message || "Failed to save user");
     } finally {
       setIsSubmitting(false);
@@ -156,6 +169,7 @@ const UsersManagementPage = () => {
       await deleteUserMutation.mutateAsync(id);
       toast.success("User deleted successfully");
     } catch (error: any) {
+      console.error("Delete error:", error);
       toast.error(error?.response?.data?.message || "Failed to delete user");
     }
   };
@@ -163,9 +177,12 @@ const UsersManagementPage = () => {
   const handleToggleStatus = async (id: string) => {
     try {
       const user = users.find((u) => u.id === id);
-      if (!user) return;
+      if (!user) {
+        toast.error("User not found");
+        return;
+      }
 
-      if (user.status === "Active") {
+      if (user.status?.toLowerCase() === "active") {
         await deactivateUserMutation.mutateAsync(id);
         toast.success("User deactivated successfully");
       } else {
@@ -173,29 +190,35 @@ const UsersManagementPage = () => {
         toast.success("User activated successfully");
       }
     } catch (error: any) {
+      console.error("Toggle status error:", error);
       toast.error(error?.response?.data?.message || "Failed to update user status");
     }
   };
 
-  const getRoleColor = (role: string) => {
-    switch (role) {
+  const getRoleColor = (role: string | undefined) => {
+    if (!role) return "bg-slate-100 text-slate-800";
+    
+    const upperRole = role.toUpperCase();
+    switch (upperRole) {
       case "ADMIN":
-        return "bg-red-100 text-red-800";
+        return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-200";
       case "OFFICER":
-        return "bg-blue-100 text-blue-800";
+        return "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200";
       case "RESPONDER":
-        return "bg-green-100 text-green-800";
+        return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200";
       case "USER":
-        return "bg-gray-100 text-gray-800";
+        return "bg-slate-100 text-slate-800 dark:bg-slate-900/30 dark:text-slate-200";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-slate-100 text-slate-800 dark:bg-slate-900/30 dark:text-slate-200";
     }
   };
 
-  const getStatusColor = (status: string) => {
-    return status === "Active"
-      ? "bg-green-100 text-green-800"
-      : "bg-gray-100 text-gray-800";
+  const getStatusColor = (status: string | undefined) => {
+    if (!status) return "bg-slate-100 text-slate-800 dark:bg-slate-900/30 dark:text-slate-200";
+    
+    return status.toLowerCase() === "active"
+      ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200"
+      : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-200";
   };
 
   return (
@@ -211,17 +234,6 @@ const UsersManagementPage = () => {
               </p>
               <p className="text-xs mt-2 text-red-300/70">Check browser console for details</p>
             </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Debug Info - Remove in production */}
-      {!isLoading && (
-        <Card className="bg-slate-700/50 border-slate-600">
-          <CardContent className="pt-6">
-            <p className="text-xs text-slate-300">
-              Users loaded: {users.length} | Data type: {Array.isArray(usersData) ? "array" : typeof usersData}
-            </p>
           </CardContent>
         </Card>
       )}
@@ -349,7 +361,7 @@ const UsersManagementPage = () => {
           <CardContent className="pt-6">
             <div className="text-center">
               <p className="text-3xl font-bold text-blue-600">
-                {users.filter((u) => u.role === "OFFICER").length}
+                {users.filter((u) => u && u.role && u.role.toUpperCase() === "OFFICER").length}
               </p>
               <p className="text-sm text-slate-400 mt-1">Officers</p>
             </div>
@@ -359,7 +371,7 @@ const UsersManagementPage = () => {
           <CardContent className="pt-6">
             <div className="text-center">
               <p className="text-3xl font-bold text-green-600">
-                {users.filter((u) => u.role === "RESPONDER").length}
+                {users.filter((u) => u && u.role && u.role.toUpperCase() === "RESPONDER").length}
               </p>
               <p className="text-sm text-slate-400 mt-1">Responders</p>
             </div>
@@ -369,7 +381,7 @@ const UsersManagementPage = () => {
           <CardContent className="pt-6">
             <div className="text-center">
               <p className="text-3xl font-bold text-emerald-600">
-                {users.filter((u) => u.status === "Active").length}
+                {users.filter((u) => u && u.status && u.status.toLowerCase() === "active").length}
               </p>
               <p className="text-sm text-slate-400 mt-1">Active</p>
             </div>
@@ -473,12 +485,12 @@ const UsersManagementPage = () => {
                       </TableCell>
                       <TableCell>
                         <Badge className={getRoleColor(user.role)}>
-                          {user.role}
+                          {user.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1).toLowerCase() : "Unknown"}
                         </Badge>
                       </TableCell>
                       <TableCell>
                         <Badge className={getStatusColor(user.status)}>
-                          {user.status}
+                          {user.status || "Unknown"}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-sm">

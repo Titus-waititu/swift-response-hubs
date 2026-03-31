@@ -18,21 +18,29 @@ export const useGetUsers = () =>
     queryFn: async () => {
       try {
         const response = await apiClient.get("/users/");
-        console.log("Users API Response:", response); // Debug log
+        
+        if (!response) {
+          return [];
+        }
         
         // Handle array directly
         if (Array.isArray(response)) {
-          return response;
+          return response.filter(u => u);
         }
         
         // Handle wrapped response (data property)
         if (response?.data && Array.isArray(response.data)) {
-          return response.data;
+          return response.data.filter(u => u);
         }
         
         // Handle paginated response
         if (response?.users && Array.isArray(response.users)) {
-          return response.users;
+          return response.users.filter(u => u);
+        }
+        
+        // Handle object with user list
+        if (response?.list && Array.isArray(response.list)) {
+          return response.list.filter(u => u);
         }
         
         // Fallback
@@ -75,9 +83,10 @@ export const useCreateUser = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: any) => apiClient.post("/users/", data),
-    onSuccess: () => {
+    onSuccess: async () => {
       queryClient.invalidateQueries({ queryKey: usersKeys.lists() });
       queryClient.invalidateQueries({ queryKey: usersKeys.stats() });
+      await queryClient.refetchQueries({ queryKey: usersKeys.lists() });
     },
   });
 };
@@ -87,9 +96,10 @@ export const useUpdateUser = () => {
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: any }) =>
       apiClient.patch(`/users/${id}`, data),
-    onSuccess: (_, { id }) => {
-      queryClient.invalidateQueries({ queryKey: usersKeys.detail(id) });
+    onSuccess: async (_, variables) => {
       queryClient.invalidateQueries({ queryKey: usersKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: usersKeys.detail(variables.id) });
+      await queryClient.refetchQueries({ queryKey: usersKeys.lists() });
     },
   });
 };
@@ -97,10 +107,11 @@ export const useUpdateUser = () => {
 export const useActivateUser = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => apiClient.patch(`/users/${id}/activate`),
-    onSuccess: () => {
+    mutationFn: (id: string) => apiClient.patch(`/users/${id}/activate`, {}),
+    onSuccess: async () => {
+      // Clear cache and force refetch
       queryClient.invalidateQueries({ queryKey: usersKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: usersKeys.active() });
+      await queryClient.refetchQueries({ queryKey: usersKeys.lists() });
     },
   });
 };
@@ -108,10 +119,11 @@ export const useActivateUser = () => {
 export const useDeactivateUser = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => apiClient.patch(`/users/${id}/deactivate`),
-    onSuccess: () => {
+    mutationFn: (id: string) => apiClient.patch(`/users/${id}/deactivate`, {}),
+    onSuccess: async () => {
+      // Clear cache and force refetch
       queryClient.invalidateQueries({ queryKey: usersKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: usersKeys.active() });
+      await queryClient.refetchQueries({ queryKey: usersKeys.lists() });
     },
   });
 };

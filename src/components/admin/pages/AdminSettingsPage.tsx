@@ -76,7 +76,7 @@ const AdminSettingsPage = () => {
       </div>
 
       {/* System Information */}
-      <Card className="bg-slate-800 border-slate-700">
+      <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
           <div>
             <CardTitle className="flex items-center gap-2 text-slate-50">

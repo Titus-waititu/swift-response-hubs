@@ -56,8 +56,8 @@ interface User {
 
 const UsersManagementPage = () => {
   // Fetch users from backend
-  const { data: usersData, isLoading } = useGetUsers();
-  const users = usersData?.data || [];
+  const { data: usersData, isLoading, error: usersError } = useGetUsers();
+  const users = Array.isArray(usersData) ? usersData : usersData?.data || [];
 
   // API mutations
   const createUserMutation = useCreateUser();
@@ -198,6 +198,20 @@ const UsersManagementPage = () => {
 
   return (
     <div className="space-y-6">
+      {/* Error Alert */}
+      {usersError && (
+        <Card className="bg-red-900/20 border-red-800">
+          <CardContent className="pt-6">
+            <div className="text-red-200">
+              <p className="font-semibold">Error loading users</p>
+              <p className="text-sm mt-1">
+                {usersError?.message || "Failed to fetch users from backend. Please check the server logs."}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Header */}
       <div className="flex justify-between items-start">
         <div>
@@ -416,6 +430,15 @@ const UsersManagementPage = () => {
                   <TableRow>
                     <TableCell colSpan={7} className="text-center py-8">
                       <p className="text-slate-400">Loading users...</p>
+                    </TableCell>
+                  </TableRow>
+                ) : usersError ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-8">
+                      <div className="text-red-400">
+                        <p className="font-semibold">Failed to load users</p>
+                        <p className="text-xs mt-1">{usersError?.message || "Backend error: Check console"}</p>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ) : filteredUsers.length === 0 ? (

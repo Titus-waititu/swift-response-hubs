@@ -41,7 +41,33 @@ export default function PublicReportAccidentPage() {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [geoLocation, setGeoLocation] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
+  const [geoError, setGeoError] = useState<string | null>(null);
   const { isDark } = useTheme();
+
+  // Request geolocation on component mount
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setGeoLocation({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+          });
+          setGeoError(null);
+        },
+        (error) => {
+          console.warn("Geolocation error:", error);
+          setGeoError("Unable to access your location. Please enter it manually.");
+          setGeoLocation(null);
+        },
+        { timeout: 10000, enableHighAccuracy: false }
+      );
+    }
+  }, []);
 
   const form = useForm({
     defaultValues: {
@@ -55,15 +81,23 @@ export default function PublicReportAccidentPage() {
     onSubmit: async ({ value }) => {
       setIsSubmitting(true);
       try {
-        // Submit to public endpoint
+        // Validate geolocation
+        if (!geoLocation) {
+          toast.error("Unable to determine your location. Please check your browser permissions.");
+          setIsSubmitting(false);
+          return;
+        }
+
+        // Map form values to backend expectations
         const response = await client.post("/accidents", {
-          reported_by_name: value.fullName,
-          reported_by_email: value.email,
-          reported_by_phone: value.phoneNumber,
-          location: value.location,
-          description: value.description,
-          type: value.type || "accident",
-          status: "submitted",
+          description: `${value.description}\n\nReporter: ${value.fullName}\nEmail: ${value.email}\nPhone: ${value.phoneNumber}`,
+          severity: "moderate",
+          latitude: geoLocation.latitude,
+          longitude: geoLocation.longitude,
+          locationAddress: value.location,
+          accidentDate: new Date().toISOString(),
+          reportedById: "public-user", // Temporary ID for public reports
+          numberOfVehicles: 1,
         });
 
         if (response.status === 201 || response.status === 200) {
@@ -333,6 +367,11 @@ export default function PublicReportAccidentPage() {
                               >
                                 <MapPin className="h-4 w-4" />
                                 Incident Location *
+                                {geoLocation && (
+                                  <span className="text-xs bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 px-2 py-0.5 rounded">
+                                    📍 Location detected
+                                  </span>
+                                )}
                               </Label>
                               <Input
                                 id="location"
@@ -350,6 +389,11 @@ export default function PublicReportAccidentPage() {
                                     : ""
                                 }`}
                               />
+                              {geoError && (
+                                <p className="text-xs text-yellow-600 dark:text-yellow-400">
+                                  ⚠️ {geoError}
+                                </p>
+                              )}
                               {field.state.meta.errors.length > 0 && (
                                 <p className="text-sm text-red-600 dark:text-red-400">
                                   {field.state.meta.errors.join(", ")}

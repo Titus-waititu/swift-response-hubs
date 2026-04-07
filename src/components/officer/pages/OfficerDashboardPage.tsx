@@ -225,8 +225,8 @@ export default function OfficerDashboardPage({
                 }}
                 labelStyle={{ color: "#1e293b" }}
               />
-              <Legend 
-                verticalAlign="bottom" 
+              <Legend
+                verticalAlign="bottom"
                 height={36}
                 wrapperStyle={{ paddingTop: "20px" }}
               />

@@ -16,11 +16,7 @@ import {
 } from "@/lib/incident-analytics";
 import type { IncidentReport } from "@/types/incident";
 
-type OfficerPage =
-  | "dashboard"
-  | "accidents"
-  | "users"
-  | "profile";
+type OfficerPage = "dashboard" | "accidents" | "users" | "profile";
 
 const OfficerDashboard = () => {
   const navigate = useNavigate();

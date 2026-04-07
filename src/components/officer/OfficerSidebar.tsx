@@ -11,9 +11,7 @@ import { Button } from "@/components/ui/button";
 
 interface OfficerSidebarProps {
   currentPage: "dashboard" | "accidents" | "users" | "profile";
-  onPageChange: (
-    page: "dashboard" | "accidents" | "users" | "profile",
-  ) => void;
+  onPageChange: (page: "dashboard" | "accidents" | "users" | "profile") => void;
   sidebarOpen: boolean;
   onToggleSidebar: () => void;
   userName: string;
@@ -68,11 +66,7 @@ export default function OfficerSidebar({
             key={id}
             onClick={() =>
               onPageChange(
-                id as
-                  | "dashboard"
-                  | "accidents"
-                  | "users"
-                  | "profile",
+                id as "dashboard" | "accidents" | "users" | "profile",
               )
             }
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-sm transition-colors ${

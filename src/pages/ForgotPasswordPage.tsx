@@ -52,9 +52,10 @@ export default function ForgotPasswordPage() {
         setFieldErrors(errors);
       } else {
         // Extract error message from API response
-        const errorMessage = error?.response?.data?.message || 
-                           error?.message || 
-                           "Failed to send reset link. Please try again.";
+        const errorMessage =
+          error?.response?.data?.message ||
+          error?.message ||
+          "Failed to send reset link. Please try again.";
         setGeneralError(errorMessage);
         toast.error(errorMessage);
       }
@@ -132,7 +133,9 @@ export default function ForgotPasswordPage() {
                     className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
                     disabled={forgotPasswordMutation.isPending}
                   >
-                    {forgotPasswordMutation.isPending ? "Sending..." : "Send Reset Link"}
+                    {forgotPasswordMutation.isPending
+                      ? "Sending..."
+                      : "Send Reset Link"}
                   </Button>
 
                   <Button

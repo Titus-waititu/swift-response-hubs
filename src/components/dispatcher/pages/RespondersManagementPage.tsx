@@ -90,7 +90,16 @@ export default function RespondersManagementPage(
   const { data: allIncidents = [] as any, isLoading: incidentsLoading } =
     useGetAccidents();
 
+  // Filter incidents to only show active ones (exclude resolved and closed)
+  const activeIncidentsForDispatch = Array.isArray(allIncidents)
+    ? allIncidents.filter(
+        (incident: any) =>
+          incident.status !== "resolved" && incident.status !== "closed",
+      )
+    : [];
+
   console.log("All incidents available for dispatch:", allIncidents);
+  console.log("Active incidents for dispatch:", activeIncidentsForDispatch);
 
   const dispatchMutation = useDispatchResponder();
   const broadcastMutation = useBroadcastToResponders();
@@ -329,7 +338,7 @@ export default function RespondersManagementPage(
             Active Responders
           </CardTitle>
           <CardDescription className="text-slate-600 dark:text-slate-400">
-            {filteredResponders.length} responder(s) available
+            {filteredResponders.length} responder(s) and officer(s) available
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -365,7 +374,7 @@ export default function RespondersManagementPage(
                   No responders found
                 </p>
                 <p className="text-slate-500 dark:text-slate-500 text-sm">
-                  No users with responder role exist yet
+                  No responder or officer users exist yet
                 </p>
               </div>
             </div>
@@ -407,7 +416,14 @@ export default function RespondersManagementPage(
                       className="border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700"
                     >
                       <TableCell className="text-slate-900 dark:text-slate-50 font-medium">
-                        {responder.name}
+                        <div className="flex items-center gap-2">
+                          <span>{responder.name}</span>
+                          {responder.userData?.userType === "officer" && (
+                            <Badge className="bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-200">
+                              Officer
+                            </Badge>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell>
                         <span
@@ -492,18 +508,20 @@ export default function RespondersManagementPage(
                                       <SelectItem value="">
                                         Loading incidents...
                                       </SelectItem>
-                                    ) : allIncidents &&
-                                      allIncidents.length > 0 ? (
-                                      allIncidents.map((incident: any) => (
-                                        <SelectItem
-                                          key={incident.id}
-                                          value={incident.id}
-                                        >
-                                          #{incident.number || incident.id} -{" "}
-                                          {incident.type || "Incident"} (
-                                          {incident.status || "pending"})
-                                        </SelectItem>
-                                      ))
+                                    ) : activeIncidentsForDispatch &&
+                                      activeIncidentsForDispatch.length > 0 ? (
+                                      activeIncidentsForDispatch.map(
+                                        (incident: any) => (
+                                          <SelectItem
+                                            key={incident.id}
+                                            value={incident.id}
+                                          >
+                                            #{incident.number || incident.id} -{" "}
+                                            {incident.type || "Incident"} (
+                                            {incident.status || "pending"})
+                                          </SelectItem>
+                                        ),
+                                      )
                                     ) : (
                                       <SelectItem value="">
                                         No incidents available

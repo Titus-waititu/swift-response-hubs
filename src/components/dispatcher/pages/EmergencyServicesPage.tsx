@@ -83,7 +83,7 @@ export default function EmergencyServicesPage() {
   const updateMutation = useUpdateEmergencyService();
   const deleteMutation = useDeleteEmergencyService();
 
-  // Use API data if available
+  // Use API data if available - apiServices is already an array from the hook
   const services = Array.isArray(apiServices) ? apiServices : [];
 
   const filteredServices = services.filter((service) => {
@@ -530,7 +530,7 @@ export default function EmergencyServicesPage() {
                   Total Units
                 </p>
                 <p className="text-2xl font-bold text-slate-900 dark:text-slate-50 mt-1">
-                  {services.reduce((sum, s) => sum + s.units, 0)}
+                  {services.reduce((sum, s) => sum + (s.units || 0), 0)}
                 </p>
               </div>
               <div className="text-3xl opacity-20">🚑</div>
@@ -545,10 +545,14 @@ export default function EmergencyServicesPage() {
                   Avg Response Time
                 </p>
                 <p className="text-2xl font-bold text-slate-900 dark:text-slate-50 mt-1">
-                  {Math.round(
-                    services.reduce((sum, s) => sum + s.responseTime, 0) /
-                      services.length,
-                  )}{" "}
+                  {services.length > 0
+                    ? Math.round(
+                        services.reduce(
+                          (sum, s) => sum + (s.responseTime || 0),
+                          0,
+                        ) / services.length,
+                      )
+                    : 0}{" "}
                   min
                 </p>
               </div>

@@ -14,7 +14,7 @@ export const useAnalyzeAccident = () =>
   useMutation({
     mutationFn: async (data: any) => {
       const response = await apiClient.post("/ai/analyze-accident", data);
-      return response;
+      return response as any;
     },
     onError: (error: any) => {
       console.error("AI analysis error:", error);
@@ -26,7 +26,7 @@ export const useGenerateReport = () =>
   useMutation({
     mutationFn: async (data: any) => {
       const response = await apiClient.post("/ai/generate-report", data);
-      return response;
+      return response as any;
     },
     onError: (error: any) => {
       console.error("Report generation error:", error);
@@ -38,7 +38,7 @@ export const useExtractText = () =>
   useMutation({
     mutationFn: async (data: any) => {
       const response = await apiClient.post("/ai/extract-text", data);
-      return response;
+      return response as any;
     },
     onError: (error: any) => {
       console.error("Text extraction error:", error);
@@ -50,7 +50,7 @@ export const useClassifySeverity = () =>
   useMutation({
     mutationFn: async (data: any) => {
       const response = await apiClient.post("/ai/classify-severity", data);
-      return response;
+      return response as any;
     },
     onError: (error: any) => {
       console.error("Severity classification error:", error);
@@ -81,7 +81,7 @@ export const useAccidentAnalysis = (accidentData: any) => {
         numberOfVehicles: data.numberOfVehicles,
       });
 
-      return response;
+      return response as any;
     },
   });
 };

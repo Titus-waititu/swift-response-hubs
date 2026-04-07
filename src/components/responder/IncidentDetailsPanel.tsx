@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   MapPin,
   Phone,
@@ -10,7 +11,12 @@ import {
   Car,
   FileText,
   User,
+  Navigation,
 } from "lucide-react";
+import {
+  openGoogleMapsNavigation,
+  isValidCoordinates,
+} from "@/lib/navigation-utils";
 import type { IncidentReport } from "@/types/incident";
 
 interface IncidentDetailsPanelProps {
@@ -186,7 +192,7 @@ export default function IncidentDetailsPanel({
               GPS Coordinates
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2">
+          <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-2">
               <div className="p-2 bg-slate-50 dark:bg-slate-900 rounded">
                 <p className="text-xs text-slate-600 dark:text-slate-400">
@@ -205,6 +211,25 @@ export default function IncidentDetailsPanel({
                 </p>
               </div>
             </div>
+
+            {/* Navigation Button - Primary CTA */}
+            {isValidCoordinates(
+              incident.gps_latitude,
+              incident.gps_longitude,
+            ) && (
+              <Button
+                onClick={() =>
+                  openGoogleMapsNavigation(
+                    incident.gps_latitude,
+                    incident.gps_longitude,
+                  )
+                }
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 h-auto"
+              >
+                <Navigation className="h-4 w-4 mr-2" />
+                Start Navigation in Google Maps
+              </Button>
+            )}
           </CardContent>
         </Card>
       )}

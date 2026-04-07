@@ -55,7 +55,10 @@ export default function DispatcherDashboard() {
   }, [user, navigate]);
 
   const { data: accidents } = useGetAccidents();
-  const accidentsArray = Array.isArray(accidents) ? accidents : accidents || [];
+
+  // Safely extract incidents array from API response
+  // The hook returns an array of normalized incidents directly
+  const accidentsArray = Array.isArray(accidents) ? accidents : [];
   const incidents: IncidentReport[] = accidentsArray.map(
     mapBackendAccidentToIncident,
   );

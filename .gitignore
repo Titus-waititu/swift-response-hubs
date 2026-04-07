@@ -27,3 +27,5 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+MAP_NAVIGATION_FEATURE.md
+MAP_QUICK_START.md

@@ -19,6 +19,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import {
   Select,
@@ -504,6 +505,9 @@ export default function ResponderAssignmentsPage({
               Update Status
             </DialogTitle>
           </div>
+          <DialogDescription className="hidden">
+            Update the status of your assigned incident
+          </DialogDescription>
           <div className="px-3 py-4 overflow-y-auto">
             {selectedIncident && (
               <QuickStatusUpdatePanel
@@ -526,6 +530,9 @@ export default function ResponderAssignmentsPage({
             <DialogTitle className="text-slate-900 dark:text-slate-50">
               Incident Details
             </DialogTitle>
+            <DialogDescription>
+              Review detailed information about this incident
+            </DialogDescription>
           </DialogHeader>
           {selectedIncidentForDetails && (
             <IncidentDetailsPanel incident={selectedIncidentForDetails} />

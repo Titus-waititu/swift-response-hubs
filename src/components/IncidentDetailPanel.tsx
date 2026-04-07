@@ -6,6 +6,7 @@ import {
   FileText,
   CheckCircle,
   Navigation,
+  Map,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -20,6 +21,10 @@ import {
 import { StatusBadge, SeverityBadge } from "@/components/StatusBadge";
 import MapViewer from "@/components/MapViewer";
 import { useIncidentStore } from "@/context/IncidentStore";
+import {
+  openGoogleMapsNavigation,
+  isValidCoordinates,
+} from "@/lib/navigation-utils";
 import type { IncidentReport, IncidentStatus } from "@/types/incident";
 import { toast } from "sonner";
 
@@ -158,8 +163,8 @@ export default function IncidentDetailPanel({
               value={`${incident.gps_latitude}, ${incident.gps_longitude}`}
             />
 
-            {/* Map Viewer for Responders */}
-            {role === "responder" &&
+            {/* Map for Dispatchers - Basic View */}
+            {role === "dispatcher" &&
               incident.gps_latitude !== undefined &&
               incident.gps_latitude !== null &&
               incident.gps_longitude !== undefined &&
@@ -241,10 +246,29 @@ export default function IncidentDetailPanel({
             <CardHeader>
               <CardTitle className="text-sm text-foreground flex items-center gap-2">
                 <Navigation className="h-4 w-4 text-info" />
-                Responder View
+                Responder Actions
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              {isValidCoordinates(
+                incident.gps_latitude,
+                incident.gps_longitude,
+              ) && (
+                <div className="space-y-2">
+                  <Button
+                    onClick={() =>
+                      openGoogleMapsNavigation(
+                        incident.gps_latitude,
+                        incident.gps_longitude,
+                      )
+                    }
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 h-auto gap-2"
+                  >
+                    <Map className="h-4 w-4" />
+                    Start Navigation in Google Maps
+                  </Button>
+                </div>
+              )}
               <div className="rounded-2xl border border-border/70 bg-secondary/55 p-4 text-sm leading-6 text-muted-foreground">
                 The current backend exposes responder accident access, but it
                 does not support the richer field workflow from the prototype.

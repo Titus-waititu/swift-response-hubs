@@ -49,30 +49,17 @@ export default function DispatcherDashboardPage({
   incidentTypeBreakdown: initialIncidentTypeBreakdown,
   responseMetrics: initialResponseMetrics,
 }: DispatcherDashboardPageProps) {
-  // Fetch incidents from API
-  const { data: apiData } = useGetAccidents();
+  // Use incidents passed from parent (already properly transformed)
+  // Parent fetches and transforms the data, so we don't need to fetch again
+  const incidents =
+    initialIncidents && Array.isArray(initialIncidents) ? initialIncidents : [];
 
-  // Normalize and extract incidents from API response
-  const incidents = (() => {
-    let data: any[] = [];
-
-    if (Array.isArray(apiData)) {
-      data = apiData;
-    } else if (apiData) {
-      data = [apiData];
-    } else {
-      data = initialIncidents;
-    }
-
-    console.log("📊 Dashboard incidents data:", {
-      count: data.length,
-      firstIncident: data[0],
-      severities: data.map((i) => i.severity_level),
-      statuses: data.map((i) => i.status),
-    });
-
-    return data || [];
-  })();
+  console.log("📊 Dashboard incidents data:", {
+    count: incidents.length,
+    firstIncident: incidents[0],
+    severities: incidents.map((i: any) => i.severity_level),
+    statuses: incidents.map((i: any) => i.status),
+  });
 
   // Calculate queue stats from incidents - ALWAYS use computed, not initial
   const computedQueueStats = {
@@ -134,11 +121,14 @@ export default function DispatcherDashboardPage({
   const getIncidentsTrendData = () => {
     const today = new Date();
     const data = [];
-    const dayLabels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+    // Fixed: dayLabels now matches getDay() output (0=Sun, 1=Mon, ..., 6=Sat)
+    const dayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
     for (let i = 6; i >= 0; i--) {
       const date = new Date(today);
       date.setDate(date.getDate() - i);
+
+      // Create date range for this day (local timezone)
       const dayStart = new Date(date);
       dayStart.setHours(0, 0, 0, 0);
       const dayEnd = new Date(date);
@@ -154,8 +144,13 @@ export default function DispatcherDashboardPage({
 
       const resolvedCount = incidents.filter((inc) => {
         if (inc.status !== "resolved" && inc.status !== "closed") return false;
-        if (!inc.resolved_time) return false;
-        const resDate = new Date(inc.resolved_time);
+
+        // Use resolved_time if available, otherwise fall back to updated_at or created_at
+        const resolveDate =
+          inc.resolved_time || inc.updated_at || inc.created_at;
+        if (!resolveDate) return false;
+
+        const resDate = new Date(resolveDate);
         return resDate >= dayStart && resDate <= dayEnd;
       }).length;
 
@@ -166,11 +161,18 @@ export default function DispatcherDashboardPage({
       });
     }
 
-    console.log("📊 Trend data:", data);
+    console.log("📊 Trend data generated:", data);
+    console.log("📊 Total incidents for trend:", incidents.length);
     return data;
   };
 
   const incidentsData = getIncidentsTrendData();
+
+  // Filter out entries where both reported and resolved are 0 if there are no incidents at all
+  const hasAnyData = incidentsData.some(
+    (day) => day.reported > 0 || day.resolved > 0,
+  );
+  const trendDataToDisplay = hasAnyData ? incidentsData : [];
 
   // Build severity data dynamically with proper filtering
   const severityData = [
@@ -220,10 +222,6 @@ export default function DispatcherDashboardPage({
     severityData,
     allSeverities: incidents.map((i) => i.severity_level),
   });
-
-  useEffect(() => {
-    console.log("🔍 RAW API DATA:", apiData);
-  }, [apiData]);
 
   return (
     <div className="space-y-6">
@@ -352,9 +350,9 @@ export default function DispatcherDashboardPage({
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {incidentsData && incidentsData.length > 0 ? (
+            {trendDataToDisplay && trendDataToDisplay.length > 0 ? (
               <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={incidentsData}>
+                <LineChart data={trendDataToDisplay}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                   <XAxis dataKey="month" stroke="#64748b" />
                   <YAxis stroke="#64748b" />

@@ -61,10 +61,12 @@ export default function PublicReportAccidentPage() {
         },
         (error) => {
           console.warn("Geolocation error:", error);
-          setGeoError("Unable to access your location. Please enter it manually.");
+          setGeoError(
+            "Unable to access your location. Please enter it manually.",
+          );
           setGeoLocation(null);
         },
-        { timeout: 10000, enableHighAccuracy: false }
+        { timeout: 10000, enableHighAccuracy: false },
       );
     }
   }, []);
@@ -83,7 +85,9 @@ export default function PublicReportAccidentPage() {
       try {
         // Validate geolocation
         if (!geoLocation) {
-          toast.error("Unable to determine your location. Please check your browser permissions.");
+          toast.error(
+            "Unable to determine your location. Please check your browser permissions.",
+          );
           setIsSubmitting(false);
           return;
         }
@@ -457,8 +461,7 @@ export default function PublicReportAccidentPage() {
                       <AlertCircle className="h-4 w-4" />
                       <AlertDescription>
                         In life-threatening emergencies, call emergency services
-                        (911 in the US) immediately. This form supplements
-                        emergency calls.
+                        immediately. This form supplements emergency calls.
                       </AlertDescription>
                     </Alert>
 

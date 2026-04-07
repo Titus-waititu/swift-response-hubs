@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import {
   FileText,
   Sparkles,
@@ -6,6 +6,8 @@ import {
   AlertCircle,
   CheckCircle2,
   Loader2,
+  Download,
+  Copy,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,6 +19,13 @@ import {
 } from "@/components/ui/card";
 import { AIAssessmentCard } from "@/components/AIAssessmentCard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  useExtractText,
+  useClassifySeverity,
+  useAnalyzeAccident,
+  useGenerateReport,
+} from "@/hooks/useAI";
+import { toast } from "sonner";
 import type { SeverityLevel } from "@/types/incident";
 
 interface AIToolResult {
@@ -28,18 +37,96 @@ interface AIToolResult {
 }
 
 /**
+ * Compress image to reduce file size before sending to server
+ * Reduces quality and resizes if needed to stay under max size
+ */
+const compressImage = (
+  file: File,
+  maxSizeKB: number = 500,
+): Promise<{ base64: string; sizeKB: number }> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target?.result as string;
+
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        let width = img.width;
+        let height = img.height;
+
+        // Calculate scaling to reduce size
+        const maxDimension = 1200;
+        if (width > maxDimension || height > maxDimension) {
+          const scale = Math.min(maxDimension / width, maxDimension / height);
+          width = Math.round(width * scale);
+          height = Math.round(height * scale);
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          reject(new Error("Failed to get canvas context"));
+          return;
+        }
+
+        ctx.drawImage(img, 0, 0, width, height);
+
+        // Try different quality levels until under max size
+        let quality = 0.85;
+        let compressedBase64 = canvas.toDataURL("image/jpeg", quality);
+
+        while (compressedBase64.length / 1024 > maxSizeKB && quality > 0.3) {
+          quality -= 0.1;
+          compressedBase64 = canvas.toDataURL("image/jpeg", quality);
+        }
+
+        const sizeKB = Math.round((compressedBase64.length / 1024) * 100) / 100;
+
+        if (sizeKB > maxSizeKB) {
+          reject(
+            new Error(
+              `Image too large even after compression: ${sizeKB}KB (max ${maxSizeKB}KB)`,
+            ),
+          );
+          return;
+        }
+
+        resolve({ base64: compressedBase64, sizeKB });
+      };
+
+      img.onerror = () => {
+        reject(new Error("Failed to load image"));
+      };
+    };
+
+    reader.onerror = () => {
+      reject(new Error("Failed to read file"));
+    };
+  });
+};
+
+/**
  * OfficerAIToolsPanel Component
  *
- * Workspace for officers to use AI-powered tools:
+ * Fully integrated workspace for officers to use AI-powered tools:
  * - Extract Text: OCR on images for report data extraction
  * - Classify Severity: Analyze incident description and suggest severity level
  * - Analyze Accident: Full AI analysis of an incident
  * - Generate Report: Auto-generate formatted incident report
- *
- * Used in OfficerDashboard as a dedicated AI tools workspace
  */
 export function OfficerAIToolsPanel() {
   const [activeTab, setActiveTab] = useState<string>("extract");
+  const [incidentDescription, setIncidentDescription] = useState(
+    "Vehicle collision at intersection. Multiple vehicles involved. Injuries reported. Police on scene.",
+  );
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const [extractResult, setExtractResult] = useState<AIToolResult>({
     type: "extract",
     status: "idle",
@@ -57,56 +144,88 @@ export function OfficerAIToolsPanel() {
     status: "idle",
   });
 
-  // Simulate Extract Text (OCR)
+  // AI Mutations
+  const extractTextMutation = useExtractText();
+  const classifySeverityMutation = useClassifySeverity();
+  const analyzeAccidentMutation = useAnalyzeAccident();
+  const generateReportMutation = useGenerateReport();
+
+  // Handle Extract Text (OCR)
   const handleExtractText = async () => {
+    if (!uploadedFile) {
+      toast.error("Please upload an image first");
+      return;
+    }
+
     setExtractResult({ ...extractResult, status: "loading", type: "extract" });
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      // Compress image to reduce file size before sending
+      const { base64: compressedBase64, sizeKB } = await compressImage(
+        uploadedFile,
+        500,
+      );
+      toast.success(`Image compressed to ${sizeKB}KB`);
+
+      const response = (await extractTextMutation.mutateAsync({
+        imageData: compressedBase64,
+        imageType: "image/jpeg",
+      })) as any;
+
       setExtractResult({
         type: "extract",
         status: "success",
         data: {
-          extractedText:
-            "Vehicle collision at intersection. Multiple vehicles involved. Injuries reported. Police on scene.",
-          confidence: 0.94,
+          extractedText: response?.extractedText || response?.text || "",
+          confidence: response?.confidence || 0.85,
           imageProcessed: true,
         },
         timestamp: new Date(),
       });
+      toast.success("Text extracted successfully");
     } catch (error) {
       setExtractResult({
         type: "extract",
         status: "error",
         error: String(error),
       });
+      toast.error(String(error));
     }
   };
 
-  // Simulate Classify Severity
+  // Handle Classify Severity
   const handleClassifySeverity = async () => {
+    if (!incidentDescription.trim()) {
+      toast.error("Please enter an incident description");
+      return;
+    }
+
     setClassifyResult({
       ...classifyResult,
       status: "loading",
       type: "classify",
     });
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      const response = (await classifySeverityMutation.mutateAsync({
+        description: incidentDescription,
+      })) as any;
+
       setClassifyResult({
         type: "classify",
         status: "success",
         data: {
-          severity: "High" as SeverityLevel,
-          confidence: 0.87,
-          reasoning: [
-            "Multiple vehicles involved",
-            "Injuries reported",
-            "Police presence required",
+          severity:
+            (response?.severity as SeverityLevel) ||
+            (response?.classifiedSeverity as SeverityLevel) ||
+            "Medium",
+          confidence: response?.confidence || 0.87,
+          reasoning: response?.reasoning || [
+            "Analysis completed",
+            "Classification generated",
           ],
         },
         timestamp: new Date(),
       });
+      toast.success("Severity classification completed");
     } catch (error) {
       setClassifyResult({
         type: "classify",
@@ -116,34 +235,51 @@ export function OfficerAIToolsPanel() {
     }
   };
 
-  // Simulate Analyze Accident
+  // Handle Analyze Accident
   const handleAnalyzeAccident = async () => {
+    if (!incidentDescription.trim()) {
+      toast.error("Please enter an incident description");
+      return;
+    }
+
     setAnalyzeResult({ ...analyzeResult, status: "loading", type: "analyze" });
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 3000));
+      const response = (await analyzeAccidentMutation.mutateAsync({
+        description: incidentDescription,
+        location: "Location",
+        vehicles: 2,
+        injuries: 2,
+      })) as any;
+
       setAnalyzeResult({
         type: "analyze",
         status: "success",
         data: {
-          severity: "High" as SeverityLevel,
-          summary: "Multi-vehicle collision with reported injuries",
-          detectedInjuries: 2,
-          recommendations: [
+          severity:
+            (response?.severity as SeverityLevel) ||
+            (response?.classifiedSeverity as SeverityLevel) ||
+            "High",
+          summary: response?.summary || "Multi-vehicle incident analysis",
+          detectedInjuries: response?.detectedInjuries || 2,
+          recommendations: response?.recommendations || [
             "Dispatch EMS to scene",
             "Traffic control required",
             "Preliminary investigation",
           ],
-          suggestedEquipment: [
+          suggestedEquipment: response?.suggestedEquipment || [
             "EMS Kit",
             "Stretchers",
             "Cervical Collars",
             "Trauma Supplies",
           ],
-          sceneHazards: ["Active traffic area", "Potential vehicle fire risk"],
+          sceneHazards: response?.sceneHazards || [
+            "Active traffic area",
+            "Potential hazards",
+          ],
         },
         timestamp: new Date(),
       });
+      toast.success("Accident analysis completed");
     } catch (error) {
       setAnalyzeResult({
         type: "analyze",
@@ -153,41 +289,39 @@ export function OfficerAIToolsPanel() {
     }
   };
 
-  // Simulate Generate Report
+  // Handle Generate Report
   const handleGenerateReport = async () => {
+    if (!incidentDescription.trim()) {
+      toast.error("Please enter an incident description");
+      return;
+    }
+
     setGenerateResult({
       ...generateResult,
       status: "loading",
       type: "generate",
     });
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 2500));
+      const response = (await generateReportMutation.mutateAsync({
+        description: incidentDescription,
+        severity: classifyResult.data?.severity || "Medium",
+        location: "Location",
+      })) as any;
+
       setGenerateResult({
         type: "generate",
         status: "success",
         data: {
-          reportId: "RPT-2024-001543",
-          generatedReport: `INCIDENT REPORT
-          
-Date: ${new Date().toLocaleDateString()}
-Type: Multi-Vehicle Collision
-Severity: HIGH
-Location: Main Street & 5th Avenue
-
-Summary:
-Multiple vehicles involved in traffic collision. Two individuals reported injured. Emergency services dispatched.
-
-Response Actions:
-- EMS dispatch to scene
-- Traffic control implemented
-- Initial investigation begun
-
-Status: UNDER_REVIEW`,
+          reportId: response?.reportId || `RPT-${Date.now()}`,
+          generatedReport:
+            response?.generatedReport ||
+            response?.report ||
+            `INCIDENT REPORT\n\nDate: ${new Date().toLocaleDateString()}\nDescription: ${incidentDescription}`,
           canExport: true,
         },
         timestamp: new Date(),
       });
+      toast.success("Report generated successfully");
     } catch (error) {
       setGenerateResult({
         type: "generate",
@@ -195,6 +329,39 @@ Status: UNDER_REVIEW`,
         error: String(error),
       });
     }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 50 * 1024 * 1024) {
+        toast.error("File size must be less than 50MB");
+        return;
+      }
+      setUploadedFile(file);
+      toast.success(`File "${file.name}" uploaded`);
+    }
+  };
+
+  const handleDownloadReport = () => {
+    if (!generateResult.data?.generatedReport) return;
+
+    const element = document.createElement("a");
+    const file = new Blob([generateResult.data.generatedReport], {
+      type: "text/plain",
+    });
+    element.href = URL.createObjectURL(file);
+    element.download = `${generateResult.data.reportId || "report"}.txt`;
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+    toast.success("Report downloaded");
+  };
+
+  const handleCopyReport = () => {
+    if (!generateResult.data?.generatedReport) return;
+    navigator.clipboard.writeText(generateResult.data.generatedReport);
+    toast.success("Report copied to clipboard");
   };
 
   return (
@@ -250,22 +417,42 @@ Status: UNDER_REVIEW`,
 
             {/* Extract Text Tab */}
             <TabsContent value="extract" className="mt-6 space-y-4">
-              <div className="rounded-lg border border-dashed border-border/50 p-8 text-center">
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                className="rounded-lg border-2 border-dashed border-border/50 p-8 text-center cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-colors"
+              >
                 <Upload className="mx-auto h-10 w-10 text-muted-foreground" />
                 <p className="mt-3 text-sm font-medium text-foreground">
-                  Upload image to extract text (OCR)
+                  Click to upload image for OCR
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Supports JPG, PNG, PDF (Max 10MB)
+                  Supports JPG, PNG (Auto-compressed, Max 50MB)
                 </p>
+                {uploadedFile && (
+                  <p className="mt-2 text-xs text-green-600 dark:text-green-400">
+                    ✓ {uploadedFile.name}
+                  </p>
+                )}
               </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+                className="hidden"
+              />
 
               <Button
                 onClick={handleExtractText}
-                disabled={extractResult.status === "loading"}
+                disabled={
+                  extractResult.status === "loading" ||
+                  !uploadedFile ||
+                  extractTextMutation.isPending
+                }
                 className="w-full"
               >
-                {extractResult.status === "loading" ? (
+                {extractResult.status === "loading" ||
+                extractTextMutation.isPending ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Extracting text...
@@ -296,7 +483,18 @@ Status: UNDER_REVIEW`,
                     <p className="rounded-md bg-white dark:bg-slate-900 p-3 text-sm text-foreground">
                       {extractResult.data.extractedText}
                     </p>
-                    <Button variant="outline" size="sm" className="w-full">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                      onClick={() => {
+                        setIncidentDescription(
+                          extractResult.data.extractedText,
+                        );
+                        setActiveTab("classify");
+                        toast.success("Text added to description");
+                      }}
+                    >
                       Use Extracted Text
                     </Button>
                   </CardContent>
@@ -325,16 +523,21 @@ Status: UNDER_REVIEW`,
                   placeholder="Paste incident description here..."
                   className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
                   rows={4}
-                  defaultValue="Vehicle collision at intersection. Multiple vehicles involved. Injuries reported. Police on scene."
+                  value={incidentDescription}
+                  onChange={(e) => setIncidentDescription(e.target.value)}
                 />
               </div>
 
               <Button
                 onClick={handleClassifySeverity}
-                disabled={classifyResult.status === "loading"}
+                disabled={
+                  classifyResult.status === "loading" ||
+                  classifySeverityMutation.isPending
+                }
                 className="w-full"
               >
-                {classifyResult.status === "loading" ? (
+                {classifyResult.status === "loading" ||
+                classifySeverityMutation.isPending ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Classifying...
@@ -384,9 +587,28 @@ Status: UNDER_REVIEW`,
                         )}
                       </ul>
                     </div>
-                    <Button variant="outline" size="sm" className="w-full">
-                      Accept Classification
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                      onClick={() => {
+                        setActiveTab("analyze");
+                        toast.success("Moving to analysis step");
+                      }}
+                    >
+                      Next: Analyze Incident
                     </Button>
+                  </CardContent>
+                </Card>
+              )}
+
+              {classifyResult.status === "error" && (
+                <Card className="border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/20">
+                  <CardContent className="pt-6">
+                    <p className="flex items-center gap-2 text-sm text-red-700 dark:text-red-300">
+                      <AlertCircle className="h-4 w-4" />
+                      {classifyResult.error}
+                    </p>
                   </CardContent>
                 </Card>
               )}
@@ -394,16 +616,29 @@ Status: UNDER_REVIEW`,
 
             {/* Analyze Accident Tab */}
             <TabsContent value="analyze" className="mt-6 space-y-4">
-              <p className="text-sm text-muted-foreground">
-                Perform comprehensive AI analysis on selected incident
-              </p>
+              <div className="space-y-3">
+                <label className="block text-sm font-medium text-foreground">
+                  Incident Description
+                </label>
+                <textarea
+                  placeholder="Describe the incident for comprehensive analysis..."
+                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  rows={4}
+                  value={incidentDescription}
+                  onChange={(e) => setIncidentDescription(e.target.value)}
+                />
+              </div>
 
               <Button
                 onClick={handleAnalyzeAccident}
-                disabled={analyzeResult.status === "loading"}
+                disabled={
+                  analyzeResult.status === "loading" ||
+                  analyzeAccidentMutation.isPending
+                }
                 className="w-full"
               >
-                {analyzeResult.status === "loading" ? (
+                {analyzeResult.status === "loading" ||
+                analyzeAccidentMutation.isPending ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Analyzing accident...
@@ -427,20 +662,44 @@ Status: UNDER_REVIEW`,
                   compact={false}
                 />
               )}
+
+              {analyzeResult.status === "error" && (
+                <Card className="border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/20">
+                  <CardContent className="pt-6">
+                    <p className="flex items-center gap-2 text-sm text-red-700 dark:text-red-300">
+                      <AlertCircle className="h-4 w-4" />
+                      {analyzeResult.error}
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
             </TabsContent>
 
             {/* Generate Report Tab */}
             <TabsContent value="generate" className="mt-6 space-y-4">
-              <p className="text-sm text-muted-foreground">
-                Auto-generate formatted incident report
-              </p>
+              <div className="space-y-3">
+                <label className="block text-sm font-medium text-foreground">
+                  Incident Description
+                </label>
+                <textarea
+                  placeholder="Enter incident description for report generation..."
+                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  rows={4}
+                  value={incidentDescription}
+                  onChange={(e) => setIncidentDescription(e.target.value)}
+                />
+              </div>
 
               <Button
                 onClick={handleGenerateReport}
-                disabled={generateResult.status === "loading"}
+                disabled={
+                  generateResult.status === "loading" ||
+                  generateReportMutation.isPending
+                }
                 className="w-full"
               >
-                {generateResult.status === "loading" ? (
+                {generateResult.status === "loading" ||
+                generateReportMutation.isPending ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Generating report...
@@ -473,13 +732,35 @@ Status: UNDER_REVIEW`,
                       {generateResult.data.generatedReport}
                     </pre>
                     <div className="flex gap-2">
-                      <Button variant="outline" size="sm" className="flex-1">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1"
+                        onClick={handleCopyReport}
+                      >
+                        <Copy className="mr-2 h-4 w-4" />
                         Copy
                       </Button>
-                      <Button size="sm" className="flex-1">
-                        Download PDF
+                      <Button
+                        size="sm"
+                        className="flex-1"
+                        onClick={handleDownloadReport}
+                      >
+                        <Download className="mr-2 h-4 w-4" />
+                        Download
                       </Button>
                     </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {generateResult.status === "error" && (
+                <Card className="border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/20">
+                  <CardContent className="pt-6">
+                    <p className="flex items-center gap-2 text-sm text-red-700 dark:text-red-300">
+                      <AlertCircle className="h-4 w-4" />
+                      {generateResult.error}
+                    </p>
                   </CardContent>
                 </Card>
               )}

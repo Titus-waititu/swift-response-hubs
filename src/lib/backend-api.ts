@@ -466,7 +466,10 @@ export async function submitPublicAccidentReport(input: {
       userId = userResult.id;
     } catch (userError) {
       // If user creation fails, try with a common public user
-      console.warn("Failed to create guest user, attempting fallback:", userError);
+      console.warn(
+        "Failed to create guest user, attempting fallback:",
+        userError,
+      );
       userId = "public-user";
     }
 

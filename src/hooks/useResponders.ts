@@ -56,36 +56,71 @@ export const useGetResponders = () =>
     },
   });
 
-// Fetch all responder users with emergency_responder role
+// Fetch all responder users with emergency_responder role AND officers
 export const useGetResponderUsers = () =>
   useQuery<any>({
     queryKey: [...respondersKeys.all, "users"],
     queryFn: async () => {
-      const response = await apiClient.get("/users/role/emergency_responder");
-      // apiClient interceptor already extracts response.data, so response IS the data array
-      const data = Array.isArray(response) ? response : response?.data || [];
+      try {
+        // Fetch emergency responders
+        const responderResponse = await apiClient.get(
+          "/users/role/emergency_responder",
+        );
+        const responderData = Array.isArray(responderResponse)
+          ? responderResponse
+          : responderResponse?.data || [];
 
-      console.log("useGetResponderUsers raw data:", data);
+        // Fetch officers
+        const officerResponse = await apiClient.get("/users/role/officer");
+        const officerData = Array.isArray(officerResponse)
+          ? officerResponse
+          : officerResponse?.data || [];
 
-      return data.map((user: any) => {
-        const transformed = {
-          id: user.id,
-          name: user.fullName || user.name || "Unknown",
-          // Default to ambulance since emergency_responder role doesn't specify type
-          role: mapUserTypeToRole(
-            user.emergencyServiceType || user.type || "ambulance",
-          ),
-          phone: user.phoneNumber || user.phone || "N/A",
-          location: user.location || "Station",
-          // Use isActive to determine status - if not active, mark as unavailable
-          status: user.isActive ? "available" : "unavailable",
-          currentAssignment: user.currentAssignmentId || undefined,
-          estimatedAvailable: user.estimatedAvailableTime || undefined,
-          userData: user, // Keep original data
-        };
-        console.log("Transformed user:", transformed);
-        return transformed;
-      });
+        console.log(
+          "useGetResponderUsers - emergency responders:",
+          responderData,
+        );
+        console.log("useGetResponderUsers - officers:", officerData);
+
+        // Combine and transform both groups
+        const allUsers = [
+          ...responderData.map((user: any) => ({
+            ...user,
+            userType: "responder",
+          })),
+          ...officerData.map((user: any) => ({
+            ...user,
+            userType: "officer",
+          })),
+        ];
+
+        return allUsers.map((user: any) => {
+          const transformed = {
+            id: user.id,
+            name: user.fullName || user.name || "Unknown",
+            // Map user type to role - officers are police, responders use their type
+            role:
+              user.userType === "officer"
+                ? "police"
+                : mapUserTypeToRole(
+                    user.emergencyServiceType || user.type || "ambulance",
+                  ),
+            phone: user.phoneNumber || user.phone || "N/A",
+            location: user.location || "Station",
+            // Use isActive to determine status - if not active, mark as unavailable
+            status: user.isActive ? "available" : "unavailable",
+            currentAssignment: user.currentAssignmentId || undefined,
+            estimatedAvailable: user.estimatedAvailableTime || undefined,
+            userType: user.userType, // Track if this is an officer or responder
+            userData: user, // Keep original data
+          };
+          console.log("Transformed user:", transformed);
+          return transformed;
+        });
+      } catch (error) {
+        console.error("Error fetching responder users:", error);
+        return [];
+      }
     },
   });
 

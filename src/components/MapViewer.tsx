@@ -19,6 +19,7 @@ export default function MapViewer({
   const map = useRef<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const initializingRef = useRef(false);
 
   useEffect(() => {
     // Validate coordinates
@@ -26,7 +27,6 @@ export default function MapViewer({
     const lon = parseFloat(String(longitude || 0));
 
     if (isNaN(lat) || isNaN(lon)) {
-      console.error("Invalid coordinates:", { latitude, longitude });
       setError("Invalid coordinates");
       setIsLoading(false);
       return;
@@ -34,61 +34,88 @@ export default function MapViewer({
 
     // Check if coordinates are in valid range
     if (Math.abs(lat) > 90 || Math.abs(lon) > 180) {
-      console.error("Coordinates out of range:", { lat, lon });
       setError("Coordinates out of valid range");
       setIsLoading(false);
       return;
     }
 
-    // Load Leaflet CSS and JS dynamically
+    // Reset error state when coordinates change
+    setError(null);
+    setIsLoading(true);
+
+    // Clean up container from old Leaflet artifacts
+    if (mapContainer.current) {
+      // Remove all child elements (old Leaflet DOM)
+      while (mapContainer.current.firstChild) {
+        mapContainer.current.removeChild(mapContainer.current.firstChild);
+      }
+      // Remove inline styles
+      mapContainer.current.style.backgroundColor = "";
+    }
+
+    // Clean up existing map
+    if (map.current) {
+      map.current.remove();
+      map.current = null;
+    }
+
+    // Load Leaflet JS only - CSS is already in index.css
     const loadLeaflet = async () => {
+      // Prevent double initialization in React StrictMode
+      if (initializingRef.current) {
+        return;
+      }
+      initializingRef.current = true;
+
       try {
         // Check if Leaflet is already loaded
         if ((window as any).L !== undefined) {
-          console.log("Leaflet already loaded");
-          initMap(lat, lon);
+          // Small delay to ensure container is rendered
+          setTimeout(() => initMap(lat, lon), 50);
           return;
         }
 
-        console.log("Loading Leaflet library...");
+        // Verify CSS is loaded
+        const leafletCss = Array.from(document.styleSheets).find((sheet) =>
+          sheet.href?.includes("leaflet.min.css"),
+        );
 
-        // Load CSS
-        const link = document.createElement("link");
-        link.rel = "stylesheet";
-        link.href =
-          "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css";
-        link.onerror = () => {
-          console.error("Failed to load Leaflet CSS");
-          setError("Failed to load map styles");
-          setIsLoading(false);
-        };
-        document.head.appendChild(link);
-
-        // Load JS
+        // Load JS only
         const script = document.createElement("script");
         script.src =
           "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js";
+        script.crossOrigin = "anonymous";
         script.async = true;
+
         script.onload = () => {
-          console.log("Leaflet script loaded successfully");
-          initMap(lat, lon);
+          setTimeout(() => {
+            const L = (window as any).L;
+            if (L) {
+              initMap(lat, lon);
+            } else {
+              setError("Leaflet failed to initialize");
+              setIsLoading(false);
+              initializingRef.current = false;
+            }
+          }, 100);
         };
+
         script.onerror = () => {
-          console.error("Failed to load Leaflet script");
           setError("Failed to load map library");
           setIsLoading(false);
+          initializingRef.current = false;
         };
+
         document.body.appendChild(script);
       } catch (err) {
-        console.error("Error loading Leaflet:", err);
         setError("Failed to initialize map");
         setIsLoading(false);
+        initializingRef.current = false;
       }
     };
 
     const initMap = (lat: number, lon: number) => {
       if (!mapContainer.current) {
-        console.error("Map container not found");
         setError("Map container not available");
         setIsLoading(false);
         return;
@@ -100,41 +127,128 @@ export default function MapViewer({
           throw new Error("Leaflet library not loaded");
         }
 
-        console.log("Initializing map with coordinates:", { lat, lon });
+        // Ensure container is visible and sized
+
+        // Ensure container is visible and sized
+        if (
+          mapContainer.current.offsetHeight === 0 ||
+          mapContainer.current.offsetWidth === 0
+        ) {
+          setTimeout(() => initMap(lat, lon), 300);
+          return;
+        }
+
+        // Remove existing map if any (safety check)
+        if (map.current) {
+          map.current.remove();
+          map.current = null;
+        }
+
+        // Configure Leaflet icons BEFORE creating map
+        try {
+          delete L.Icon.Default.prototype._getIconUrl;
+          L.Icon.Default.mergeOptions({
+            iconRetinaUrl:
+              "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+            iconUrl:
+              "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+            shadowUrl:
+              "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+          });
+        } catch (iconErr) {
+          // Icon configuration error - continue anyway
+        }
 
         // Create map
-        map.current = L.map(mapContainer.current).setView([lat, lon], 15);
+        map.current = L.map(mapContainer.current, {
+          preferCanvas: false,
+        }).setView([lat, lon], 15);
 
-        // Add tile layer
-        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-          maxZoom: 19,
-          attribution:
-            '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-        }).addTo(map.current);
+        // Force container visibility and sizing explicitly
+        if (mapContainer.current) {
+          mapContainer.current.style.backgroundColor = "#e5e3df";
+          mapContainer.current.style.width = "100%";
+          mapContainer.current.style.height = "400px";
+          mapContainer.current.style.display = "block";
+        }
 
-        // Add marker
-        L.marker([lat, lon])
-          .addTo(map.current)
-          .bindPopup(
-            `<div class="text-sm"><strong>${address || "Incident Location"}</strong><br/>${lat.toFixed(6)}, ${lon.toFixed(6)}</div>`,
-          )
-          .openPopup();
+        // Use requestAnimationFrame for proper timing
+        requestAnimationFrame(() => {
+          if (!map.current) return;
 
-        console.log("Map initialized successfully");
-        setIsLoading(false);
+          map.current.invalidateSize();
+
+          // Add tile layer with fallback
+          try {
+            const tileLayer = L.tileLayer(
+              "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+              {
+                maxZoom: 19,
+                minZoom: 0,
+                crossOrigin: true,
+                attribution:
+                  '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+              },
+            );
+
+            tileLayer.addTo(map.current);
+
+            // Check pane visibility with actual computed styles
+            const tilePane = document.querySelector(
+              ".leaflet-tile-pane",
+            ) as HTMLElement;
+            if (tilePane) {
+              const computedStyle = window.getComputedStyle(tilePane);
+              const tileCount = tilePane.querySelectorAll("img, canvas").length;
+            }
+          } catch (tileErr) {
+            // Tile layer error handled gracefully
+          }
+
+          // Add marker with simple popup
+          try {
+            L.marker([lat, lon])
+              .addTo(map.current)
+              .bindPopup(
+                `<div style="font-size: 12px; max-width: 200px;">
+                  <strong>${address || "Incident Location"}</strong><br/>
+                  ${lat.toFixed(6)}, ${lon.toFixed(6)}<br/>
+                  <em style="display: block; margin-top: 8px; color: #666;">Use the "Start Navigation" button in the details panel</em>
+                </div>`,
+              )
+              .openPopup();
+          } catch (markerErr) {
+            // Marker error handled gracefully
+          }
+
+          // Call invalidateSize again after layer is added
+          setTimeout(() => {
+            if (map.current) {
+              map.current.invalidateSize();
+              setIsLoading(false);
+            }
+          }, 100);
+        });
       } catch (err) {
-        console.error("Map initialization error:", err);
         setError("Failed to initialize map");
         setIsLoading(false);
+        initializingRef.current = false;
       }
     };
 
     loadLeaflet();
 
     return () => {
+      initializingRef.current = false;
       if (map.current) {
         map.current.remove();
         map.current = null;
+      }
+      // Clean container DOM
+      if (mapContainer.current) {
+        while (mapContainer.current.firstChild) {
+          mapContainer.current.removeChild(mapContainer.current.firstChild);
+        }
       }
     };
   }, [latitude, longitude, address]);

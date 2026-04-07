@@ -18,31 +18,31 @@ export const useGetUsers = () =>
     queryFn: async () => {
       try {
         const response = await apiClient.get("/users/");
-        
+
         if (!response) {
           return [];
         }
-        
+
         // Handle array directly
         if (Array.isArray(response)) {
-          return response.filter(u => u);
+          return response.filter((u) => u);
         }
-        
+
         // Handle wrapped response (data property)
         if (response?.data && Array.isArray(response.data)) {
-          return response.data.filter(u => u);
+          return response.data.filter((u) => u);
         }
-        
+
         // Handle paginated response
         if (response?.users && Array.isArray(response.users)) {
-          return response.users.filter(u => u);
+          return response.users.filter((u) => u);
         }
-        
+
         // Handle object with user list
         if (response?.list && Array.isArray(response.list)) {
-          return response.list.filter(u => u);
+          return response.list.filter((u) => u);
         }
-        
+
         // Fallback
         return [];
       } catch (error) {
@@ -98,7 +98,9 @@ export const useUpdateUser = () => {
       apiClient.patch(`/users/${id}`, data),
     onSuccess: async (_, variables) => {
       queryClient.invalidateQueries({ queryKey: usersKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: usersKeys.detail(variables.id) });
+      queryClient.invalidateQueries({
+        queryKey: usersKeys.detail(variables.id),
+      });
       await queryClient.refetchQueries({ queryKey: usersKeys.lists() });
     },
   });

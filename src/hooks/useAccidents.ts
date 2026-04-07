@@ -81,16 +81,6 @@ const normalizeIncidents = (incidents: any[]): any[] => {
       incident.state ||
       incident.type_status;
 
-    console.log("🔍 Normalizing incident:", {
-      report_id: incident.report_id,
-      backend_accident_id: incident.backend_accident_id,
-      rawStatus,
-      statusField: incident.status,
-      incident_status: incident.incident_status,
-      report_status: incident.report_status,
-      normalized: normalizeStatus(rawStatus),
-    });
-
     return {
       ...incident,
       status: normalizeStatus(rawStatus),
@@ -154,9 +144,9 @@ export const useGetAccidents = (options?: {
       }
     },
     enabled: options?.enabled ?? !!user,
-    staleTime: options?.staleTime !== undefined ? options.staleTime : 5000, // Default to 5s for other pages, 0 for ResponderPage
-    refetchInterval: 3000, // Refetch every 3 seconds for real-time updates
-    refetchOnWindowFocus: true, // Refetch when window regains focus
+    staleTime: options?.staleTime !== undefined ? options.staleTime : 60000, // Default to 60s, will invalidate on mutations
+    refetchInterval: false, // Don't auto-refetch - only invalidate on mutations
+    refetchOnWindowFocus: false, // Don't refetch on window focus
   });
 };
 
@@ -167,7 +157,6 @@ export const useGetMyAssignedIncidents = () => {
   return useQuery({
     queryKey: [...accidentKeys.all, "my-assigned"],
     queryFn: async () => {
-      console.log("=== FETCHING RESPONDER ASSIGNMENTS ===");
       let assignments: any[] = [];
       const endpointsToTry = [
         "/dispatch/my-assignments",
@@ -179,36 +168,20 @@ export const useGetMyAssignedIncidents = () => {
       // Try multiple endpoints with fallback logic
       for (const endpoint of endpointsToTry) {
         try {
-          console.log(`Trying endpoint: ${endpoint}`);
           const response = await apiClient.get(endpoint);
           assignments = Array.isArray(response)
             ? response
             : response?.data || [];
 
-          console.log(
-            `✓ ${endpoint} returned:`,
-            assignments.length,
-            "items",
-            assignments,
-          );
-
           if (assignments.length > 0) {
-            console.log(
-              `✓ Successfully retrieved assignments from ${endpoint}`,
-            );
             break; // Exit loop after first successful response
           }
         } catch (err: any) {
-          console.warn(
-            `✗ ${endpoint} failed (${err?.response?.status}):`,
-            err?.message,
-          );
           continue; // Try next endpoint
         }
       }
 
       if (!assignments.length) {
-        console.log("⚠ No assignments found from any endpoint");
         return [];
       }
 
@@ -222,8 +195,6 @@ export const useGetMyAssignedIncidents = () => {
 
         // Normalize all incidents to ensure status is correct
         allIncidents = normalizeIncidents(allIncidents);
-
-        console.log("Total incidents available:", allIncidents.length);
       } catch (err: any) {
         console.error("Failed to fetch incidents:", err?.message);
         return [];
@@ -245,14 +216,7 @@ export const useGetMyAssignedIncidents = () => {
         ids.forEach((id) => {
           assignedAccidentIds.add(String(id));
         });
-
-        console.log(
-          `Assignment ${idx}: IDs = [${ids.join(", ")}], Full =`,
-          assignment,
-        );
       });
-
-      console.log("Accident IDs to match:", Array.from(assignedAccidentIds));
 
       // Match incidents to assignments
       const myIncidents: any[] = [];
@@ -276,19 +240,8 @@ export const useGetMyAssignedIncidents = () => {
 
         if (isMatched) {
           myIncidents.push(incident);
-          console.log(
-            "✓ MATCHED incident IDs:",
-            incidentIds,
-            "Status:",
-            incident.status,
-            "Details:",
-            incident,
-          );
         }
       });
-
-      console.log("✓ RESULT: Found", myIncidents.length, "matching incidents");
-      console.log("Matched incidents:", myIncidents);
 
       return myIncidents;
     },
@@ -411,9 +364,35 @@ export const useUpdateAccidentStatus = () => {
   return useMutation({
     mutationFn: ({ id, data }: { id: string | number; data: any }) =>
       apiClient.patch(`/accidents/${id}/status`, data),
-    onSuccess: (_, { id }) => {
-      queryClient.invalidateQueries({ queryKey: accidentKeys.detail(id) });
-      queryClient.invalidateQueries({ queryKey: accidentKeys.lists() });
+    onSuccess: (response, { id }) => {
+      console.log(
+        `✅ Status updated for incident ${id}, invalidating cache...`,
+      );
+
+      // Invalidate and immediately refetch the lists query
+      queryClient.setQueryData(accidentKeys.lists(), (oldData: any) => {
+        if (!Array.isArray(oldData)) return oldData;
+
+        // Update the specific incident in the cache with the latest response
+        return oldData.map((incident) => {
+          if (incident.id === id || incident.report_id === id) {
+            console.log(`📝 Updated incident ${id} in cache:`, {
+              oldStatus: incident.status,
+              newStatus: response?.status,
+            });
+            return { ...incident, ...response };
+          }
+          return incident;
+        });
+      });
+
+      // Also invalidate to ensure fresh data from server
+      queryClient.invalidateQueries({
+        queryKey: accidentKeys.lists(),
+        refetchType: "all", // Force refetch
+      });
+
+      console.log(`✅ Cache updated and will refetch for incident ${id}`);
     },
   });
 };

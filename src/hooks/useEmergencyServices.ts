@@ -12,13 +12,29 @@ export const emergencyServicesKeys = {
 export const useGetEmergencyServices = () =>
   useQuery({
     queryKey: emergencyServicesKeys.lists(),
-    queryFn: () => apiClient.get("/emergency-services/"),
+    queryFn: async () => {
+      const response = await apiClient.get("/emergency-services/");
+      // The apiClient interceptor already unwraps response.data, so response is already the data
+      if (Array.isArray(response)) {
+        return response;
+      }
+      if (response?.data && Array.isArray(response.data)) {
+        return response.data;
+      }
+      if (response?.services && Array.isArray(response.services)) {
+        return response.services;
+      }
+      return [];
+    },
   });
 
 export const useGetEmergencyServiceById = (id: string | undefined) =>
   useQuery({
     queryKey: emergencyServicesKeys.detail(id!),
-    queryFn: () => apiClient.get(`/emergency-services/${id}`),
+    queryFn: async () => {
+      const response = await apiClient.get(`/emergency-services/${id}`);
+      return response.data;
+    },
     enabled: !!id,
   });
 

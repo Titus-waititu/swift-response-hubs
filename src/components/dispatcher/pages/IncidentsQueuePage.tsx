@@ -53,8 +53,9 @@ import type { IncidentReport, IncidentStatus } from "../../../types/incident";
 import { STATUS_FLOW } from "../../../types/incident";
 import {
   useGetAccidents,
-  useUpdateAccident,
+  useUpdateAccidentStatus,
 } from "../../../hooks/useAccidents";
+import { mapBackendAccidentToIncident } from "../../../lib/backend-api";
 
 interface IncidentsQueuePageProps {
   incidents?: IncidentReport[];
@@ -70,31 +71,48 @@ export default function IncidentsQueuePage({
 
   // Fetch incidents from API
   const { data: apiIncidents = [], isLoading } = useGetAccidents();
-  const updateStatusMutation = useUpdateAccident();
+  const updateStatusMutation = useUpdateAccidentStatus();
 
-  // Log API response to debug
-  console.log("API Incidents Response:", apiIncidents);
+  console.log(`📊 Incidents data:`, {
+    count: apiIncidents.length,
+    isLoading,
+    updateInProgress: updateStatusMutation.isPending,
+  });
 
-  // Use API data if available, otherwise use initial incidents
-  // Transform API response to match component expectations
-  const incidents = Array.isArray(apiIncidents)
-    ? apiIncidents.map((incident: any) => ({
-        report_id: incident.report_id || incident.id || "",
-        id: incident.id || incident.report_id || "",
-        backend_report_number:
-          incident.backend_report_number ||
-          incident.report_id ||
-          incident.id ||
-          "",
-        location_address: incident.location_address || incident.location || "",
-        reporter_name: incident.reporter_name || incident.reporter?.name || "",
-        status: incident.status || "reported",
-        severity_level:
-          incident.severity_level || incident.severity || "Medium",
-        incident_type:
-          incident.incident_type || incident.type || "Motor Vehicle",
-        ...incident, // Keep all original properties
-      }))
+  // Use proper backend mapping function (same as DispatcherPage uses)
+  // The API returns backend accident objects that need to be mapped to IncidentReport format
+  const incidents: IncidentReport[] = Array.isArray(apiIncidents)
+    ? (apiIncidents as any[])
+        .filter((item) => item && typeof item === "object")
+        .map((item, idx) => {
+          try {
+            // Check if already mapped (has incident_type field)
+            if (item.incident_type) {
+              console.log(
+                `✓ Incident ${idx} already mapped:`,
+                item.incident_type,
+              );
+              return item as IncidentReport;
+            }
+            // Otherwise map from backend accident format
+            console.log(`🔄 Mapping incident ${idx} from backend format:`, {
+              keys: Object.keys(item),
+              reportNumber: item.reportNumber,
+              description: item.description,
+              locationAddress: item.locationAddress,
+            });
+            const mapped = mapBackendAccidentToIncident(item);
+            console.log(`✓ Mapped successfully:`, {
+              incident_type: mapped.incident_type,
+              location_address: mapped.location_address,
+              reporter_name: mapped.reporter_name,
+            });
+            return mapped;
+          } catch (error) {
+            console.error(`❌ Error mapping incident ${idx}:`, error);
+            return item as IncidentReport;
+          }
+        })
     : initialIncidents;
 
   const filteredIncidents = incidents.filter((incident) => {
@@ -115,9 +133,7 @@ export default function IncidentsQueuePage({
     return matchesSearch && matchesStatus && matchesSeverity;
   });
 
-  const currentIncident = incidents.find(
-    (inc) => inc.report_id === viewingId || inc.id === viewingId,
-  );
+  const currentIncident = incidents.find((inc) => inc.report_id === viewingId);
 
   const getSeverityColor = (severity: string) => {
     switch (severity) {
@@ -169,6 +185,8 @@ export default function IncidentsQueuePage({
   };
 
   const handleUpdateStatus = (id: string, newStatus: IncidentStatus) => {
+    console.log(`📤 Updating incident ${id} status to ${newStatus}`);
+
     updateStatusMutation.mutate(
       {
         id,
@@ -176,10 +194,12 @@ export default function IncidentsQueuePage({
       },
       {
         onSuccess: () => {
+          console.log(`✅ Incident ${id} status updated to ${newStatus}`);
           toast.success(`Incident status updated to ${newStatus}`);
           // setViewingId(null); // Removed to prevent modal closing on status change
         },
         onError: (error: any) => {
+          console.error(`❌ Failed to update incident ${id}:`, error);
           toast.error(error?.message || "Failed to update incident status");
         },
       },
@@ -303,7 +323,7 @@ export default function IncidentsQueuePage({
                   </TableRow>
                 ) : (
                   filteredIncidents.map((incident) => (
-                    <TableRow key={incident.report_id || incident.id}>
+                    <TableRow key={incident.report_id}>
                       <TableCell className="font-medium text-slate-900 dark:text-slate-50">
                         {incident.backend_report_number ||
                           incident.report_id ||
@@ -341,9 +361,7 @@ export default function IncidentsQueuePage({
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() =>
-                              setViewingId(incident.report_id || incident.id)
-                            }
+                            onClick={() => setViewingId(incident.report_id)}
                             className="h-8 w-8 p-0 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-50 hover:bg-slate-100 dark:hover:bg-slate-700"
                             title="View incident"
                           >
@@ -382,7 +400,8 @@ export default function IncidentsQueuePage({
                                   key={status}
                                   onClick={() =>
                                     handleUpdateStatus(
-                                      incident.report_id || incident.id,
+                                      incident.backend_accident_id ||
+                                        incident.report_id,
                                       status as IncidentStatus,
                                     )
                                   }

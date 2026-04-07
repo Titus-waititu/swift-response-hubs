@@ -57,20 +57,31 @@ interface User {
 const UsersManagementPage = () => {
   // Fetch users from backend
   const { data: usersData, isLoading, error: usersError } = useGetUsers();
-  
+
   // Ensure users is always an array
   const rawUsers = Array.isArray(usersData) ? usersData : usersData?.data || [];
-  
+
   // Map backend fields to our User interface (flexible mapping)
-  const users = rawUsers.map(u => ({
-    id: u.id || u._id || String(Math.random()),
-    name: u.name || u.fullName || u.email?.split("@")[0] || "Unknown",
-    email: u.email || "no-email@example.com",
-    role: u.role || "USER",
-    status: u.status === false || u.status === "Inactive" ? "Inactive" : "Active",
-    createdDate: u.createdAt || u.createdDate || new Date().toISOString().split("T")[0],
-    lastLogin: u.lastLogin || u.lastLoginAt,
-  } as User)).filter(u => u.id && u.id !== String(Math.random()));
+  const users = rawUsers
+    .map(
+      (u) =>
+        ({
+          id: u.id || u._id || String(Math.random()),
+          name: u.name || u.fullName || u.email?.split("@")[0] || "Unknown",
+          email: u.email || "no-email@example.com",
+          role: u.role || "USER",
+          status:
+            u.status === false || u.status === "Inactive"
+              ? "Inactive"
+              : "Active",
+          createdDate:
+            u.createdAt ||
+            u.createdDate ||
+            new Date().toISOString().split("T")[0],
+          lastLogin: u.lastLogin || u.lastLoginAt,
+        }) as User,
+    )
+    .filter((u) => u.id && u.id !== String(Math.random()));
 
   // API mutations
   const createUserMutation = useCreateUser();
@@ -94,11 +105,15 @@ const UsersManagementPage = () => {
 
   const filteredUsers = users.filter((user) => {
     if (!user) return false;
-    
+
     const searchLower = searchQuery.toLowerCase();
     const matchesSearch =
-      String(user.name || "").toLowerCase().includes(searchLower) ||
-      String(user.email || "").toLowerCase().includes(searchLower);
+      String(user.name || "")
+        .toLowerCase()
+        .includes(searchLower) ||
+      String(user.email || "")
+        .toLowerCase()
+        .includes(searchLower);
 
     const matchesRole = roleFilter === "all" || user.role === roleFilter;
 
@@ -191,13 +206,15 @@ const UsersManagementPage = () => {
       }
     } catch (error: any) {
       console.error("Toggle status error:", error);
-      toast.error(error?.response?.data?.message || "Failed to update user status");
+      toast.error(
+        error?.response?.data?.message || "Failed to update user status",
+      );
     }
   };
 
   const getRoleColor = (role: string | undefined) => {
     if (!role) return "bg-slate-100 text-slate-800";
-    
+
     const upperRole = role.toUpperCase();
     switch (upperRole) {
       case "ADMIN":
@@ -214,8 +231,9 @@ const UsersManagementPage = () => {
   };
 
   const getStatusColor = (status: string | undefined) => {
-    if (!status) return "bg-slate-100 text-slate-800 dark:bg-slate-900/30 dark:text-slate-200";
-    
+    if (!status)
+      return "bg-slate-100 text-slate-800 dark:bg-slate-900/30 dark:text-slate-200";
+
     return status.toLowerCase() === "active"
       ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200"
       : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-200";
@@ -230,9 +248,12 @@ const UsersManagementPage = () => {
             <div className="text-red-200">
               <p className="font-semibold">Error loading users</p>
               <p className="text-sm mt-1">
-                {usersError?.message || "Failed to fetch users from backend. Please check the server logs."}
+                {usersError?.message ||
+                  "Failed to fetch users from backend. Please check the server logs."}
               </p>
-              <p className="text-xs mt-2 text-red-300/70">Check browser console for details</p>
+              <p className="text-xs mt-2 text-red-300/70">
+                Check browser console for details
+              </p>
             </div>
           </CardContent>
         </Card>
@@ -339,7 +360,11 @@ const UsersManagementPage = () => {
                   Cancel
                 </Button>
                 <Button onClick={handleSave} disabled={isSubmitting}>
-                  {isSubmitting ? "Saving..." : editingId ? "Update User" : "Create User"}
+                  {isSubmitting
+                    ? "Saving..."
+                    : editingId
+                      ? "Update User"
+                      : "Create User"}
                 </Button>
               </div>
             </div>
@@ -361,7 +386,11 @@ const UsersManagementPage = () => {
           <CardContent className="pt-6">
             <div className="text-center">
               <p className="text-3xl font-bold text-blue-600">
-                {users.filter((u) => u && u.role && u.role.toUpperCase() === "OFFICER").length}
+                {
+                  users.filter(
+                    (u) => u && u.role && u.role.toUpperCase() === "OFFICER",
+                  ).length
+                }
               </p>
               <p className="text-sm text-slate-400 mt-1">Officers</p>
             </div>
@@ -371,7 +400,11 @@ const UsersManagementPage = () => {
           <CardContent className="pt-6">
             <div className="text-center">
               <p className="text-3xl font-bold text-green-600">
-                {users.filter((u) => u && u.role && u.role.toUpperCase() === "RESPONDER").length}
+                {
+                  users.filter(
+                    (u) => u && u.role && u.role.toUpperCase() === "RESPONDER",
+                  ).length
+                }
               </p>
               <p className="text-sm text-slate-400 mt-1">Responders</p>
             </div>
@@ -381,7 +414,11 @@ const UsersManagementPage = () => {
           <CardContent className="pt-6">
             <div className="text-center">
               <p className="text-3xl font-bold text-emerald-600">
-                {users.filter((u) => u && u.status && u.status.toLowerCase() === "active").length}
+                {
+                  users.filter(
+                    (u) => u && u.status && u.status.toLowerCase() === "active",
+                  ).length
+                }
               </p>
               <p className="text-sm text-slate-400 mt-1">Active</p>
             </div>
@@ -463,7 +500,10 @@ const UsersManagementPage = () => {
                     <TableCell colSpan={7} className="text-center py-8">
                       <div className="text-red-400">
                         <p className="font-semibold">Failed to load users</p>
-                        <p className="text-xs mt-1">{usersError?.message || "Backend error: Check console"}</p>
+                        <p className="text-xs mt-1">
+                          {usersError?.message ||
+                            "Backend error: Check console"}
+                        </p>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -485,7 +525,10 @@ const UsersManagementPage = () => {
                       </TableCell>
                       <TableCell>
                         <Badge className={getRoleColor(user.role)}>
-                          {user.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1).toLowerCase() : "Unknown"}
+                          {user.role
+                            ? user.role.charAt(0).toUpperCase() +
+                              user.role.slice(1).toLowerCase()
+                            : "Unknown"}
                         </Badge>
                       </TableCell>
                       <TableCell>

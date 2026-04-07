@@ -18,35 +18,31 @@ import {
   forgotPasswordSchema,
   ForgotPasswordFormValues,
 } from "@/lib/validation-schemas";
+import { useForgotPassword } from "@/hooks/useAuth";
 
 export default function ForgotPasswordPage() {
   const navigate = useNavigate();
+  const forgotPasswordMutation = useForgotPassword();
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [email, setEmail] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [generalError, setGeneralError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
     setFieldErrors({});
+    setGeneralError("");
 
     try {
       // Validate the form
       await forgotPasswordSchema.parseAsync({ email });
 
-      // Simulate API call - in production, this would call the backend
-      // const response = await fetch(`${API_BASE_URL}/auth/forgot-password`, {
-      //   method: "POST",
-      //   headers: { "Content-Type": "application/json" },
-      //   body: JSON.stringify({ email }),
-      // });
-
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Call the forgot password API
+      await forgotPasswordMutation.mutateAsync({ email });
 
       setIsSubmitted(true);
       toast.success("Password reset link sent to your email");
-    } catch (error) {
+    } catch (error: any) {
       if (error instanceof z.ZodError) {
         const errors: Record<string, string> = {};
         error.errors.forEach((err) => {
@@ -55,10 +51,13 @@ export default function ForgotPasswordPage() {
         });
         setFieldErrors(errors);
       } else {
-        toast.error("Failed to send reset link. Please try again.");
+        // Extract error message from API response
+        const errorMessage = error?.response?.data?.message || 
+                           error?.message || 
+                           "Failed to send reset link. Please try again.";
+        setGeneralError(errorMessage);
+        toast.error(errorMessage);
       }
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -104,13 +103,20 @@ export default function ForgotPasswordPage() {
             <CardContent>
               {!isSubmitted ? (
                 <form onSubmit={handleSubmit} className="space-y-6">
+                  {generalError && (
+                    <div className="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-900 dark:bg-red-950">
+                      <p className="text-sm text-red-800 dark:text-red-200">
+                        {generalError}
+                      </p>
+                    </div>
+                  )}
                   <div className="space-y-2">
                     <Label className="text-foreground">Email Address</Label>
                     <Input
                       type="email"
                       placeholder="your@email.com"
                       className={`border-border bg-secondary text-foreground`}
-                      disabled={isLoading}
+                      disabled={forgotPasswordMutation.isPending}
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                     />
@@ -124,9 +130,9 @@ export default function ForgotPasswordPage() {
                   <Button
                     type="submit"
                     className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
-                    disabled={isLoading}
+                    disabled={forgotPasswordMutation.isPending}
                   >
-                    {isLoading ? "Sending..." : "Send Reset Link"}
+                    {forgotPasswordMutation.isPending ? "Sending..." : "Send Reset Link"}
                   </Button>
 
                   <Button
@@ -134,7 +140,7 @@ export default function ForgotPasswordPage() {
                     variant="outline"
                     className="w-full border-border text-foreground"
                     onClick={() => navigate("/login")}
-                    disabled={isLoading}
+                    disabled={forgotPasswordMutation.isPending}
                   >
                     Back to Login
                   </Button>
@@ -151,7 +157,7 @@ export default function ForgotPasswordPage() {
                     <p className="text-sm text-muted-foreground">
                       We've sent a password reset link to{" "}
                       <span className="font-medium text-foreground">
-                        {form.state.values.email}
+                        {email}
                       </span>
                     </p>
                     <p className="text-xs text-muted-foreground">
@@ -173,7 +179,7 @@ export default function ForgotPasswordPage() {
                     variant="outline"
                     className="w-full border-border text-foreground"
                     onClick={() => {
-                      form.reset();
+                      setEmail("");
                       setIsSubmitted(false);
                     }}
                   >

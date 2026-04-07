@@ -3,7 +3,6 @@ import {
   PanelLeft,
   LayoutDashboard,
   AlertCircle,
-  Wand2,
   Users,
   User,
   LogOut,
@@ -11,9 +10,9 @@ import {
 import { Button } from "@/components/ui/button";
 
 interface OfficerSidebarProps {
-  currentPage: "dashboard" | "accidents" | "ai-assistant" | "users" | "profile";
+  currentPage: "dashboard" | "accidents" | "users" | "profile";
   onPageChange: (
-    page: "dashboard" | "accidents" | "ai-assistant" | "users" | "profile",
+    page: "dashboard" | "accidents" | "users" | "profile",
   ) => void;
   sidebarOpen: boolean;
   onToggleSidebar: () => void;
@@ -30,7 +29,6 @@ export default function OfficerSidebar({
   const menuItems = [
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
     { id: "accidents", label: "Manage Accidents", icon: AlertCircle },
-    { id: "ai-assistant", label: "AI Investigation", icon: Wand2 },
     { id: "users", label: "Users Profile", icon: Users },
     { id: "profile", label: "Profile", icon: User },
   ];
@@ -73,7 +71,6 @@ export default function OfficerSidebar({
                 id as
                   | "dashboard"
                   | "accidents"
-                  | "ai-assistant"
                   | "users"
                   | "profile",
               )

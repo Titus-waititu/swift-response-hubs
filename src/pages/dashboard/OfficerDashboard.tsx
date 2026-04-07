@@ -5,7 +5,6 @@ import OfficerSidebar from "@/components/officer/OfficerSidebar";
 import OfficerTopNav from "@/components/officer/OfficerTopNav";
 import OfficerDashboardPage from "@/components/officer/pages/OfficerDashboardPage";
 import AccidentsManagementPage from "@/components/officer/pages/AccidentsManagementPage";
-import AIInvestigationAssistantPage from "@/components/officer/pages/AIInvestigationAssistantPage";
 import UsersProfilePage from "@/components/officer/pages/UsersProfilePage";
 import ProfilePage from "@/components/ProfilePage";
 import { useGetAccidents } from "@/hooks/useAccidents";
@@ -20,7 +19,6 @@ import type { IncidentReport } from "@/types/incident";
 type OfficerPage =
   | "dashboard"
   | "accidents"
-  | "ai-assistant"
   | "users"
   | "profile";
 
@@ -79,21 +77,6 @@ const OfficerDashboard = () => {
         );
       case "accidents":
         return <AccidentsManagementPage incidents={incidents} />;
-      case "ai-assistant":
-        return (
-          <AIInvestigationAssistantPage
-            incident={
-              incidents[0] || {
-                report_id: "",
-                incident_type: "",
-                severity_level: "MEDIUM",
-                status: "Submitted",
-                location: "Demo Location",
-                description: "Demo incident",
-              }
-            }
-          />
-        );
       case "users":
         return <UsersProfilePage />;
       case "profile":

@@ -101,12 +101,6 @@ export default function AccidentsManagementPage({
     setIsViewDialogOpen(true);
   };
 
-  const handleMarkResolved = (incident: IncidentReport) => {
-    toast.success(
-      `Incident #${incident.backend_report_number || incident.report_id} marked as resolved`,
-    );
-  };
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -259,17 +253,6 @@ export default function AccidentsManagementPage({
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
-                          {incident.status !== "Resolved" && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleMarkResolved(incident)}
-                              title={`Mark Incident #${incident.backend_report_number || incident.report_id} as Resolved`}
-                              className="h-8 px-2 text-slate-600 dark:text-slate-400 hover:text-green-600 dark:hover:text-green-400 hover:bg-slate-100 dark:hover:bg-slate-700"
-                            >
-                              <CheckCircle className="h-4 w-4" />
-                            </Button>
-                          )}
                           {incident.severity_level === "Critical" && (
                             <Button
                               variant="ghost"

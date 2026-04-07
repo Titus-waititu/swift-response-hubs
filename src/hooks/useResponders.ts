@@ -82,36 +82,28 @@ export const useGetResponderUsers = () =>
         );
         console.log("useGetResponderUsers - officers:", officerData);
 
-        // Combine and transform both groups
-        const allUsers = [
-          ...responderData.map((user: any) => ({
-            ...user,
-            userType: "responder",
-          })),
-          ...officerData.map((user: any) => ({
-            ...user,
-            userType: "officer",
-          })),
-        ];
+        // Only return responders - filter out officers
+        // Officers should NOT appear in the responders list for dispatch
+        const allUsers = responderData.map((user: any) => ({
+          ...user,
+          userType: "responder",
+        }));
 
         return allUsers.map((user: any) => {
           const transformed = {
             id: user.id,
             name: user.fullName || user.name || "Unknown",
-            // Map user type to role - officers are police, responders use their type
-            role:
-              user.userType === "officer"
-                ? "police"
-                : mapUserTypeToRole(
-                    user.emergencyServiceType || user.type || "ambulance",
-                  ),
+            // Map emergency service type to role for responders
+            role: mapUserTypeToRole(
+              user.emergencyServiceType || user.type || "ambulance",
+            ),
             phone: user.phoneNumber || user.phone || "N/A",
             location: user.location || "Station",
             // Use isActive to determine status - if not active, mark as unavailable
             status: user.isActive ? "available" : "unavailable",
             currentAssignment: user.currentAssignmentId || undefined,
             estimatedAvailable: user.estimatedAvailableTime || undefined,
-            userType: user.userType, // Track if this is an officer or responder
+            userType: user.userType, // Track if this is a responder
             userData: user, // Keep original data
           };
           console.log("Transformed user:", transformed);

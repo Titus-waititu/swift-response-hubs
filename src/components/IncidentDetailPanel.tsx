@@ -31,7 +31,7 @@ import { toast } from "sonner";
 interface Props {
   incident: IncidentReport;
   onBack: () => void;
-  role: "dispatcher" | "responder";
+  role: "dispatcher" | "responder" | "officer";
   onSyncStatus?: (
     incident: IncidentReport,
     nextStatus: IncidentStatus,

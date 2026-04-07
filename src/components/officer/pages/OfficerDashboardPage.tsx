@@ -165,7 +165,6 @@ export default function OfficerDashboardPage({
                   borderRadius: "8px",
                   boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
                 }}
-                className="dark:bg-slate-900 dark:border-slate-700"
                 labelStyle={{ color: "#1e293b" }}
               />
               <Legend wrapperStyle={{ paddingTop: "20px" }} iconType="line" />
@@ -195,17 +194,18 @@ export default function OfficerDashboardPage({
         <ChartContainer
           title="Severity Breakdown"
           description="Current distribution by incident severity"
-          height="h-80"
+          height="h-96"
         >
           <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
+            <PieChart margin={{ top: 20, right: 80, bottom: 20, left: 80 }}>
               <Pie
                 data={severityData}
                 cx="50%"
-                cy="50%"
-                labelLine={false}
-                label={(entry) => `${entry.name}: ${entry.value}`}
-                outerRadius={100}
+                cy="45%"
+                labelLine={true}
+                label={({ name, value }) => `${name}: ${value}`}
+                outerRadius={60}
+                innerRadius={0}
                 fill="#8884d8"
                 dataKey="value"
               >
@@ -223,10 +223,13 @@ export default function OfficerDashboardPage({
                   borderRadius: "8px",
                   boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
                 }}
-                className="dark:bg-slate-900 dark:border-slate-700"
                 labelStyle={{ color: "#1e293b" }}
               />
-              <Legend />
+              <Legend 
+                verticalAlign="bottom" 
+                height={36}
+                wrapperStyle={{ paddingTop: "20px" }}
+              />
             </PieChart>
           </ResponsiveContainer>
         </ChartContainer>

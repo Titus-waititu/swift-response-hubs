@@ -47,6 +47,18 @@ apiClient.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
+    // Don't try to refresh token on login/auth endpoints - pass the error through
+    const isAuthEndpoint = originalRequest?.url?.includes("/auth/signin") || 
+                          originalRequest?.url?.includes("/auth/login");
+    
+    if (isAuthEndpoint) {
+      console.error(
+        "Auth Error:",
+        error?.response?.data || error?.message || error,
+      );
+      return Promise.reject(error);
+    }
+
     // Check if it's a 401 Unauthorized error (likely token expired)
     if (error.response?.status === 401 && !originalRequest._retry) {
       if (isRefreshing) {

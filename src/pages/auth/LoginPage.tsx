@@ -62,7 +62,7 @@ const LoginPage = () => {
           parsed.data.password,
         );
 
-        const { user, tokens } = response.data || {};
+        const { user, tokens } = response.data || response;
 
         if (!tokens || !tokens.accessToken) {
           throw new Error("Invalid response: missing tokens or accessToken");
@@ -106,11 +106,20 @@ const LoginPage = () => {
       } catch (err: any) {
         const message =
           err.response?.data?.message ||
+          err.response?.data?.error ||
           err.message ||
           "Login failed. Please try again.";
-        setServerError(message);
-        setAuthError(message);
-        toast.error(message);
+        
+        // Show user-friendly message for invalid credentials
+        if (err.response?.status === 401 || message.toLowerCase().includes("unauthorized") || message.toLowerCase().includes("invalid")) {
+          setServerError("Invalid email or password");
+          setAuthError("Invalid email or password");
+          toast.error("Invalid email or password");
+        } else {
+          setServerError(message);
+          setAuthError(message);
+          toast.error(message);
+        }
       }
     },
   });

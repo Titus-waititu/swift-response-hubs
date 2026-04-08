@@ -216,13 +216,22 @@ export default function UserDashboardPage({
                   {/* Additional Info */}
                   <div className="mt-3 pt-3 border-t border-slate-200 dark:border-slate-700 space-y-3 text-xs">
                     {incident.number_of_victims !== undefined && (
-                      <div className={`flex gap-2 rounded-md p-3 ${incident.number_of_victims > 0 ? 'bg-orange-50 dark:bg-orange-950/20' : 'bg-green-50 dark:bg-green-950/20'}`}>
-                        <AlertTriangle className={`h-4 w-4 flex-shrink-0 mt-0.5 ${incident.number_of_victims > 0 ? 'text-orange-600 dark:text-orange-400' : 'text-green-600 dark:text-green-400'}`} />
-                        <p className={incident.number_of_victims > 0 ? 'text-orange-800 dark:text-orange-200' : 'text-green-800 dark:text-green-200'}>
-                          {incident.number_of_victims > 0 
-                            ? `${incident.number_of_victims} victim${incident.number_of_victims !== 1 ? "s" : ""} reported`
-                            : "No injuries reported"
+                      <div
+                        className={`flex gap-2 rounded-md p-3 ${incident.number_of_victims > 0 ? "bg-orange-50 dark:bg-orange-950/20" : "bg-green-50 dark:bg-green-950/20"}`}
+                      >
+                        <AlertTriangle
+                          className={`h-4 w-4 flex-shrink-0 mt-0.5 ${incident.number_of_victims > 0 ? "text-orange-600 dark:text-orange-400" : "text-green-600 dark:text-green-400"}`}
+                        />
+                        <p
+                          className={
+                            incident.number_of_victims > 0
+                              ? "text-orange-800 dark:text-orange-200"
+                              : "text-green-800 dark:text-green-200"
                           }
+                        >
+                          {incident.number_of_victims > 0
+                            ? `${incident.number_of_victims} victim${incident.number_of_victims !== 1 ? "s" : ""} reported`
+                            : "No injuries reported"}
                         </p>
                       </div>
                     )}
@@ -242,12 +251,18 @@ export default function UserDashboardPage({
                         summary={`Incident analysis for ${incident.incident_type}`}
                         recommendations={[
                           `Priority Level: ${incident.severity_level}`,
-                          incident.number_of_victims && incident.number_of_victims > 0
+                          incident.number_of_victims &&
+                          incident.number_of_victims > 0
                             ? `Injuries: ${incident.number_of_victims} victim${incident.number_of_victims !== 1 ? "s" : ""}`
                             : "No injuries reported",
                           `Status: ${incident.status}`,
                         ]}
-                        detectedInjuries={incident.number_of_victims && incident.number_of_victims > 0 ? incident.number_of_victims : undefined}
+                        detectedInjuries={
+                          incident.number_of_victims &&
+                          incident.number_of_victims > 0
+                            ? incident.number_of_victims
+                            : undefined
+                        }
                         isLoading={false}
                         compact={true}
                       />

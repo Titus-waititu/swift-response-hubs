@@ -193,11 +193,17 @@ export default function UserReportsPage({ incidents }: UserReportsPageProps) {
                     <AIAssessmentCard
                       severity={incident.severity_level}
                       summary={incident.short_description}
-                      detectedInjuries={incident.number_of_victims && incident.number_of_victims > 0 ? incident.number_of_victims : undefined}
+                      detectedInjuries={
+                        incident.number_of_victims &&
+                        incident.number_of_victims > 0
+                          ? incident.number_of_victims
+                          : undefined
+                      }
                       recommendations={[
                         `Status: ${incident.status}`,
                         `Severity: ${incident.severity_level}`,
-                        incident.number_of_victims && incident.number_of_victims > 0
+                        incident.number_of_victims &&
+                        incident.number_of_victims > 0
                           ? `Injuries: ${incident.number_of_victims} victim${incident.number_of_victims !== 1 ? "s" : ""}`
                           : "No injuries reported",
                       ]}

@@ -109,9 +109,13 @@ const LoginPage = () => {
           err.response?.data?.error ||
           err.message ||
           "Login failed. Please try again.";
-        
+
         // Show user-friendly message for invalid credentials
-        if (err.response?.status === 401 || message.toLowerCase().includes("unauthorized") || message.toLowerCase().includes("invalid")) {
+        if (
+          err.response?.status === 401 ||
+          message.toLowerCase().includes("unauthorized") ||
+          message.toLowerCase().includes("invalid")
+        ) {
           setServerError("Invalid email or password");
           setAuthError("Invalid email or password");
           toast.error("Invalid email or password");

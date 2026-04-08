@@ -48,9 +48,10 @@ apiClient.interceptors.response.use(
     const originalRequest = error.config;
 
     // Don't try to refresh token on login/auth endpoints - pass the error through
-    const isAuthEndpoint = originalRequest?.url?.includes("/auth/signin") || 
-                          originalRequest?.url?.includes("/auth/login");
-    
+    const isAuthEndpoint =
+      originalRequest?.url?.includes("/auth/signin") ||
+      originalRequest?.url?.includes("/auth/login");
+
     if (isAuthEndpoint) {
       console.error(
         "Auth Error:",

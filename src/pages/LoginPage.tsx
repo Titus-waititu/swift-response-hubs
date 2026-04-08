@@ -116,18 +116,21 @@ export default function LoginPage() {
         },
         onError: (error: any) => {
           console.error("Login error:", error);
-          
+
           // Check for authentication/password errors (401 or 400 with specific messages)
-          const errorMessage = error?.response?.data?.message || 
-                             error?.response?.data?.error || 
-                             error?.message || 
-                             "Login failed";
-          
+          const errorMessage =
+            error?.response?.data?.message ||
+            error?.response?.data?.error ||
+            error?.message ||
+            "Login failed";
+
           // Map specific errors to user-friendly messages
-          if (error?.response?.status === 401 || 
-              errorMessage.toLowerCase().includes("invalid") ||
-              errorMessage.toLowerCase().includes("unauthorized") ||
-              errorMessage.toLowerCase().includes("missing tokens")) {
+          if (
+            error?.response?.status === 401 ||
+            errorMessage.toLowerCase().includes("invalid") ||
+            errorMessage.toLowerCase().includes("unauthorized") ||
+            errorMessage.toLowerCase().includes("missing tokens")
+          ) {
             toast.error("Invalid email or password");
           } else {
             toast.error(errorMessage);
@@ -176,18 +179,21 @@ export default function LoginPage() {
         },
         onError: (error: any) => {
           console.error("Login error:", error);
-          
+
           // Check for authentication/password errors (401 or 400 with specific messages)
-          const errorMessage = error?.response?.data?.message || 
-                             error?.response?.data?.error || 
-                             error?.message || 
-                             "Login failed";
-          
+          const errorMessage =
+            error?.response?.data?.message ||
+            error?.response?.data?.error ||
+            error?.message ||
+            "Login failed";
+
           // Map specific errors to user-friendly messages
-          if (error?.response?.status === 401 || 
-              errorMessage.toLowerCase().includes("invalid") ||
-              errorMessage.toLowerCase().includes("unauthorized") ||
-              errorMessage.toLowerCase().includes("missing tokens")) {
+          if (
+            error?.response?.status === 401 ||
+            errorMessage.toLowerCase().includes("invalid") ||
+            errorMessage.toLowerCase().includes("unauthorized") ||
+            errorMessage.toLowerCase().includes("missing tokens")
+          ) {
             toast.error("Invalid email or password");
           } else {
             toast.error(errorMessage);

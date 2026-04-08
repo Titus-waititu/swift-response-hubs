@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "@/stores/authStore";
 import UserSidebar from "@/components/user/UserSidebar";
 import UserTopNav from "@/components/user/UserTopNav";
@@ -18,6 +19,7 @@ type UserPage = "dashboard" | "submit" | "reports" | "settings" | "profile";
 const UserDashboard = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
+  const queryClient = useQueryClient();
   const [currentPage, setCurrentPage] = useState<UserPage>("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [isDarkMode, setIsDarkMode] = useState(() => {
@@ -36,12 +38,23 @@ const UserDashboard = () => {
     localStorage.setItem("user-theme", isDarkMode ? "dark" : "light");
   }, [isDarkMode]);
 
-  // Enable real-time polling for user reports
-  const { data: accidents, refetch } = useGetAccidents();
+  // Enable real-time polling for user reports with fresh data
+  const { data: accidents, refetch } = useGetAccidents({
+    staleTime: 0, // Always treat data as stale to fetch fresh data on every refetch
+  });
+
+  // Force refetch every 2 seconds to ensure latest status
+  useEffect(() => {
+    const pollInterval = setInterval(() => {
+      refetch();
+    }, 2000);
+
+    return () => clearInterval(pollInterval);
+  }, [refetch]);
 
   useRealtimeUpdates({
-    queryKeys: [["accidents"]],
-    interval: 5000, // Poll every 5 seconds for real-time status updates
+    queryKeys: [["accidents", "list"]],
+    interval: 3000, // Poll every 3 seconds for faster real-time status updates
     enabled: true,
   });
 

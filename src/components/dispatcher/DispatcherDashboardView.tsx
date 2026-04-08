@@ -386,12 +386,13 @@ export default function DispatcherDashboardView({
                                   incident.time_report_submitted,
                                 )}
                               />
-                              {incident.number_of_victims !== undefined && (
-                                <InfoChip
-                                  icon={Users}
-                                  label={`${incident.number_of_victims} injur${incident.number_of_victims === 1 ? "y" : "ies"}`}
-                                />
-                              )}
+                              {incident.number_of_victims !== undefined &&
+                                incident.number_of_victims > 0 && (
+                                  <InfoChip
+                                    icon={Users}
+                                    label={`${incident.number_of_victims} Injur${incident.number_of_victims === 1 ? "y" : "ies"}`}
+                                  />
+                                )}
                             </div>
                           </button>
 
@@ -418,10 +419,18 @@ export default function DispatcherDashboardView({
                                 summary={incident.short_description}
                                 recommendations={[
                                   `Priority: ${incident.severity_level} severity case`,
-                                  `Injuries: ${incident.number_of_victims || 0} victim${incident.number_of_victims !== 1 ? "s" : ""}`,
+                                  incident.number_of_victims &&
+                                  incident.number_of_victims > 0
+                                    ? `Injuries: ${incident.number_of_victims} victim${incident.number_of_victims !== 1 ? "s" : ""}`
+                                    : "No injuries reported",
                                   "Requires dispatcher review before dispatch",
                                 ]}
-                                detectedInjuries={incident.number_of_victims}
+                                detectedInjuries={
+                                  incident.number_of_victims &&
+                                  incident.number_of_victims > 0
+                                    ? incident.number_of_victims
+                                    : undefined
+                                }
                                 isLoading={false}
                                 compact={true}
                               />

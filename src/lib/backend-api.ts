@@ -14,6 +14,7 @@ type BackendAccidentSeverity = "minor" | "moderate" | "severe" | "fatal";
 type BackendAccidentStatus =
   | "reported"
   | "under_investigation"
+  | "in_progress"
   | "resolved"
   | "closed";
 
@@ -144,6 +145,8 @@ function mapStatusFromBackend(status: BackendAccidentStatus): IncidentStatus {
   switch (status) {
     case "under_investigation":
       return "under_investigation";
+    case "in_progress":
+      return "in_progress";
     case "resolved":
       return "resolved";
     case "closed":

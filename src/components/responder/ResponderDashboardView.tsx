@@ -434,7 +434,12 @@ export default function ResponderDashboardView({
                           <ResponderAIBriefing
                             severity={incident.severity_level}
                             summary={incident.short_description}
-                            detectedInjuries={incident.number_of_victims}
+                            detectedInjuries={
+                              incident.number_of_victims &&
+                              incident.number_of_victims > 0
+                                ? incident.number_of_victims
+                                : 0
+                            }
                             suggestedEquipment={[
                               "Basic Life Support Kit",
                               "Stabilization Equipment",

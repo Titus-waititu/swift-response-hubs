@@ -125,6 +125,17 @@ export type ReportFormValues = z.infer<typeof reportFormSchema>;
 // User submit accident report form
 export const userSubmitReportSchema = z
   .object({
+    phoneNumber: z
+      .string()
+      .optional()
+      .refine(
+        (val) => !val || /^[\d\s\-+()]+$/.test(val),
+        "Invalid phone number format",
+      )
+      .refine(
+        (val) => !val || val.replace(/\D/g, "").length >= 10,
+        "Phone number must be at least 10 digits",
+      ),
     description: z
       .string()
       .min(1, "Description is required")

@@ -5,7 +5,7 @@ import {
   Plus,
   CheckCircle2,
   MapPin,
-  Truck,
+  AlertTriangle,
 } from "lucide-react";
 import {
   MetricCard,
@@ -15,6 +15,7 @@ import {
   EmptyState,
 } from "@/components/premium/DashboardComponents";
 import { AIAssessmentCard } from "@/components/AIAssessmentCard";
+import { StatusBadge, SeverityBadge } from "@/components/StatusBadge";
 import type { IncidentReport } from "@/types/incident";
 import {
   STATUS_STEPS,
@@ -129,19 +130,7 @@ export default function UserDashboardPage({
                       </p>
                     </div>
                     <div className="flex flex-col items-end gap-2">
-                      <span
-                        className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${
-                          incident.severity_level === "Critical"
-                            ? "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300"
-                            : incident.severity_level === "High"
-                              ? "bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300"
-                              : incident.severity_level === "Medium"
-                                ? "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300"
-                                : "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300"
-                        }`}
-                      >
-                        {incident.severity_level}
-                      </span>
+                      <SeverityBadge severity={incident.severity_level} />
                       <span className="text-xs text-slate-500 dark:text-slate-400">
                         {new Date(incident.created_at).toLocaleDateString()}
                       </span>
@@ -216,10 +205,7 @@ export default function UserDashboardPage({
                       </div>
                     </div>
                     <p className="mt-3 text-xs text-slate-600 dark:text-slate-400 flex items-center gap-2 flex-wrap">
-                      <span className="font-semibold text-slate-900 dark:text-white inline-flex items-center gap-1.5 rounded-full bg-slate-100 dark:bg-slate-700 px-3 py-1">
-                        <span className="inline-flex h-2 w-2 rounded-full bg-blue-500" />
-                        Status: {getStatusLabel(incident.status)}
-                      </span>
+                      <StatusBadge status={incident.status} />
                       <span className="text-slate-500 dark:text-slate-400">
                         Updated:{" "}
                         {new Date(incident.updated_at).toLocaleTimeString()}
@@ -228,25 +214,25 @@ export default function UserDashboardPage({
                   </div>
 
                   {/* Additional Info */}
-                  {(incident.number_of_victims ||
-                    incident.short_description) && (
-                    <div className="mt-3 pt-3 border-t border-slate-200 dark:border-slate-700 space-y-2 text-xs">
-                      {incident.number_of_victims && (
-                        <p className="text-slate-600 dark:text-slate-400">
-                          <span className="font-medium">
-                            Reported Injuries:
-                          </span>{" "}
-                          {incident.number_of_victims}
+                  <div className="mt-3 pt-3 border-t border-slate-200 dark:border-slate-700 space-y-3 text-xs">
+                    {incident.number_of_victims !== undefined && (
+                      <div className={`flex gap-2 rounded-md p-3 ${incident.number_of_victims > 0 ? 'bg-orange-50 dark:bg-orange-950/20' : 'bg-green-50 dark:bg-green-950/20'}`}>
+                        <AlertTriangle className={`h-4 w-4 flex-shrink-0 mt-0.5 ${incident.number_of_victims > 0 ? 'text-orange-600 dark:text-orange-400' : 'text-green-600 dark:text-green-400'}`} />
+                        <p className={incident.number_of_victims > 0 ? 'text-orange-800 dark:text-orange-200' : 'text-green-800 dark:text-green-200'}>
+                          {incident.number_of_victims > 0 
+                            ? `${incident.number_of_victims} victim${incident.number_of_victims !== 1 ? "s" : ""} reported`
+                            : "No injuries reported"
+                          }
                         </p>
-                      )}
-                      {incident.short_description && (
-                        <p className="text-slate-600 dark:text-slate-400 line-clamp-2">
-                          <span className="font-medium">Description:</span>{" "}
-                          {incident.short_description}
-                        </p>
-                      )}
-                    </div>
-                  )}
+                      </div>
+                    )}
+                    {incident.short_description && (
+                      <p className="text-slate-600 dark:text-slate-400">
+                        <span className="font-medium">Description:</span>{" "}
+                        {incident.short_description}
+                      </p>
+                    )}
+                  </div>
 
                   {/* AI Assessment Card */}
                   {incident.status !== "reported" && (
@@ -256,10 +242,12 @@ export default function UserDashboardPage({
                         summary={`Incident analysis for ${incident.incident_type}`}
                         recommendations={[
                           `Priority Level: ${incident.severity_level}`,
-                          `Injuries: ${incident.number_of_victims || 0} victim${incident.number_of_victims !== 1 ? "s" : ""}`,
+                          incident.number_of_victims && incident.number_of_victims > 0
+                            ? `Injuries: ${incident.number_of_victims} victim${incident.number_of_victims !== 1 ? "s" : ""}`
+                            : "No injuries reported",
                           `Status: ${incident.status}`,
                         ]}
-                        detectedInjuries={incident.number_of_victims}
+                        detectedInjuries={incident.number_of_victims && incident.number_of_victims > 0 ? incident.number_of_victims : undefined}
                         isLoading={false}
                         compact={true}
                       />

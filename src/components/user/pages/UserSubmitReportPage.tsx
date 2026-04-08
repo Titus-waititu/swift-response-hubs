@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from "react";
-import { useForm } from "@tanstack/react-form";
 import { Upload, AlertCircle, Loader2, ImagePlus, X } from "lucide-react";
+import { z } from "zod";
 import { toast } from "sonner";
 import { useCreateAccidentReport } from "@/hooks/useAccidents";
+import { useUpdateUser } from "@/hooks/useUsers";
 import { useAuthStore } from "@/stores/authStore";
 import {
   Card,
@@ -28,11 +29,30 @@ interface SubmitAccidentReportProps {
 export default function SubmitAccidentReportPage({
   onSubmit,
 }: SubmitAccidentReportProps) {
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [description, setDescription] = useState("");
+  const [location, setLocation] = useState("");
+  const [latitude, setLatitude] = useState("");
+  const [longitude, setLongitude] = useState("");
+  const [vehicleLicensePlate, setVehicleLicensePlate] = useState("");
+  const [vehicleMake, setVehicleMake] = useState("");
+  const [vehicleModel, setVehicleModel] = useState("");
+  const [vehicleYear, setVehicleYear] = useState("");
+  const [otherVehiclesCount, setOtherVehiclesCount] = useState(0);
+  const [witnessCount, setWitnessCount] = useState(0);
+  const [injuriesReported, setInjuriesReported] = useState(false);
+  const [injuriesDescription, setInjuriesDescription] = useState("");
+  const [airbagDeployed, setAirbagDeployed] = useState(false);
+  const [rollover, setRollover] = useState(false);
+  const [mediaFiles, setMediaFiles] = useState<File[]>([]);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [isLocating, setIsLocating] = useState(true);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [mediaPreviews, setMediaPreviews] = useState<string[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const createReport = useCreateAccidentReport();
+  const updateUser = useUpdateUser();
   const { user } = useAuthStore();
 
   const requestLocation = () => {
@@ -41,8 +61,8 @@ export default function SubmitAccidentReportPage({
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          form.setFieldValue("latitude", position.coords.latitude.toString());
-          form.setFieldValue("longitude", position.coords.longitude.toString());
+          setLatitude(position.coords.latitude.toString());
+          setLongitude(position.coords.longitude.toString());
           setIsLocating(false);
           setLocationError(null);
         },
@@ -68,593 +88,535 @@ export default function SubmitAccidentReportPage({
   };
 
   useEffect(() => {
+    // Attempt to grab geolocation automatically on mount
     requestLocation();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const form = useForm<UserSubmitReportFormValues>({
-    defaultValues: {
-      description: "",
-      location: "",
-      latitude: "",
-      longitude: "",
-      vehicleLicensePlate: "",
-      vehicleMake: "",
-      vehicleModel: "",
-      vehicleYear: "",
-      otherVehiclesCount: 0,
-      witnessCount: 0,
-      injuriesReported: false,
-      injuriesDescription: "",
-      airbagDeployed: false,
-      rollover: false,
-      mediaFiles: [],
-    },
-    onSubmit: async ({ value }) => {
-      const parsed = userSubmitReportSchema.safeParse(value);
-      if (!parsed.success) {
-        const errors = parsed.error.flatten().fieldErrors;
-        const errorMessages = Object.values(errors).flat().filter(Boolean);
-        toast.error(
-          errorMessages.join("\n") || "Please fix the errors in the form.",
-        );
-        return { success: false, errors };
-      }
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setFieldErrors({});
 
+    try {
+      const formData: UserSubmitReportFormValues = {
+        phoneNumber,
+        description,
+        location,
+        latitude,
+        longitude,
+        vehicleLicensePlate,
+        vehicleMake,
+        vehicleModel,
+        vehicleYear,
+        otherVehiclesCount,
+        witnessCount,
+        injuriesReported,
+        injuriesDescription,
+        airbagDeployed,
+        rollover,
+        mediaFiles,
+      };
+
+      // Validate with Zod
+      await userSubmitReportSchema.parseAsync(formData);
+
+      console.log("Submitting accident report:", formData);
+
+      // Create the payload for the accident report
       const payload = {
-        description: parsed.data.description,
-        locationAddress: parsed.data.location,
-        latitude: parseFloat(parsed.data.latitude || "0"),
-        longitude: parseFloat(parsed.data.longitude || "0"),
-        severity: parsed.data.injuriesReported ? "severe" : "moderate",
+        description,
+        locationAddress: location,
+        latitude: parseFloat(latitude || "0"),
+        longitude: parseFloat(longitude || "0"),
+        severity: injuriesReported ? "severe" : "moderate",
         accidentDate: new Date().toISOString(),
         reportedById: user?.id || "unknown",
       };
-      try {
-        await createReport.mutateAsync(payload as any);
-        if (onSubmit) {
-          onSubmit(parsed.data);
-        }
-        toast.success("Report submitted successfully!");
-        form.reset();
-      } catch (error) {
+
+      // Submit the accident report
+      await createReport.mutateAsync(payload as any);
+
+      // Update user's phone number if provided and user is authenticated
+      if (phoneNumber && user?.id) {
+        await updateUser.mutateAsync({
+          id: user.id,
+          data: { phoneNumber },
+        });
+      }
+
+      if (onSubmit) {
+        onSubmit(formData);
+      }
+      toast.success("Report submitted successfully!");
+
+      // Reset form
+      setPhoneNumber("");
+      setDescription("");
+      setLocation("");
+      setVehicleLicensePlate("");
+      setVehicleMake("");
+      setVehicleModel("");
+      setVehicleYear("");
+      setOtherVehiclesCount(0);
+      setWitnessCount(0);
+      setInjuriesReported(false);
+      setInjuriesDescription("");
+      setAirbagDeployed(false);
+      setRollover(false);
+      setMediaFiles([]);
+      setMediaPreviews([]);
+    } catch (error: any) {
+      if (error.errors && Array.isArray(error.errors)) {
+        const errors: Record<string, string> = {};
+        error.errors.forEach((err: any) => {
+          const fieldName = err.path.join(".");
+          errors[fieldName] = err.message;
+        });
+        setFieldErrors(errors);
+      } else {
         console.error(error);
         toast.error("Failed to submit report.");
       }
-    },
-  });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const newFiles = Array.from(e.target.files);
-      const currentFiles = form.state.values.mediaFiles || [];
-      const updatedFiles = [...currentFiles, ...newFiles];
-      form.setFieldValue("mediaFiles", updatedFiles);
+      const updatedFiles = [...mediaFiles, ...newFiles];
+      setMediaFiles(updatedFiles);
 
+      // Create previews
       const newPreviews = newFiles.map((file) => URL.createObjectURL(file));
       setMediaPreviews((prev) => [...prev, ...newPreviews]);
     }
   };
 
   const removeMedia = (index: number) => {
+    // Revoke object URL to prevent memory leaks
     URL.revokeObjectURL(mediaPreviews[index]);
-    const updatedFiles = [...(form.state.values.mediaFiles || [])];
+
+    const updatedFiles = [...mediaFiles];
     updatedFiles.splice(index, 1);
-    form.setFieldValue("mediaFiles", updatedFiles);
+    setMediaFiles(updatedFiles);
 
     const updatedPreviews = [...mediaPreviews];
     updatedPreviews.splice(index, 1);
     setMediaPreviews(updatedPreviews);
   };
 
+  const getFieldError = (fieldName: string) => {
+    return fieldErrors[fieldName];
+  };
+
   return (
-    <form.Subscribe>
-      {({ isSubmitting }) => (
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            form.handleSubmit();
-          }}
-          className="space-y-6"
-        >
-          {/* Header */}
-          <div>
-            <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-50">
-              Submit Accident Report
-            </h1>
-            <p className="text-slate-600 dark:text-slate-400 mt-2">
-              Provide detailed information about the incident
+    <form onSubmit={handleSubmit} className="space-y-6">
+      {/* Header */}
+      <div>
+        <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-50">
+          Submit Accident Report
+        </h1>
+        <p className="text-slate-600 dark:text-slate-400 mt-2">
+          Provide detailed information about the incident
+        </p>
+      </div>
+
+      {/* Info Banner */}
+      <Card className="bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
+        <CardContent className="pt-6">
+          <div className="flex gap-3">
+            <AlertCircle className="h-5 w-5 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+            <p className="text-sm text-blue-900 dark:text-blue-300">
+              Provide as much detail as possible. All information will be
+              reviewed by emergency responders and officers.
             </p>
           </div>
+        </CardContent>
+      </Card>
 
-          {/* Info Banner */}
-          <Card className="bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
-            <CardContent className="pt-6">
-              <div className="flex gap-3">
-                <AlertCircle className="h-5 w-5 text-blue-600 dark:text-blue-400 flex-shrink-0" />
-                <p className="text-sm text-blue-900 dark:text-blue-300">
-                  Provide as much detail as possible. All information will be
-                  reviewed by emergency responders and officers.
+      {/* Form Sections */}
+      <div className="space-y-6">
+        {/* Incident Description */}
+        <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+          <CardHeader>
+            <CardTitle className="text-slate-900 dark:text-slate-50">
+              Incident Description
+            </CardTitle>
+            <CardDescription className="text-slate-600 dark:text-slate-400">
+              Describe what happened
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Label className="text-slate-700 dark:text-slate-300 mb-2 block">
+                Phone Number
+              </Label>
+              <Input
+                placeholder="+1 (555) 123-4567"
+                type="tel"
+                value={phoneNumber}
+                onChange={(e) => setPhoneNumber(e.target.value)}
+                disabled={isSubmitting}
+                className={`bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-50 ${
+                  fieldErrors.phoneNumber
+                    ? "border-red-500 focus:ring-red-500"
+                    : ""
+                }`}
+              />
+              {fieldErrors.phoneNumber && (
+                <p className="text-sm text-red-600 dark:text-red-400 mt-1">
+                  {fieldErrors.phoneNumber}
                 </p>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Form Sections */}
-          <div className="space-y-6">
-            {/* Incident Description */}
-            <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
-              <CardHeader>
-                <CardTitle className="text-slate-900 dark:text-slate-50">
-                  Incident Description
-                </CardTitle>
-                <CardDescription className="text-slate-600 dark:text-slate-400">
-                  Describe what happened
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <form.Field
-                  name="description"
-                  validators={{
-                    onChange: ({ value }) =>
-                      !value || value.length < 10
-                        ? "Description must be at least 10 characters"
-                        : undefined,
-                  }}
-                >
-                  {(field) => (
-                    <div>
-                      <Label className="text-slate-700 dark:text-slate-300 mb-2 block">
-                        What happened? *
-                      </Label>
-                      <Textarea
-                        name={field.name}
-                        placeholder="Describe the incident in detail..."
-                        value={field.state.value}
-                        onBlur={field.handleBlur}
-                        onChange={(e) => field.handleChange(e.target.value)}
-                        disabled={isSubmitting}
-                        className={`bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-50 h-32 ${
-                          field.state.meta.errors.length
-                            ? "border-red-500 focus:ring-red-500"
-                            : ""
-                        }`}
-                      />
-                      {field.state.meta.errors.length > 0 && (
-                        <p className="text-sm text-red-600 dark:text-red-400 mt-1">
-                          {field.state.meta.errors.join(", ")}
-                        </p>
-                      )}
-                    </div>
-                  )}
-                </form.Field>
-
-                <div className="grid grid-cols-1 gap-4">
-                  <form.Field
-                    name="location"
-                    validators={{
-                      onChange: ({ value }) =>
-                        !value || value.length < 5
-                          ? "Location address is required"
-                          : undefined,
-                    }}
-                  >
-                    {(field) => (
-                      <div>
-                        <Label className="text-slate-700 dark:text-slate-300 mb-2 block">
-                          Location Address *
-                        </Label>
-                        <Input
-                          name={field.name}
-                          placeholder="Street address"
-                          value={field.state.value}
-                          onBlur={field.handleBlur}
-                          onChange={(e) => field.handleChange(e.target.value)}
-                          disabled={isSubmitting}
-                          className={`bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-50 ${
-                            field.state.meta.errors.length
-                              ? "border-red-500 focus:ring-red-500"
-                              : ""
-                          }`}
-                        />
-                        {field.state.meta.errors.length > 0 && (
-                          <p className="text-sm text-red-600 dark:text-red-400 mt-1">
-                            {field.state.meta.errors.join(", ")}
-                          </p>
-                        )}
-                      </div>
-                    )}
-                  </form.Field>
-                  {/* Coordinates are captured automatically */}
-                  {locationError ? (
-                    <div className="text-sm bg-yellow-50 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-200 p-3 rounded border border-yellow-200 dark:border-yellow-800/30 flex items-start gap-2">
-                      <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                      <div>
-                        <p>{locationError}</p>
-                        <Button
-                          type="button"
-                          variant="link"
-                          className="h-auto p-0 text-yellow-700 dark:text-yellow-300 font-semibold mt-1"
-                          onClick={requestLocation}
-                        >
-                          Try Again
-                        </Button>
-                      </div>
-                    </div>
-                  ) : form.state.values.latitude &&
-                    form.state.values.longitude ? (
-                    <div className="text-sm text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 p-2 rounded border border-green-200 dark:border-green-800/30 flex items-center gap-2">
-                      <AlertCircle className="h-4 w-4" />
-                      Location successfully detected automatically
-                    </div>
-                  ) : isLocating ? (
-                    <div className="text-sm text-slate-500 dark:text-slate-400 flex items-center gap-2">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Detecting your location...
-                    </div>
-                  ) : null}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Vehicle Information */}
-            <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
-              <CardHeader>
-                <CardTitle className="text-slate-900 dark:text-slate-50">
-                  Your Vehicle Information
-                </CardTitle>
-                <CardDescription className="text-slate-600 dark:text-slate-400">
-                  Details about the primary vehicle involved
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <form.Field name="vehicleLicensePlate">
-                  {(field) => (
-                    <div>
-                      <Label className="text-slate-700 dark:text-slate-300 mb-2 block">
-                        License Plate
-                      </Label>
-                      <Input
-                        name={field.name}
-                        placeholder="ABC-1234"
-                        value={field.state.value}
-                        onBlur={field.handleBlur}
-                        onChange={(e) => field.handleChange(e.target.value)}
-                        disabled={isSubmitting}
-                        className="bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-50"
-                      />
-                    </div>
-                  )}
-                </form.Field>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <form.Field name="vehicleMake">
-                    {(field) => (
-                      <div>
-                        <Label className="text-slate-700 dark:text-slate-300 mb-2 block">
-                          Make
-                        </Label>
-                        <Input
-                          name={field.name}
-                          placeholder="Toyota"
-                          value={field.state.value}
-                          onBlur={field.handleBlur}
-                          onChange={(e) => field.handleChange(e.target.value)}
-                          disabled={isSubmitting}
-                          className="bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-50"
-                        />
-                      </div>
-                    )}
-                  </form.Field>
-                  <form.Field name="vehicleModel">
-                    {(field) => (
-                      <div>
-                        <Label className="text-slate-700 dark:text-slate-300 mb-2 block">
-                          Model
-                        </Label>
-                        <Input
-                          name={field.name}
-                          placeholder="Camry"
-                          value={field.state.value}
-                          onBlur={field.handleBlur}
-                          onChange={(e) => field.handleChange(e.target.value)}
-                          disabled={isSubmitting}
-                          className="bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-50"
-                        />
-                      </div>
-                    )}
-                  </form.Field>
-                  <form.Field name="vehicleYear" validators={{}}>
-                    {(field) => (
-                      <div>
-                        <Label className="text-slate-700 dark:text-slate-300 mb-2 block">
-                          Year
-                        </Label>
-                        <Input
-                          type="text"
-                          name={field.name}
-                          placeholder="2022"
-                          value={field.state.value}
-                          onBlur={field.handleBlur}
-                          onChange={(e) => field.handleChange(e.target.value)}
-                          disabled={isSubmitting}
-                          className={`bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-50 ${
-                            field.state.meta.errors.length
-                              ? "border-red-500 focus:ring-red-500"
-                              : ""
-                          }`}
-                        />
-                        {field.state.meta.errors.length > 0 && (
-                          <p className="text-sm text-red-600 dark:text-red-400 mt-1">
-                            {field.state.meta.errors.join(", ")}
-                          </p>
-                        )}
-                      </div>
-                    )}
-                  </form.Field>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Incident Details */}
-            <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
-              <CardHeader>
-                <CardTitle className="text-slate-900 dark:text-slate-50">
-                  Incident Details
-                </CardTitle>
-                <CardDescription className="text-slate-600 dark:text-slate-400">
-                  Additional information about the accident
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <form.Field name="otherVehiclesCount">
-                    {(field) => (
-                      <div>
-                        <Label className="text-slate-700 dark:text-slate-300 mb-2 block">
-                          Other Vehicles Involved
-                        </Label>
-                        <Input
-                          type="number"
-                          min="0"
-                          name={field.name}
-                          value={field.state.value}
-                          onBlur={field.handleBlur}
-                          onChange={(e) =>
-                            field.handleChange(parseInt(e.target.value) || 0)
-                          }
-                          disabled={isSubmitting}
-                          className="bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-50"
-                        />
-                      </div>
-                    )}
-                  </form.Field>
-                  <form.Field name="witnessCount">
-                    {(field) => (
-                      <div>
-                        <Label className="text-slate-700 dark:text-slate-300 mb-2 block">
-                          Witnesses Present
-                        </Label>
-                        <Input
-                          type="number"
-                          min="0"
-                          name={field.name}
-                          value={field.state.value}
-                          onBlur={field.handleBlur}
-                          onChange={(e) =>
-                            field.handleChange(parseInt(e.target.value) || 0)
-                          }
-                          disabled={isSubmitting}
-                          className="bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-50"
-                        />
-                      </div>
-                    )}
-                  </form.Field>
-                </div>
-
-                <div className="border-t border-slate-200 dark:border-slate-700 pt-4 space-y-3">
-                  <form.Field name="injuriesReported">
-                    {(field) => (
-                      <div className="flex items-center space-x-2">
-                        <Checkbox
-                          id="injuries"
-                          name={field.name}
-                          checked={field.state.value}
-                          onCheckedChange={(checked) =>
-                            field.handleChange(checked === true)
-                          }
-                          disabled={isSubmitting}
-                        />
-                        <label
-                          htmlFor="injuries"
-                          className="text-sm font-medium text-slate-700 dark:text-slate-300 cursor-pointer"
-                        >
-                          Injuries reported
-                        </label>
-                      </div>
-                    )}
-                  </form.Field>
-
-                  <form.Subscribe
-                    selector={(state) => [state.values.injuriesReported]}
-                  >
-                    {([injuriesReported]) =>
-                      injuriesReported && (
-                        <form.Field
-                          name="injuriesDescription"
-                          validators={{
-                            onChange: ({ value }) =>
-                              !value
-                                ? "Injury description is required"
-                                : undefined,
-                          }}
-                        >
-                          {(field) => (
-                            <div>
-                              <Label className="text-slate-700 dark:text-slate-300 mb-2 block">
-                                Describe injuries *
-                              </Label>
-                              <Textarea
-                                name={field.name}
-                                placeholder="Describe any injuries..."
-                                value={field.state.value}
-                                onBlur={field.handleBlur}
-                                onChange={(e) =>
-                                  field.handleChange(e.target.value)
-                                }
-                                disabled={isSubmitting}
-                                className={`bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-50 ${
-                                  field.state.meta.errors.length
-                                    ? "border-red-500 focus:ring-red-500"
-                                    : ""
-                                }`}
-                              />
-                              {field.state.meta.errors.length > 0 && (
-                                <p className="text-sm text-red-600 dark:text-red-400 mt-1">
-                                  {field.state.meta.errors.join(", ")}
-                                </p>
-                              )}
-                            </div>
-                          )}
-                        </form.Field>
-                      )
-                    }
-                  </form.Subscribe>
-
-                  <form.Field name="airbagDeployed">
-                    {(field) => (
-                      <div className="flex items-center space-x-2">
-                        <Checkbox
-                          id="airbag"
-                          name={field.name}
-                          checked={field.state.value}
-                          onCheckedChange={(checked) =>
-                            field.handleChange(checked === true)
-                          }
-                          disabled={isSubmitting}
-                        />
-                        <label
-                          htmlFor="airbag"
-                          className="text-sm font-medium text-slate-700 dark:text-slate-300 cursor-pointer"
-                        >
-                          Airbag deployed
-                        </label>
-                      </div>
-                    )}
-                  </form.Field>
-
-                  <form.Field name="rollover">
-                    {(field) => (
-                      <div className="flex items-center space-x-2">
-                        <Checkbox
-                          id="rollover"
-                          name={field.name}
-                          checked={field.state.value}
-                          onCheckedChange={(checked) =>
-                            field.handleChange(checked === true)
-                          }
-                          disabled={isSubmitting}
-                        />
-                        <label
-                          htmlFor="rollover"
-                          className="text-sm font-medium text-slate-700 dark:text-slate-300 cursor-pointer"
-                        >
-                          Vehicle rolled over
-                        </label>
-                      </div>
-                    )}
-                  </form.Field>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Media Attachments */}
-            <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
-              <CardHeader>
-                <CardTitle className="text-slate-900 dark:text-slate-50 flex items-center gap-2">
-                  <ImagePlus className="h-5 w-5" />
-                  Media Attachments
-                </CardTitle>
-                <CardDescription className="text-slate-600 dark:text-slate-400">
-                  Upload photos or videos of the incident scene
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center gap-4">
-                  <input
-                    type="file"
-                    multiple
-                    accept="image/*,video/*"
-                    className="hidden"
-                    ref={fileInputRef}
-                    onChange={handleFileChange}
-                    disabled={isSubmitting}
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={isSubmitting}
-                    className="w-full sm:w-auto"
-                  >
-                    <Upload className="mr-2 h-4 w-4" />
-                    Select Files
-                  </Button>
-                  <span className="text-sm text-slate-500">
-                    {form.state.values.mediaFiles?.length || 0} file(s) selected
-                  </span>
-                </div>
-
-                {/* Previews */}
-                {mediaPreviews.length > 0 && (
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
-                    {mediaPreviews.map((preview, index) => (
-                      <div
-                        key={index}
-                        className="relative group rounded-md overflow-hidden bg-slate-100 aspect-square"
-                      >
-                        <img
-                          src={preview}
-                          alt={`Preview ${index + 1}`}
-                          className="w-full h-full object-cover"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => removeMedia(index)}
-                          className="absolute top-1 right-1 bg-red-500/80 hover:bg-red-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          <X className="h-4 w-4" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Submit Button */}
-            <Button
-              type="submit"
-              disabled={isSubmitting}
-              className="w-full py-6"
-              size="lg"
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Submitting Report...
-                </>
-              ) : (
-                <>
-                  <Upload className="mr-2 h-4 w-4" />
-                  Submit Accident Report
-                </>
               )}
-            </Button>
-          </div>
-        </form>
-      )}
-    </form.Subscribe>
+            </div>
+
+            <div>
+              <Label className="text-slate-700 dark:text-slate-300 mb-2 block">
+                What happened? *
+              </Label>
+              <Textarea
+                placeholder="Describe the incident in detail..."
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                disabled={isSubmitting}
+                className={`bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-50 h-32 ${
+                  fieldErrors.description
+                    ? "border-red-500 focus:ring-red-500"
+                    : ""
+                }`}
+              />
+              {fieldErrors.description && (
+                <p className="text-sm text-red-600 dark:text-red-400 mt-1">
+                  {fieldErrors.description}
+                </p>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 gap-4">
+              <div>
+                <Label className="text-slate-700 dark:text-slate-300 mb-2 block">
+                  Location Address *
+                </Label>
+                <Input
+                  placeholder="Street address"
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  disabled={isSubmitting}
+                  className={`bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-50 ${
+                    fieldErrors.location
+                      ? "border-red-500 focus:ring-red-500"
+                      : ""
+                  }`}
+                />
+                {fieldErrors.location && (
+                  <p className="text-sm text-red-600 dark:text-red-400 mt-1">
+                    {fieldErrors.location}
+                  </p>
+                )}
+              </div>
+              {/* Coordinates are captured automatically */}
+              {locationError ? (
+                <div className="text-sm bg-yellow-50 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-200 p-3 rounded border border-yellow-200 dark:border-yellow-800/30 flex items-start gap-2">
+                  <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p>{locationError}</p>
+                    <Button
+                      type="button"
+                      variant="link"
+                      className="h-auto p-0 text-yellow-700 dark:text-yellow-300 font-semibold mt-1"
+                      onClick={requestLocation}
+                    >
+                      Try Again
+                    </Button>
+                  </div>
+                </div>
+              ) : latitude && longitude ? (
+                <div className="text-sm text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 p-2 rounded border border-green-200 dark:border-green-800/30 flex items-center gap-2">
+                  <AlertCircle className="h-4 w-4" />
+                  Location successfully detected automatically
+                </div>
+              ) : isLocating ? (
+                <div className="text-sm text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Detecting your location...
+                </div>
+              ) : null}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Vehicle Information */}
+        <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+          <CardHeader>
+            <CardTitle className="text-slate-900 dark:text-slate-50">
+              Your Vehicle Information
+            </CardTitle>
+            <CardDescription className="text-slate-600 dark:text-slate-400">
+              Details about the primary vehicle involved
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Label className="text-slate-700 dark:text-slate-300 mb-2 block">
+                License Plate
+              </Label>
+              <Input
+                placeholder="ABC-1234"
+                value={vehicleLicensePlate}
+                onChange={(e) => setVehicleLicensePlate(e.target.value)}
+                disabled={isSubmitting}
+                className="bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-50"
+              />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <Label className="text-slate-700 dark:text-slate-300 mb-2 block">
+                  Make
+                </Label>
+                <Input
+                  placeholder="Toyota"
+                  value={vehicleMake}
+                  onChange={(e) => setVehicleMake(e.target.value)}
+                  disabled={isSubmitting}
+                  className="bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-50"
+                />
+              </div>
+              <div>
+                <Label className="text-slate-700 dark:text-slate-300 mb-2 block">
+                  Model
+                </Label>
+                <Input
+                  placeholder="Camry"
+                  value={vehicleModel}
+                  onChange={(e) => setVehicleModel(e.target.value)}
+                  disabled={isSubmitting}
+                  className="bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-50"
+                />
+              </div>
+              <div>
+                <Label className="text-slate-700 dark:text-slate-300 mb-2 block">
+                  Year
+                </Label>
+                <Input
+                  type="number"
+                  placeholder="2022"
+                  value={vehicleYear}
+                  onChange={(e) => setVehicleYear(e.target.value)}
+                  disabled={isSubmitting}
+                  className="bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-50"
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Incident Details */}
+        <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+          <CardHeader>
+            <CardTitle className="text-slate-900 dark:text-slate-50">
+              Incident Details
+            </CardTitle>
+            <CardDescription className="text-slate-600 dark:text-slate-400">
+              Additional information about the accident
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label className="text-slate-700 dark:text-slate-300 mb-2 block">
+                  Other Vehicles Involved
+                </Label>
+                <Input
+                  type="number"
+                  min="0"
+                  value={otherVehiclesCount}
+                  onChange={(e) =>
+                    setOtherVehiclesCount(parseInt(e.target.value) || 0)
+                  }
+                  disabled={isSubmitting}
+                  className="bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-50"
+                />
+              </div>
+              <div>
+                <Label className="text-slate-700 dark:text-slate-300 mb-2 block">
+                  Witnesses Present
+                </Label>
+                <Input
+                  type="number"
+                  min="0"
+                  value={witnessCount}
+                  onChange={(e) =>
+                    setWitnessCount(parseInt(e.target.value) || 0)
+                  }
+                  disabled={isSubmitting}
+                  className="bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-50"
+                />
+              </div>
+            </div>
+
+            <div className="border-t border-slate-200 dark:border-slate-700 pt-4 space-y-3">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="injuries"
+                  checked={injuriesReported}
+                  onCheckedChange={(checked) =>
+                    setInjuriesReported(checked as boolean)
+                  }
+                  disabled={isSubmitting}
+                />
+                <label
+                  htmlFor="injuries"
+                  className="text-sm font-medium text-slate-700 dark:text-slate-300 cursor-pointer"
+                >
+                  Injuries reported
+                </label>
+              </div>
+
+              {injuriesReported && (
+                <div>
+                  <Label className="text-slate-700 dark:text-slate-300 mb-2 block">
+                    Describe injuries *
+                  </Label>
+                  <Textarea
+                    placeholder="Describe any injuries..."
+                    value={injuriesDescription}
+                    onChange={(e) => setInjuriesDescription(e.target.value)}
+                    disabled={isSubmitting}
+                    className={`bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-50 ${
+                      fieldErrors.injuriesDescription
+                        ? "border-red-500 focus:ring-red-500"
+                        : ""
+                    }`}
+                  />
+                  {fieldErrors.injuriesDescription && (
+                    <p className="text-sm text-red-600 dark:text-red-400 mt-1">
+                      {fieldErrors.injuriesDescription}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="airbag"
+                  checked={airbagDeployed}
+                  onCheckedChange={(checked) =>
+                    setAirbagDeployed(checked as boolean)
+                  }
+                  disabled={isSubmitting}
+                />
+                <label
+                  htmlFor="airbag"
+                  className="text-sm font-medium text-slate-700 dark:text-slate-300 cursor-pointer"
+                >
+                  Airbag deployed
+                </label>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="rollover"
+                  checked={rollover}
+                  onCheckedChange={(checked) => setRollover(checked as boolean)}
+                  disabled={isSubmitting}
+                />
+                <label
+                  htmlFor="rollover"
+                  className="text-sm font-medium text-slate-700 dark:text-slate-300 cursor-pointer"
+                >
+                  Vehicle rolled over
+                </label>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Media Attachments */}
+        <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+          <CardHeader>
+            <CardTitle className="text-slate-900 dark:text-slate-50 flex items-center gap-2">
+              <ImagePlus className="h-5 w-5" />
+              Media Attachments
+            </CardTitle>
+            <CardDescription className="text-slate-600 dark:text-slate-400">
+              Upload photos or videos of the incident scene
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center gap-4">
+              <input
+                type="file"
+                multiple
+                accept="image/*,video/*"
+                className="hidden"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                disabled={isSubmitting}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isSubmitting}
+                className="w-full sm:w-auto"
+              >
+                <Upload className="mr-2 h-4 w-4" />
+                Select Files
+              </Button>
+              <span className="text-sm text-slate-500">
+                {mediaFiles?.length || 0} file(s) selected
+              </span>
+            </div>
+
+            {/* Previews */}
+            {mediaPreviews.length > 0 && (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+                {mediaPreviews.map((preview, index) => (
+                  <div
+                    key={index}
+                    className="relative group rounded-md overflow-hidden bg-slate-100 aspect-square"
+                  >
+                    <img
+                      src={preview}
+                      alt={`Preview ${index + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeMedia(index)}
+                      className="absolute top-1 right-1 bg-red-500/80 hover:bg-red-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Submit Button */}
+        <Button
+          type="submit"
+          disabled={isSubmitting}
+          className="w-full py-6"
+          size="lg"
+        >
+          {isSubmitting ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Submitting Report...
+            </>
+          ) : (
+            <>
+              <Upload className="mr-2 h-4 w-4" />
+              Submit Accident Report
+            </>
+          )}
+        </Button>
+      </div>
+    </form>
   );
 }

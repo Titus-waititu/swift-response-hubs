@@ -4,14 +4,14 @@
 
 export interface AIExtractTextRequest {
   imageUrl: string;
-//   mediaType:
-//     | "license_plate"
-//     | "drivers_license"
-//     | "id_card"
-//     | "passport"
-//     | "insurance_card"
-//     | "general";
-//   language?: string;
+  //   mediaType:
+  //     | "license_plate"
+  //     | "drivers_license"
+  //     | "id_card"
+  //     | "passport"
+  //     | "insurance_card"
+  //     | "general";
+  //   language?: string;
 }
 
 export interface AIExtractTextResponse {

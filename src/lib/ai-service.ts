@@ -31,7 +31,7 @@ export function convertAISeverityToEnum(
   aiResponse: AISeverityClassificationResponse,
 ): AccidentSeverity {
   const classification = aiResponse.classification?.toLowerCase() || "medium";
-  
+
   switch (classification) {
     case "low":
       return AccidentSeverity.MINOR;
@@ -92,7 +92,7 @@ export async function classifySeverity(
 ): Promise<AISeverityClassificationResponse> {
   try {
     const { accessToken } = useAuthStore.getState();
-    
+
     // Transform frontend request to backend DTO format
     const backendPayload = {
       description: request.description,
@@ -170,7 +170,8 @@ export async function classifySeverity(
       estimatedResponseTime,
       requiredEquipment,
       recommendedServices: dispatchRecommendation,
-      requiresEmergencyServices: classification === "high" || classification === "critical",
+      requiresEmergencyServices:
+        classification === "high" || classification === "critical",
     };
   }
 }

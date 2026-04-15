@@ -35,12 +35,12 @@ apiClient.interceptors.request.use((config) => {
   if (accessToken) {
     config.headers.Authorization = `Bearer ${accessToken}`;
   }
-  
+
   // If sending FormData, don't set Content-Type - let axios auto-detect it as multipart/form-data
   if (config.data instanceof FormData) {
     delete config.headers["Content-Type"];
   }
-  
+
   return config;
 });
 

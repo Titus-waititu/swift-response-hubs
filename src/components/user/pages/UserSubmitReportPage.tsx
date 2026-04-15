@@ -165,13 +165,15 @@ export default function SubmitAccidentReportPage({
       console.log("📊 Frontend AI determined severity:", determinedSeverity);
 
       // Submit the accident report using fetch directly (bypass axios header issues with FormData)
-      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || "https://smartresponse-api.onrender.com/api/v1";
+      const apiBaseUrl =
+        import.meta.env.VITE_API_BASE_URL ||
+        "https://smartresponse-api.onrender.com/api/v1";
       const response = await fetch(`${apiBaseUrl}/accidents/report`, {
         method: "POST",
         body: requestBody,
         headers: {
           // Don't set Content-Type - let browser auto-detect as multipart/form-data
-          "Authorization": `Bearer ${useAuthStore.getState().accessToken || ""}`,
+          Authorization: `Bearer ${useAuthStore.getState().accessToken || ""}`,
         },
       });
 

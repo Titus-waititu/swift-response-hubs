@@ -43,13 +43,16 @@ export interface AISeverityClassificationRequest {
 }
 
 export interface AISeverityClassificationResponse {
-  success: boolean;
-  severity: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
-  dispatchRecommendation: string[]; // e.g., ["ambulance", "fire", "police"]
-  justification: string;
-  confidenceScore: number; // 0-100
+  success?: boolean;
+  severity: number; // numeric severity level (e.g., 10, 20, 30)
+  classification: "low" | "medium" | "high" | "critical"; // lowercase string
+  dispatchRecommendation?: string[]; // e.g., ["ambulance", "fire", "police"]
+  justification?: string;
+  confidenceScore?: number; // 0-100
   estimatedResponseTime?: number; // minutes
   requiredEquipment?: string[];
+  recommendedServices?: string[];
+  requiresEmergencyServices?: boolean;
   error?: string;
 }
 

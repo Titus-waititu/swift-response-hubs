@@ -204,13 +204,13 @@ export default function UserDashboardPage({
                         })}
                       </div>
                     </div>
-                    <p className="mt-3 text-xs text-slate-600 dark:text-slate-400 flex items-center gap-2 flex-wrap">
+                    <div className="mt-3 text-xs text-slate-600 dark:text-slate-400 flex items-center gap-2 flex-wrap">
                       <StatusBadge status={incident.status} />
                       <span className="text-slate-500 dark:text-slate-400">
                         Updated:{" "}
                         {new Date(incident.updated_at).toLocaleTimeString()}
                       </span>
-                    </p>
+                    </div>
                   </div>
 
                   {/* Additional Info */}

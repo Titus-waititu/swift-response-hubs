@@ -5,6 +5,7 @@
  */
 
 import { useAuthStore } from "@/stores/authStore";
+import { AccidentSeverity } from "@/types/incident";
 import type {
   AIExtractTextRequest,
   AIExtractTextResponse,
@@ -22,6 +23,28 @@ import type {
 const AI_API_BASE =
   import.meta.env.VITE_API_BASE_URL?.replace(/\/api\/v1$/, "") ||
   "https://smartresponse-api.onrender.com";
+
+/**
+ * Convert AI severity classification to AccidentSeverity enum
+ */
+export function convertAISeverityToEnum(
+  aiResponse: AISeverityClassificationResponse,
+): AccidentSeverity {
+  const classification = aiResponse.classification?.toLowerCase() || "medium";
+  
+  switch (classification) {
+    case "low":
+      return AccidentSeverity.MINOR;
+    case "medium":
+      return AccidentSeverity.MODERATE;
+    case "high":
+      return AccidentSeverity.SEVERE;
+    case "critical":
+      return AccidentSeverity.FATAL;
+    default:
+      return AccidentSeverity.MODERATE;
+  }
+}
 
 /**
  * Extract text from images (OCR)
@@ -69,64 +92,85 @@ export async function classifySeverity(
 ): Promise<AISeverityClassificationResponse> {
   try {
     const { accessToken } = useAuthStore.getState();
+    
+    // Transform frontend request to backend DTO format
+    const backendPayload = {
+      description: request.description,
+      numberOfVehicles: request.vehicleCount || 1,
+      numberOfInjuries: request.reportedInjuries?.length || 0,
+      numberOfFatalities: 0,
+      weatherConditions: request.location ? "unknown" : undefined,
+      roadConditions: "unknown",
+    };
+
     const response = await fetch(`${AI_API_BASE}/api/v1/ai/classify-severity`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${accessToken}`,
       },
-      body: JSON.stringify(request),
+      body: JSON.stringify(backendPayload),
     });
 
     if (!response.ok) {
-      throw new Error(`API Error: ${response.statusText}`);
+      const errorText = await response.text();
+      console.error("Backend response:", errorText);
+      throw new Error(`API Error: ${response.status} ${response.statusText}`);
     }
 
     return await response.json();
   } catch (error) {
     console.error("Classification failed:", error);
-    // Mock implementation for demo
+    // Mock implementation for demo - matches actual backend response
     const description = request.description.toLowerCase();
-    let severity: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL" = "MEDIUM";
+    let classification: "low" | "medium" | "high" | "critical" = "medium";
+    let severity = 20; // numeric severity
     let justification = "Standard accident report";
+    let dispatchRecommendation: string[] = ["police"];
+    let estimatedResponseTime = 20;
+    let requiredEquipment: string[] = [];
 
     if (
       description.includes("critical") ||
       description.includes("fatality") ||
       (request.vehicleCount && request.vehicleCount > 3)
     ) {
-      severity = "CRITICAL";
+      classification = "critical";
+      severity = 40;
       justification = "Multiple vehicles and critical injuries reported";
+      dispatchRecommendation = ["ambulance", "fire", "police"];
+      estimatedResponseTime = 5;
+      requiredEquipment = ["trauma_equipment", "fire_suppression"];
     } else if (description.includes("minor") || description.includes("small")) {
-      severity = "LOW";
+      classification = "low";
+      severity = 10;
       justification = "Minor incident with no injuries reported";
+      dispatchRecommendation = ["police"];
+      estimatedResponseTime = 30;
+      requiredEquipment = [];
     } else if (
       description.includes("severe") ||
       description.includes("rollover")
     ) {
-      severity = "HIGH";
+      classification = "high";
+      severity = 30;
       justification = "Severe damage with potential injuries";
+      dispatchRecommendation = ["ambulance", "police"];
+      estimatedResponseTime = 10;
+      requiredEquipment = ["basic_first_aid"];
     }
 
     return {
       success: true,
       severity,
-      dispatchRecommendation:
-        severity === "CRITICAL"
-          ? ["ambulance", "fire", "police"]
-          : severity === "HIGH"
-            ? ["ambulance", "police"]
-            : ["police"],
+      classification,
+      dispatchRecommendation,
       justification,
       confidenceScore: 85,
-      estimatedResponseTime:
-        severity === "CRITICAL" ? 5 : severity === "HIGH" ? 10 : 20,
-      requiredEquipment:
-        severity === "CRITICAL"
-          ? ["AED", "stretcher", "fire_extinguisher"]
-          : severity === "HIGH"
-            ? ["first_aid_kit", "cone_markers"]
-            : ["basic_first_aid"],
+      estimatedResponseTime,
+      requiredEquipment,
+      recommendedServices: dispatchRecommendation,
+      requiresEmergencyServices: classification === "high" || classification === "critical",
     };
   }
 }

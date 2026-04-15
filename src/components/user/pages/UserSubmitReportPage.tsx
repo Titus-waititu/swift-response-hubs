@@ -5,6 +5,8 @@ import { toast } from "sonner";
 import { useCreateAccidentReport } from "@/hooks/useAccidents";
 import { useUpdateUser } from "@/hooks/useUsers";
 import { useAuthStore } from "@/stores/authStore";
+import { classifySeverity, convertAISeverityToEnum } from "@/lib/ai-service";
+import { AccidentSeverity } from "@/types/incident";
 import {
   Card,
   CardContent,
@@ -122,19 +124,63 @@ export default function SubmitAccidentReportPage({
 
       console.log("Submitting accident report:", formData);
 
-      // Create the payload for the accident report
-      const payload = {
+      // Use AI to determine severity level based on accident details
+      toast.loading("Analyzing accident severity...");
+      const severityAnalysis = await classifySeverity({
         description,
-        locationAddress: location,
+        reportedInjuries: injuriesReported
+          ? [injuriesDescription || "Injuries reported"]
+          : [],
+        vehicleCount: otherVehiclesCount + 1, // +1 for primary vehicle
+        hasAirbagDeployed: airbagDeployed,
+        hasRollover: rollover,
+        location,
+      });
+
+      const determinedSeverity = convertAISeverityToEnum(severityAnalysis);
+
+      console.log(
+        `AI Analysis: ${severityAnalysis.classification} (${severityAnalysis.severity}) -> ${determinedSeverity}`,
+        severityAnalysis,
+      );
+
+      // Create FormData payload matching backend API contract
+      const requestBody = new FormData();
+      requestBody.append("description", description);
+      requestBody.append("location", location);
+      requestBody.append("latitude", String(parseFloat(latitude || "0")));
+      requestBody.append("longitude", String(parseFloat(longitude || "0")));
+      // userId is optional
+      if (user?.id) {
+        requestBody.append("userId", user.id);
+      }
+
+      console.log("🚨 FormData being sent to API:", {
+        description,
+        location,
         latitude: parseFloat(latitude || "0"),
         longitude: parseFloat(longitude || "0"),
-        severity: injuriesReported ? "severe" : "moderate",
-        accidentDate: new Date().toISOString(),
-        reportedById: user?.id || "unknown",
-      };
+        userId: user?.id,
+      });
+      console.log("📊 Frontend AI determined severity:", determinedSeverity);
 
-      // Submit the accident report
-      await createReport.mutateAsync(payload as any);
+      // Submit the accident report using fetch directly (bypass axios header issues with FormData)
+      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || "https://smartresponse-api.onrender.com/api/v1";
+      const response = await fetch(`${apiBaseUrl}/accidents/report`, {
+        method: "POST",
+        body: requestBody,
+        headers: {
+          // Don't set Content-Type - let browser auto-detect as multipart/form-data
+          "Authorization": `Bearer ${useAuthStore.getState().accessToken || ""}`,
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw errorData;
+      }
+
+      const result = await response.json();
 
       // Update user's phone number if provided and user is authenticated
       if (phoneNumber && user?.id) {
@@ -147,7 +193,10 @@ export default function SubmitAccidentReportPage({
       if (onSubmit) {
         onSubmit(formData);
       }
-      toast.success("Report submitted successfully!");
+      toast.dismiss();
+      toast.success(
+        `Report submitted successfully! Severity: ${determinedSeverity}. ${severityAnalysis.justification}`,
+      );
 
       // Reset form
       setPhoneNumber("");
@@ -166,6 +215,7 @@ export default function SubmitAccidentReportPage({
       setMediaFiles([]);
       setMediaPreviews([]);
     } catch (error: any) {
+      toast.dismiss();
       if (error.errors && Array.isArray(error.errors)) {
         const errors: Record<string, string> = {};
         error.errors.forEach((err: any) => {

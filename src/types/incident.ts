@@ -5,6 +5,13 @@ export type IncidentStatus =
   | "resolved"
   | "closed";
 
+export enum AccidentSeverity {
+  MINOR = "minor",
+  MODERATE = "moderate",
+  SEVERE = "severe",
+  FATAL = "fatal",
+}
+
 export type IncidentType =
   | "Road Traffic Accident"
   | "Motorcycle Accident"
